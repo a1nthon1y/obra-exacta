@@ -1,0 +1,156 @@
+{
+  "cemento": {
+    "nombre": "Cemento Portland Tipo I",
+    "unidad": "bolsa 42.5 kg",
+    "precio": 29.50,
+    "grupo": "Concreto y mortero",
+    "fuente": "OneEstimate agosto 2026"
+  },
+  "hormigon": {
+    "nombre": "Hormigón",
+    "unidad": "m³",
+    "precio": 57.50,
+    "grupo": "Áridos",
+    "fuente": "OneEstimate agosto 2026"
+  },
+  "arena_gruesa": {
+    "nombre": "Arena gruesa",
+    "unidad": "m³",
+    "precio": 62.50,
+    "grupo": "Áridos",
+    "fuente": "OneEstimate agosto 2026"
+  },
+  "piedra_chancada": {
+    "nombre": "Piedra chancada 1/2\"",
+    "unidad": "m³",
+    "precio": 85.00,
+    "grupo": "Áridos",
+    "fuente": "OneEstimate agosto 2026"
+  },
+  "piedra_grande": {
+    "nombre": "Piedra grande de zanja (8\"-10\")",
+    "unidad": "m³",
+    "precio": 55.00,
+    "grupo": "Áridos",
+    "fuente": "Ferreterías Lima 2026"
+  },
+  "piedra_mediana": {
+    "nombre": "Piedra mediana (3\"-4\")",
+    "unidad": "m³",
+    "precio": 60.00,
+    "grupo": "Áridos",
+    "fuente": "Ferreterías Lima 2026"
+  },
+  "agua": {
+    "nombre": "Agua",
+    "unidad": "m³",
+    "precio": 0,
+    "grupo": "Concreto y mortero",
+    "fuente": "Dato informativo, sin costo"
+  },
+  "ladrillo_kk18": {
+    "nombre": "Ladrillo King Kong 18 huecos",
+    "unidad": "und",
+    "precio": 1.40,
+    "grupo": "Albañilería",
+    "fuente": "OneEstimate agosto 2026"
+  },
+  "ladrillo_pand": {
+    "nombre": "Ladrillo pandereta",
+    "unidad": "und",
+    "precio": 1.10,
+    "grupo": "Albañilería",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "ladrillo_techo": {
+    "nombre": "Ladrillo de techo (hueco)",
+    "unidad": "und",
+    "precio": 3.00,
+    "grupo": "Losa",
+    "fuente": "Mercado Lima oct-2026 (INEI millar S/ 3,084)"
+  },
+  "fierro_6mm": {
+    "nombre": "Fierro corrugado 6 mm (1/4\")",
+    "unidad": "varilla 9 m",
+    "precio": 12.00,
+    "grupo": "Fierro",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "fierro_8mm": {
+    "nombre": "Fierro corrugado 8 mm (5/16\")",
+    "unidad": "varilla 9 m",
+    "precio": 17.00,
+    "grupo": "Fierro",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "fierro_3_8": {
+    "nombre": "Fierro corrugado 3/8\"",
+    "unidad": "varilla 9 m",
+    "precio": 25.00,
+    "grupo": "Fierro",
+    "fuente": "Mercado Lima oct-2026 (Aceros Arequipa / Sider Perú)"
+  },
+  "fierro_1_2": {
+    "nombre": "Fierro corrugado 1/2\"",
+    "unidad": "varilla 9 m",
+    "precio": 43.00,
+    "grupo": "Fierro",
+    "fuente": "Mercado Lima oct-2026 (Aceros Arequipa / Sider Perú)"
+  },
+  "fierro_5_8": {
+    "nombre": "Fierro corrugado 5/8\"",
+    "unidad": "varilla 9 m",
+    "precio": 67.00,
+    "grupo": "Fierro",
+    "fuente": "Mercado Lima oct-2026 (Aceros Arequipa / Sider Perú)"
+  },
+  "fierro_3_4": {
+    "nombre": "Fierro corrugado 3/4\"",
+    "unidad": "varilla 9 m",
+    "precio": 95.00,
+    "grupo": "Fierro",
+    "fuente": "Mercado Lima oct-2026 (Aceros Arequipa / Sider Perú)"
+  },
+  "alambre_8": {
+    "nombre": "Alambre negro N°8",
+    "unidad": "kg",
+    "precio": 5.50,
+    "grupo": "Fierro",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "madera_encofrado": {
+    "nombre": "Madera para encofrado",
+    "unidad": "m²",
+    "precio": 45.00,
+    "grupo": "Encofrado",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "clavos_encofrado": {
+    "nombre": "Clavos para encofrado 2 1/2\"",
+    "unidad": "kg",
+    "precio": 7.00,
+    "grupo": "Encofrado",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "ceramico": {
+    "nombre": "Cerámico 30×30 cm",
+    "unidad": "m²",
+    "precio": 35.00,
+    "grupo": "Acabados",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "pintura_latex": {
+    "nombre": "Pintura látex",
+    "unidad": "gal",
+    "precio": 45.00,
+    "grupo": "Acabados",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "imprimante": {
+    "nombre": "Imprimante",
+    "unidad": "gal",
+    "precio": 35.00,
+    "grupo": "Acabados",
+    "fuente": "Mercado Lima oct-2026"
+  }
+}
