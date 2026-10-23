@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Aviso, ResultadoCalculo } from '../engine/types';
 import { useObraStore, CATALOGO } from '../store/obraStore';
 import type { EtapaGuardada } from '../store/obraStore';
+import { AvisoEdificio } from './AvisoEdificio';
 import { exportarReportePdf } from '../utils/exportarPdf';
 
 interface Props {
@@ -16,6 +17,11 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
   const [guardado, setGuardado] = useState(false);
   const agregarEtapa = useObraStore(s => s.agregarEtapa);
   const precios = useObraStore(s => s.precios);
+  const proyectos = useObraStore(s => s.proyectos);
+  const proyectoActivoId = useObraStore(s => s.proyectoActivoId);
+  const pisoActivo = useObraStore(s => s.pisoActivo);
+  const setPisoActivo = useObraStore(s => s.setPisoActivo);
+  const proyectoActivo = proyectos.find(p => p.id === proyectoActivoId) ?? null;
 
   const hayBad = resultado.avisos.some(a => a.n === 'bad');
 
@@ -39,6 +45,9 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
       detalle: resultado.detalle,
       resultado,
       timestamp: Date.now(),
+      proyectoId: proyectoActivo?.id,
+      proyectoNombre: proyectoActivo?.nombre,
+      piso: proyectoActivo ? pisoActivo : undefined,
     };
     agregarEtapa(etapa);
     setConfirmar(false);
@@ -53,9 +62,12 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
   }, 0);
 
   function imprimirPdf() {
+    const alcance = proyectoActivo
+      ? `${proyectoActivo.nombre} · Piso ${pisoActivo}`
+      : '';
     exportarReportePdf({
-      titulo: `Presupuesto de Materiales — ${resultado.titulo}`,
-      etapasStr: `${resultado.titulo} (${resultado.detalle})`,
+      titulo: `Presupuesto de Materiales — ${resultado.titulo}${alcance ? ` (${alcance})` : ''}`,
+      etapasStr: `${resultado.titulo} (${resultado.detalle})${alcance ? ` · ${alcance}` : ''}`,
       totalEstimado,
       items: resultado.mats.map(m => {
         const cat = CATALOGO[m.id];
@@ -98,6 +110,12 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
         </div>
       )}
 
+      {/* Aviso de proyecto de edificio: la medida no la define la app */}
+      <AvisoEdificio tono="warn" conProyecto={false}>
+        <strong>Medida de plano, no sugerida por la app.</strong>{' '}
+        Para 3–5 pisos, la estructura debe estar aprobada por un ingeniero. Aquí solo calculamos cantidades.
+      </AvisoEdificio>
+
       {/* Resumen */}
       <div className="resumen-card">
         <div className="resumen-titulo">
@@ -114,6 +132,11 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
             </div>
           ))}
         </div>
+        {proyectoActivo && (
+          <div style={{ fontSize: '0.72rem', color: 'var(--c-muted)', marginTop: 10 }}>
+            🏢 {proyectoActivo.nombre} · Piso {pisoActivo}
+          </div>
+        )}
       </div>
 
       {/* Materiales */}
@@ -170,6 +193,53 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
         </div>
       )}
 
+      {/* Contexto de proyecto: la partida se guarda en el piso activo */}
+      {proyectoActivo && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+            background: 'var(--c-surface2)',
+            border: '1px solid var(--c-border)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '10px 12px',
+            marginBottom: '10px',
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '0.66rem', color: 'var(--c-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Se guardará en
+            </div>
+            <div style={{ fontSize: '0.84rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              🏢 {proyectoActivo.nombre}
+            </div>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 600, color: 'var(--c-muted)', flexShrink: 0 }}>
+            Piso
+            <select
+              aria-label="Piso del proyecto"
+              value={pisoActivo}
+              onChange={e => setPisoActivo(Number(e.target.value))}
+              style={{
+                background: 'var(--c-field)',
+                border: '1.5px solid var(--c-border)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--c-text)',
+                fontFamily: 'inherit',
+                fontSize: '0.84rem',
+                padding: '7px 8px',
+              }}
+            >
+              {Array.from({ length: proyectoActivo.pisos }, (_, i) => i + 1).map(n => (
+                <option key={n} value={n}>Piso {n}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+
       {/* Botones de acción */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         <button className="btn-miobra" style={{ flex: 1.3 }} onClick={handleAgregar}>
@@ -187,8 +257,8 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
 
       {/* Aviso legal */}
       <p className="aviso-legal">
-        Obra Exacta calcula cantidades referenciales y muestra mínimos habituales del RNE.<br />
-        No es un diseño estructural. Confirmar con el maestro o capataz antes de comprar.
+        Obra Exacta calcula cantidades referenciales y muestra reglas mínimas habituales de obra.<br />
+        No es un diseño estructural. Confirmar con el maestro o un ingeniero antes de comprar.
       </p>
 
       {/* Confirmación si hay bad */}

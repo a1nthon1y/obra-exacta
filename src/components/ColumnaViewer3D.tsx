@@ -29,7 +29,15 @@ interface Props {
   dEst: string;    // pulg — estribo
   rec: number;     // cm — recubrimiento
   campoActivo?: string | null;
+  /** El usuario tocó "No sé" en una burbuja del plano. */
+  onNoSe?: (campo: string) => void;
+  /** El usuario tocó "Cambiar" en una burbuja del plano. */
+  onEditar?: (campo: string) => void;
+  /** Abre directo en el plano 2D (modo "No sé la medida"). */
+  guia?: boolean;
 }
+
+type HotspotId = 'b' | 'h' | 'alto' | 'nVar' | 'dEst';
 
 const HUD: Record<string, string> = {
   b: 'BASE DE LA COLUMNA',
@@ -50,11 +58,12 @@ const radioVarPx = (pulg: string, escalaPx: number): number => {
 };
 
 export const ColumnaViewer3D: React.FC<Props> = ({
-  b, h, alto, nVar, dVar, dEst, rec, campoActivo,
+  b, h, alto, nVar, dVar, dEst, rec, campoActivo, onNoSe, onEditar, guia,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState<'3d' | 'plano2d' | 'referencia'>('3d');
+  const [tab, setTab] = useState<'3d' | 'plano2d' | 'referencia'>(guia ? 'plano2d' : '3d');
   const [autoRotate, setAutoRotate] = useState(false);
+  const [hotspot, setHotspot] = useState<HotspotId | null>(null);
 
   // Valores con fallbacks
   const realB = b > 0 ? b : 25;
@@ -216,6 +225,57 @@ export const ColumnaViewer3D: React.FC<Props> = ({
   });
   const estriboN = Math.max(4, Math.min(Math.round(realAlto / 0.2), 14));
 
+  // Puntos tocables del plano 2D: una burbuja a la vez, anclada a la gráfica.
+  const hotspots: Array<{
+    id: HotspotId;
+    x: number;
+    y: number;
+    title: string;
+    value: string;
+    text: string;
+  }> = [
+    {
+      id: 'b',
+      x: 160,
+      y: secY + secH + 28,
+      title: 'Base (ancho)',
+      value: `${realB} cm`,
+      text: 'Es el ancho de la columna. En una casa de 1–2 pisos, lo usual es 25 cm.',
+    },
+    {
+      id: 'h',
+      x: secX + secW + 28,
+      y: 165,
+      title: 'Largo (otro lado)',
+      value: `${realH} cm`,
+      text: 'Es el otro lado de la sección. Casi siempre es igual al ancho: 25 × 25 cm.',
+    },
+    {
+      id: 'alto',
+      x: 494,
+      y: 175,
+      title: 'Alto de la columna',
+      value: `${realAlto} m`,
+      text: 'Es la altura de piso a techo. Lo usual en una casa es 2.5 m.',
+    },
+    {
+      id: 'nVar',
+      x: 160,
+      y: 165,
+      title: 'Fierro vertical',
+      value: `${realNVar} Ø ${dVar}"`,
+      text: 'Son las varillas que van de abajo hacia arriba. Para 25 × 25, lo usual es 4 de 5/8".',
+    },
+    {
+      id: 'dEst',
+      x: 430,
+      y: 100,
+      title: 'Estribo',
+      value: `Ø ${dEst}"`,
+      text: 'Es el anillo que abraza las varillas. Lo usual es de 1/4" cada 10–20 cm.',
+    },
+  ];
+
   return (
     <ViewerShell
       icon={etapa.icon}
@@ -245,61 +305,165 @@ export const ColumnaViewer3D: React.FC<Props> = ({
         </div>
       ) : tab === 'plano2d' ? (
         <div className="viewer-2d">
-          <svg
-            viewBox="0 0 560 340"
-            style={{ width: '100%', height: 'auto', display: 'block', background: '#070b14', borderRadius: 8 }}
-            role="img"
-            aria-label="Despiece de armado de columna: planta y alzado"
-          >
-            <defs>
-              <marker id="puntaColC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M0,0 L10,5 L0,10 Z" fill="#38bdf8" />
-              </marker>
-              <marker id="puntaColA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M0,0 L10,5 L0,10 Z" fill="#fbbf24" />
-              </marker>
-            </defs>
+          <div className="viewer-2d-plan">
+            <svg
+              viewBox="0 0 560 340"
+              style={{ width: '100%', height: 'auto', display: 'block', background: '#070b14', borderRadius: 8 }}
+              role="group"
+              aria-label="Despiece de armado de columna: planta y alzado"
+            >
+              <defs>
+                <marker id="puntaColC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 Z" fill="#38bdf8" />
+                </marker>
+                <marker id="puntaColA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 Z" fill="#fbbf24" />
+                </marker>
+              </defs>
 
-            {/* PLANTA — sección A-A */}
-            <text x={160} y={58} textAnchor="middle" fill="#cbd5e1" fontSize="12" fontFamily="monospace" letterSpacing="1">PLANTA · SECCIÓN A-A</text>
-            <rect x={secX} y={secY} width={secW} height={secH} fill="#475569" fillOpacity="0.55" stroke="#94a3b8" strokeWidth="1.5" />
-            <rect
-              x={secX + recPx}
-              y={secY + recPx}
-              width={Math.max(secW - 2 * recPx, 2)}
-              height={Math.max(secH - 2 * recPx, 2)}
-              fill="none"
-              stroke="#38bdf8"
-              strokeWidth="1.4"
-              strokeDasharray="6 4"
-            />
-            {varillasPx.map((v, i) => (
-              <circle key={i} cx={v.x} cy={v.y} r={rVarPx} fill="#0f172a" stroke="#e2e8f0" strokeWidth="1.5" />
-            ))}
-            <line x1={secX} y1={secY + secH + 28} x2={secX + secW} y2={secY + secH + 28} stroke="#38bdf8" strokeWidth="1.2" markerStart="url(#puntaColC)" markerEnd="url(#puntaColC)" />
-            <text x={160} y={secY + secH + 44} textAnchor="middle" fill="#38bdf8" fontSize="11" fontFamily="monospace">Base: {realB} cm</text>
-            <line x1={secX + secW + 28} y1={secY} x2={secX + secW + 28} y2={secY + secH} stroke="#38bdf8" strokeWidth="1.2" markerStart="url(#puntaColC)" markerEnd="url(#puntaColC)" />
-            <text x={secX + secW + 37} y={165} textAnchor="middle" fill="#38bdf8" fontSize="11" fontFamily="monospace" transform={`rotate(90, ${secX + secW + 37}, 165)`}>Largo: {realH} cm</text>
-            <text x={secX - 8} y={secY + recPx + 3} textAnchor="end" fill="#38bdf8" fontSize="10" fontFamily="monospace">rec. {realRec} cm</text>
+              <text x={280} y={22} textAnchor="middle" fill="#64748b" fontSize="10" fontFamily="monospace" letterSpacing="1">
+                TOCA LOS ? PARA SABER QUÉ ES
+              </text>
 
-            {/* ALZADO — varillas y estribos */}
-            <text x={430} y={58} textAnchor="middle" fill="#cbd5e1" fontSize="12" fontFamily="monospace" letterSpacing="1">ALZADO</text>
-            <rect x={390} y={80} width={80} height={190} fill="#475569" fillOpacity="0.55" stroke="#94a3b8" strokeWidth="1.5" />
-            <line x1={400} y1={86} x2={400} y2={264} stroke="#e2e8f0" strokeWidth="3" />
-            <line x1={460} y1={86} x2={460} y2={264} stroke="#e2e8f0" strokeWidth="3" />
-            {Array.from({ length: estriboN }, (_, i) => {
-              const y = 88 + (i * 174) / (estriboN - 1);
-              return <line key={i} x1={390} y1={y} x2={470} y2={y} stroke="#38bdf8" strokeWidth="1.4" />;
-            })}
-            <line x1={380} y1={270} x2={480} y2={270} stroke="#64748b" strokeWidth="1.5" />
-            <line x1={494} y1={80} x2={494} y2={270} stroke="#fbbf24" strokeWidth="1.2" markerStart="url(#puntaColA)" markerEnd="url(#puntaColA)" />
-            <text x={506} y={175} textAnchor="middle" fill="#fbbf24" fontSize="11" fontFamily="monospace" transform="rotate(-90, 506, 175)">Alto: {realAlto} m</text>
+              {/* PLANTA — sección A-A */}
+              <text x={160} y={58} textAnchor="middle" fill="#cbd5e1" fontSize="12" fontFamily="monospace" letterSpacing="1">PLANTA · SECCIÓN A-A</text>
+              <rect x={secX} y={secY} width={secW} height={secH} fill="#475569" fillOpacity="0.55" stroke="#94a3b8" strokeWidth="1.5" />
+              <rect
+                x={secX + recPx}
+                y={secY + recPx}
+                width={Math.max(secW - 2 * recPx, 2)}
+                height={Math.max(secH - 2 * recPx, 2)}
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="1.4"
+                strokeDasharray="6 4"
+              />
+              {varillasPx.map((v, i) => (
+                <circle key={i} cx={v.x} cy={v.y} r={rVarPx} fill="#0f172a" stroke="#e2e8f0" strokeWidth="1.5" />
+              ))}
+              <line x1={secX} y1={secY + secH + 28} x2={secX + secW} y2={secY + secH + 28} stroke="#38bdf8" strokeWidth="1.2" markerStart="url(#puntaColC)" markerEnd="url(#puntaColC)" />
+              <text x={160} y={secY + secH + 44} textAnchor="middle" fill="#38bdf8" fontSize="11" fontFamily="monospace">Base: {realB} cm</text>
+              <line x1={secX + secW + 28} y1={secY} x2={secX + secW + 28} y2={secY + secH} stroke="#38bdf8" strokeWidth="1.2" markerStart="url(#puntaColC)" markerEnd="url(#puntaColC)" />
+              <text x={secX + secW + 37} y={165} textAnchor="middle" fill="#38bdf8" fontSize="11" fontFamily="monospace" transform={`rotate(90, ${secX + secW + 37}, 165)`}>Largo: {realH} cm</text>
+              <text x={secX - 8} y={secY + recPx + 3} textAnchor="end" fill="#38bdf8" fontSize="10" fontFamily="monospace">rec. {realRec} cm</text>
 
-            {/* Leyenda */}
-            <text x={280} y={318} textAnchor="middle" fill="#94a3b8" fontSize="11" fontFamily="monospace">
-              {`Varillas: ${realNVar} Ø ${dVar}"  ·  Estribo: Ø ${dEst}"  ·  Recubrimiento: ${realRec} cm`}
-            </text>
-          </svg>
+              {/* ALZADO — varillas y estribos */}
+              <text x={430} y={58} textAnchor="middle" fill="#cbd5e1" fontSize="12" fontFamily="monospace" letterSpacing="1">ALZADO</text>
+              <rect x={390} y={80} width={80} height={190} fill="#475569" fillOpacity="0.55" stroke="#94a3b8" strokeWidth="1.5" />
+              <line x1={400} y1={86} x2={400} y2={264} stroke="#e2e8f0" strokeWidth="3" />
+              <line x1={460} y1={86} x2={460} y2={264} stroke="#e2e8f0" strokeWidth="3" />
+              {Array.from({ length: estriboN }, (_, i) => {
+                const y = 88 + (i * 174) / (estriboN - 1);
+                return <line key={i} x1={390} y1={y} x2={470} y2={y} stroke="#38bdf8" strokeWidth="1.4" />;
+              })}
+              <line x1={380} y1={270} x2={480} y2={270} stroke="#64748b" strokeWidth="1.5" />
+              <line x1={494} y1={80} x2={494} y2={270} stroke="#fbbf24" strokeWidth="1.2" markerStart="url(#puntaColA)" markerEnd="url(#puntaColA)" />
+              <text x={506} y={175} textAnchor="middle" fill="#fbbf24" fontSize="11" fontFamily="monospace" transform="rotate(-90, 506, 175)">Alto: {realAlto} m</text>
+
+              {/* Leyenda */}
+              <text x={280} y={318} textAnchor="middle" fill="#94a3b8" fontSize="11" fontFamily="monospace">
+                {`Varillas: ${realNVar} Ø ${dVar}"  ·  Estribo: Ø ${dEst}"  ·  Recubrimiento: ${realRec} cm`}
+              </text>
+
+              {/* Puntos tocables */}
+              {hotspots.map(h => (
+                <g
+                  key={h.id}
+                  className="hotspot-mark"
+                  onClick={() => setHotspot(hotspot === h.id ? null : h.id)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setHotspot(hotspot === h.id ? null : h.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Qué es: ${h.title}`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <title>{h.title}</title>
+                  <circle
+                    cx={h.x}
+                    cy={h.y}
+                    r={hotspot === h.id ? 11 : 9}
+                    fill={hotspot === h.id ? 'rgba(251,191,36,0.28)' : 'rgba(56,189,248,0.16)'}
+                    stroke={hotspot === h.id ? '#fbbf24' : '#38bdf8'}
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x={h.x}
+                    y={h.y + 3.5}
+                    textAnchor="middle"
+                    fill={hotspot === h.id ? '#fbbf24' : '#38bdf8'}
+                    fontSize="10"
+                    fontFamily="monospace"
+                    fontWeight="700"
+                  >
+                    ?
+                  </text>
+                </g>
+              ))}
+            </svg>
+
+            {hotspot && (() => {
+              const h = hotspots.find(x => x.id === hotspot)!;
+              const pctX = (h.x / 560) * 100;
+              const pctY = (h.y / 340) * 100;
+              const nearRight = pctX > 70;
+              const nearLeft = pctX < 30;
+              const below = pctY < 45;
+              const style: React.CSSProperties = nearRight
+                ? { right: 8, left: 'auto', top: `${pctY}%` }
+                : nearLeft
+                  ? { left: 8, top: `${pctY}%` }
+                  : { left: `${pctX}%`, top: `${pctY}%` };
+              style.transform = below
+                ? (nearRight || nearLeft ? 'translate(0, 14px)' : 'translate(-50%, 14px)')
+                : (nearRight || nearLeft ? 'translate(0, calc(-100% - 14px))' : 'translate(-50%, calc(-100% - 14px))');
+
+              return (
+                <div className="hotspot-tip" style={style}>
+                  <div className="hotspot-tip__head">
+                    <span className="hotspot-tip__title">{h.title}</span>
+                    <button
+                      type="button"
+                      className="hotspot-tip__close"
+                      onClick={() => setHotspot(null)}
+                      aria-label="Cerrar"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="hotspot-tip__value">{h.value}</div>
+                  <div className="hotspot-tip__text">{h.text}</div>
+                  <div className="hotspot-tip__actions">
+                    {onEditar && (
+                      <button
+                        type="button"
+                        className="hotspot-tip__btn"
+                        onClick={() => { onEditar(h.id); setHotspot(null); }}
+                      >
+                        Cambiar
+                      </button>
+                    )}
+                    {onNoSe && (
+                      <button
+                        type="button"
+                        className="hotspot-tip__btn ghost"
+                        onClick={() => { onNoSe(h.id); setHotspot(null); }}
+                      >
+                        No sé
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+          <div className="viewer-2d-desc">
+            Toca los <strong>?</strong> del plano para saber qué es cada medida.
+          </div>
         </div>
       ) : (
         <div className="ref-wrap">

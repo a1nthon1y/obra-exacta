@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useObraStore } from './store/obraStore';
 import { CalcCimientos } from './pages/CalcCimientos';
 import { CalcZapata }    from './pages/CalcZapata';
@@ -8,6 +8,7 @@ import { CalcVigas, CalcLosa } from './pages/CalcVigasLosa';
 import { CalcAcabados }  from './pages/CalcAcabados';
 import { CalcEscalera }  from './pages/CalcEscalera';
 import { MiObra }        from './pages/MiObra';
+import { Edificio }      from './pages/Edificio';
 import { ETAPAS, getEtapa } from './config/etapas';
 import type { EtapaId } from './config/etapas';
 
@@ -17,15 +18,27 @@ type Calc = EtapaId | null;
 export default function App() {
   const [tab, setTab]   = useState<Tab>('inicio');
   const [calc, setCalc] = useState<Calc>(null);
+  const [enEdificio, setEnEdificio] = useState(false);
   const etapas = useObraStore(s => s.etapas);
+  const proyectos = useObraStore(s => s.proyectos);
+  const proyectoActivoId = useObraStore(s => s.proyectoActivoId);
+  const pisoActivo = useObraStore(s => s.pisoActivo);
+  const proyectoActivo = proyectos.find(p => p.id === proyectoActivoId) ?? null;
+
+  // Cada cambio de pantalla debe empezar arriba.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [tab, calc, enEdificio]);
 
   function abrirCalc(id: Calc) {
     console.log('[APP] abrirCalc ->', id);
+    setEnEdificio(false);
     setCalc(id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function volverInicio() {
+    setEnEdificio(false);
     setCalc(null);
     setTab('inicio');
   }
@@ -67,7 +80,7 @@ export default function App() {
           </button>
           <button
             className="header-obra-badge"
-            onClick={() => { setTab('obra'); setCalc(null); }}
+            onClick={() => { setEnEdificio(false); setTab('obra'); setCalc(null); }}
           >
             🗂️ Mi obra {etapas.length > 0 && `(${etapas.length})`}
           </button>
@@ -78,6 +91,12 @@ export default function App() {
       <main style={{ flex: 1, overflowY: 'auto' }}>
         {calc ? (
           renderCalc()
+        ) : enEdificio ? (
+          <Edificio
+            onBack={() => setEnEdificio(false)}
+            onIrCalculadoras={() => { setEnEdificio(false); setTab('inicio'); setCalc(null); }}
+            onVerObra={() => { setEnEdificio(false); setTab('obra'); setCalc(null); }}
+          />
         ) : tab === 'inicio' ? (
           <div className="page">
             {/* Hero: portada de plano */}
@@ -109,6 +128,32 @@ export default function App() {
               ))}
             </div>
 
+            {/* Sección Edificio: 3–5 pisos, con planos o derivación a ingeniero */}
+            <div className="sugerir-card" style={{ marginTop: 20 }}>
+              <div className="sugerir-head">
+                <div>
+                  <div className="sugerir-title">
+                    {proyectoActivo
+                      ? `🏢 ${proyectoActivo.nombre}`
+                      : '🏢 ¿Edificio de 3 a 5 pisos?'}
+                  </div>
+                  <div className="sugerir-sub">
+                    {proyectoActivo
+                      ? `Piso ${pisoActivo} de ${proyectoActivo.pisos}. Las partidas que guardes quedarán en este nivel.`
+                      : 'Para 3+ pisos no damos una medida usual: el ingeniero define la estructura. La app te ayuda a meter material con sus planos.'}
+                  </div>
+                </div>
+                <span className="sugerir-beta">{proyectoActivo ? 'EN CURSO' : 'CON PLANOS'}</span>
+              </div>
+              <button
+                className="btn-secondary"
+                style={{ marginTop: 10 }}
+                onClick={() => { setEnEdificio(true); setCalc(null); setTab('inicio'); }}
+              >
+                {proyectoActivo ? `Continuar en Piso ${pisoActivo}` : 'Entrar a la sección Edificio'}
+              </button>
+            </div>
+
             {/* Aviso referencial */}
             <p className="aviso-legal" style={{ marginTop: 20 }}>
               Obra Exacta muestra cantidades referenciales basadas en prácticas habituales peruanas (RNE).<br />
@@ -116,7 +161,7 @@ export default function App() {
             </p>
           </div>
         ) : (
-          <MiObra onIrCalculadoras={() => { setTab('inicio'); setCalc(null); }} />
+          <MiObra onIrCalculadoras={() => { setEnEdificio(false); setTab('inicio'); setCalc(null); }} />
         )}
       </main>
 
@@ -124,12 +169,22 @@ export default function App() {
       <nav className="bottom-nav">
         <button
           id="nav-inicio"
-          className={`nav-tab ${tab === 'inicio' && !calc ? 'active' : ''}`}
+          className={`nav-tab ${tab === 'inicio' && !calc && !enEdificio ? 'active' : ''}`}
           onClick={volverInicio}
         >
           <span className="nav-icon">🏠</span>
           Inicio
         </button>
+        {enEdificio && !calc && (
+          <button
+            id="nav-edificio"
+            className="nav-tab active"
+            onClick={() => { setEnEdificio(true); setCalc(null); setTab('inicio'); }}
+          >
+            <span className="nav-icon">🏢</span>
+            Edificio
+          </button>
+        )}
         {calc && (
           <button
             id="nav-calculadora"
@@ -141,8 +196,8 @@ export default function App() {
         )}
         <button
           id="nav-mi-obra"
-          className={`nav-tab ${tab === 'obra' && !calc ? 'active' : ''}`}
-          onClick={() => { setTab('obra'); setCalc(null); }}
+          className={`nav-tab ${tab === 'obra' && !calc && !enEdificio ? 'active' : ''}`}
+          onClick={() => { setEnEdificio(false); setTab('obra'); setCalc(null); }}
         >
           <span className="nav-icon">🗂️</span>
           Mi obra {etapas.length > 0 && <span className="nav-count">{etapas.length}</span>}

@@ -17,6 +17,17 @@ export interface OptionsPdf {
   avisos?: string[];
 }
 
+// Los nombres de proyecto y algunos detalles vienen del usuario:
+// se escapan antes de inyectarlos en la ventana de impresión.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function exportarReportePdf(opt: OptionsPdf): void {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -34,7 +45,7 @@ export function exportarReportePdf(opt: OptionsPdf): void {
 <html lang="es-PE">
 <head>
   <meta charset="UTF-8">
-  <title>${opt.titulo} - Obra Exacta Perú</title>
+  <title>${escapeHtml(opt.titulo)} - Obra Exacta Perú</title>
   <style>
     @page {
       size: A4 portrait;
@@ -245,8 +256,8 @@ export function exportarReportePdf(opt: OptionsPdf): void {
   </div>
 
   <div class="doc-banner">
-    <div class="doc-title">${opt.titulo}</div>
-    <div class="doc-etapas"><strong>Partida(s):</strong> ${opt.etapasStr}</div>
+    <div class="doc-title">${escapeHtml(opt.titulo)}</div>
+    <div class="doc-etapas"><strong>Partida(s):</strong> ${escapeHtml(opt.etapasStr)}</div>
   </div>
 
   <table>
@@ -264,12 +275,12 @@ export function exportarReportePdf(opt: OptionsPdf): void {
           (m) => `
         <tr>
           <td>
-            <div class="mat-name">${m.nombre}</div>
-            ${m.desglose ? `<div class="mat-desglose">↳ ${m.desglose}</div>` : ''}
+            <div class="mat-name">${escapeHtml(m.nombre)}</div>
+            ${m.desglose ? `<div class="mat-desglose">↳ ${escapeHtml(m.desglose)}</div>` : ''}
           </td>
           <td class="col-right">
-            <span class="cant-comprar">${m.cantidad}</span>
-            <span style="color:#64748b; font-size:10.5px;"> ${m.unidad}</span>
+            <span class="cant-comprar">${escapeHtml(String(m.cantidad))}</span>
+            <span style="color:#64748b; font-size:10.5px;"> ${escapeHtml(m.unidad)}</span>
           </td>
           <td class="col-right" style="color: #64748b;">
             ${m.precio ? `S/ ${m.precio.toFixed(2)}` : '—'}
@@ -303,7 +314,7 @@ export function exportarReportePdf(opt: OptionsPdf): void {
       ? `
     <div class="pasos-box">
       <div class="pasos-title">📐 Sustento y Pasos del Cálculo:</div>
-      ${opt.pasos.map((p) => `<div class="paso-item">${p}</div>`).join('')}
+      ${opt.pasos.map((p) => `<div class="paso-item">${escapeHtml(p)}</div>`).join('')}
     </div>
   `
       : ''

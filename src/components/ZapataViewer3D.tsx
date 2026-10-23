@@ -26,6 +26,12 @@ interface Props {
   carga?: number;    // tn
   cant?: number;     // und
   campoActivo?: string | null;
+  /** El usuario tocó "No sé" en una burbuja del plano. */
+  onNoSe?: (campo: string) => void;
+  /** El usuario tocó "Cambiar" en una burbuja del plano. */
+  onEditar?: (campo: string) => void;
+  /** Abre directo en el plano 2D (modo "No sé la medida"). */
+  guia?: boolean;
 }
 
 const etapa = getEtapa('zapata');
@@ -48,9 +54,12 @@ export const ZapataViewer3D: React.FC<Props> = ({
   carga = 0,
   cant = 0,
   campoActivo,
+  onNoSe,
+  onEditar,
+  guia,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState<'3d' | 'plano2d' | 'referencia'>('3d');
+  const [tab, setTab] = useState<'3d' | 'plano2d' | 'referencia'>(guia ? 'plano2d' : '3d');
   const [autoRotate, setAutoRotate] = useState(false);
 
   // Valores con fallbacks: el visor siempre muestra una zapata completa.
@@ -214,6 +223,8 @@ export const ZapataViewer3D: React.FC<Props> = ({
           espesor={realEsp}
           bCol={realBCol}
           hCol={realHCol}
+          onNoSe={onNoSe}
+          onEditar={onEditar}
         />
       ) : (
         <ZapataReferencia />

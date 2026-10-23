@@ -162,12 +162,18 @@ export function calcMuros(p: ParamsMuros): Resultado {
   if (p.uso === 'portante' && mezclaNum > 5)
     avisos.push({ n: 'warn', t: `Mezcla 1:${mezclaNum}: para muros portantes la norma peruana especifica mortero 1:4 o 1:5.` });
 
-  // Rendimiento unitario CALCULADO con la fórmula del Manual del Maestro Constructor
-  // (Aceros Arequipa): und/m² = 1 ÷ [(cara visible + junta) × (alto + junta)].
-  // Así el resultado se ajusta a las medidas reales del ladrillo y a la junta elegida.
+  // Rendimiento unitario: para las medidas estándar manda la Tabla 2.28 de Capeco;
+  // si el usuario cambia el ladrillo o la junta, se calcula con la fórmula del
+  // Manual del Maestro Constructor (Aceros Arequipa).
   const caraCm  = p.aparejo === 'cabeza' ? ab : lb;   // cara expuesta del ladrillo
   const altCm   = p.aparejo === 'canto'  ? ab : hb;   // otra dimensión de la cara
-  const undM2   = 1 / (((caraCm + junta) / 100) * ((altCm + junta) / 100));
+  const undFormula = 1 / (((caraCm + junta) / 100) * ((altCm + junta) / 100));
+  const esEstandar =
+    (p.ladrillo === 'kk18' && Math.abs(lb - 24) < 0.01 && Math.abs(ab - 13) < 0.01 && Math.abs(hb - 9) < 0.01) ||
+    (p.ladrillo === 'pand' && Math.abs(lb - 24) < 0.01 && Math.abs(ab - 12) < 0.01 && Math.abs(hb - 9) < 0.01);
+  const usaTabla = esEstandar && Math.abs(junta - 1.5) < 0.01 && dosLad.und_m2 > 0;
+  const undM2 = usaTabla ? dosLad.und_m2 : undFormula;
+  const fuenteUnd = usaTabla ? 'Tabla 2.28 Capeco' : 'fórmula según medidas';
   const morteroM2 = dosLad.mortero_m3;
 
   // Ladrillos
@@ -188,7 +194,7 @@ export function calcMuros(p: ParamsMuros): Resultado {
     `   Área bruta: ${p.largo} m × ${p.alto} m = ${areaBruta.toFixed(2)} m².`,
     `   Menos vanos (puertas y ventanas): ${p.aberturas.toFixed(2)} m² → Área neta efectiva: ${areaNeta.toFixed(2)} m².`,
     `2. LADRILLOS (${p.ladrillo === 'kk18' ? 'King Kong 18 huecos' : 'Pandereta'} en aparejo de ${p.aparejo}):`,
-    `   • Factor unitario: 1 ÷ [(cara ${caraCm} cm + junta ${junta} cm) × (lado ${altCm} cm + junta ${junta} cm)] = ${undM2.toFixed(1)} ladrillos/m².`,
+    `   • Factor unitario: ${undM2.toFixed(1)} ladrillos/m² (${fuenteUnd}).`,
     `   • Ladrillos netos: ${areaNeta.toFixed(2)} m² × ${undM2.toFixed(1)} = ${ladNeto.toFixed(0)} unidades.`,
     `   • Con desperdicio de rotura (+${p.desL}%): ${ladTot.toFixed(0)} unidades.`,
     `3. MORTERO DE ASENTADO (Proporción 1:${p.mezcla}):`,
@@ -218,7 +224,7 @@ export function calcMuros(p: ParamsMuros): Resultado {
       { nombre: 'Esbeltez RNE E.070', valor: esbeltez.toFixed(1), unidad: '' },
     ],
     mats: [
-      { id: idLad,          cant: ladTot,     comprar: comprarEntero(ladTot), desglose: `${areaNeta.toFixed(1)} m² × ${undM2.toFixed(1)} und/m² (cara ${caraCm}+junta ${junta} cm, +${p.desL}% rotura)` },
+      { id: idLad,          cant: ladTot,     comprar: comprarEntero(ladTot), desglose: `${areaNeta.toFixed(1)} m² × ${undM2.toFixed(1)} und/m² (${fuenteUnd}, +${p.desL}% rotura)` },
       { id: 'cemento',      cant: cemMuros,   comprar: comprarEntero(cemMuros), desglose: `${morTot.toFixed(2)} m³ mortero × ${dosMort.bolsas} bol/m³ (1:${p.mezcla})` },
       { id: 'arena_gruesa', cant: arenaMuros, comprar: ceil1(arenaMuros),       desglose: `${morTot.toFixed(2)} m³ mortero × ${dosMort.arena} m³/m³` },
     ],
@@ -235,10 +241,10 @@ export function calcColumnas(p: ParamsColumnas): Resultado {
   const avisos: Aviso[] = [];
   const dos = dosConcreto(p.fc);
 
-  // Sección mínima según sistema estructural (RNE E.070 / E.060)
+  // Sección mínima usual según sistema estructural.
   const secMin = p.sis === 'confinada' ? 15 : 25;
   if (Math.min(p.b, p.h) < secMin)
-    avisos.push({ n: 'bad', t: `Dimensión mínima: la sección mínima usual para columnas de ${p.sis === 'confinada' ? 'albañilería confinada es 15 cm' : 'pórticos sismorresistentes es 25 cm'} (RNE E.070/E.060).` });
+    avisos.push({ n: 'bad', t: `Dimensión mínima: la sección mínima usual para columnas de ${p.sis === 'confinada' ? 'albañilería confinada es 15 cm' : 'pórticos sismorresistentes es 25 cm'}.` });
 
   const aVar = aceroData(p.dVar);
   const aEst = aceroData(p.dEst);
@@ -257,15 +263,10 @@ export function calcColumnas(p: ParamsColumnas): Resultado {
   const varillasVar = Math.ceil((longVarTotal * (1 + despVar)) / aVar.varilla_m);
   const kgVar = varillasVar * aVar.varilla_m * aVar.kg_ml;
 
-  // Cuantía de acero longitudinal (RNE E.060: mínimo 1%, máximo 4%)
+  // Cuantía de acero longitudinal (mínimo 1%, máximo 4% de la sección)
   const aAceroCm2 = (Math.PI / 4) * (diametroMm(p.dVar) / 10) ** 2 * p.nVar;
   const aSeccionCm2 = p.b * p.h;
   const cuantia = (aAceroCm2 / aSeccionCm2) * 100;
-
-  if (cuantia < 1.0)
-    avisos.push({ n: 'bad', t: `Cuantía de acero ${cuantia.toFixed(2)}%: está por debajo del mínimo reglamentario de 1.0% (RNE E.060). Aumentar número o diámetro de varillas.` });
-  else if (cuantia > 4.0)
-    avisos.push({ n: 'warn', t: `Cuantía de acero ${cuantia.toFixed(2)}%: supera el 4% (congestión de fierro que dificulta el vaciado).` });
 
   // 3. Estribos (Distribución sísmica RNE E.060 / Sencico)
   // Zona de confinamiento en ambos extremos:
@@ -293,14 +294,14 @@ export function calcColumnas(p: ParamsColumnas): Resultado {
   const encofrado = perimEncofrado * p.alto * p.cant;
   const clavos = encofrado * 0.8; // ~0.8 kg de clavos por m² de encofrado
 
-  const acMinCm2 = aSeccionCm2 * 0.01; // 1% mínimo RNE E.060
-  const acMaxCm2 = aSeccionCm2 * 0.04; // 4% máximo RNE E.060
+  const acMinCm2 = aSeccionCm2 * 0.01; // 1% mínimo de la sección
+  const acMaxCm2 = aSeccionCm2 * 0.04; // 4% máximo de la sección
   if (aAceroCm2 < acMinCm2) {
-    avisos.push({ n: 'bad', t: `Cuantía insuficiente: ${aAceroCm2.toFixed(2)} cm² < ${acMinCm2.toFixed(2)} cm² (mínimo 1% RNE E.060). Aumentar número/diámetro de varillas longitudinales.` });
+    avisos.push({ n: 'bad', t: `Cuantía insuficiente: ${aAceroCm2.toFixed(2)} cm² < ${acMinCm2.toFixed(2)} cm² (mínimo 1% de la sección). Aumentar número/diámetro de varillas longitudinales.` });
   } else if (aAceroCm2 > acMaxCm2) {
-    avisos.push({ n: 'bad', t: `Cuantía excesiva: ${aAceroCm2.toFixed(2)} cm² > ${acMaxCm2.toFixed(2)} cm² (máximo 4% RNE E.060). Difícil compactar concreto; reducir acero o aumentar sección.` });
+    avisos.push({ n: 'bad', t: `Cuantía excesiva: ${aAceroCm2.toFixed(2)} cm² > ${acMaxCm2.toFixed(2)} cm² (máximo 4% de la sección). Difícil compactar concreto; reducir acero o aumentar sección.` });
   } else {
-    avisos.push({ n: 'ok', t: `Cuantía dentro de rango normativo: ${cuantia.toFixed(2)}% (1% - 4% RNE E.060).` });
+    avisos.push({ n: 'ok', t: `Cuantía dentro del rango usual: ${cuantia.toFixed(2)}% (1% - 4% de la sección).` });
   }
 
   // Traslapos/empalmes orientativos (varillas de 9 m) - +5% a +8% según práctica
@@ -344,7 +345,7 @@ export function calcColumnas(p: ParamsColumnas): Resultado {
       { nombre: 'Fierro longitud.', valor: `${varillasVar} var. (${p.dVar}")`, unidad: '' },
       { nombre: 'Estribos', valor: `${varillasEst} var. (${p.dEst}")`, unidad: '' },
       { nombre: 'Fierro total', valor: kgTotal.toFixed(1), unidad: 'kg' },
-      { nombre: 'Cuantía RNE E.060', valor: cuantia.toFixed(2), unidad: '%' },
+      { nombre: 'Cuantía de acero', valor: cuantia.toFixed(2), unidad: '%' },
       { nombre: 'Encofrado', valor: encofrado.toFixed(1), unidad: 'm²' },
     ],
     mats: [
@@ -825,7 +826,7 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
   if (ch < 15)
     avisos.push({ n: 'warn', t: `Contrahuella ${ch.toFixed(1)} cm: muy baja; la escalera queda larga y pesada.` });
   if (p.ancho < 0.8)
-    avisos.push({ n: 'warn', t: `Ancho ${p.ancho} m: en vivienda el tramo debe tener mínimo 0.80 m de ancho libre (NTE E.020).` });
+    avisos.push({ n: 'warn', t: `Ancho ${p.ancho} m: en vivienda el tramo debe tener mínimo 0.80 m de ancho libre (RNE A.010/A.020).` });
   if (p.altura > 3.5)
     avisos.push({ n: 'warn', t: `Altura ${p.altura} m en un solo tramo: es mucha; lo usual es dividir en dos tramos con meseta intermedia.` });
   avisos.push({ n: 'ok', t: 'El fierro es orientativo: el armado real de la escalera lo define el plano estructural (RNE E.060).' });
@@ -932,6 +933,7 @@ export function calcular(id: string, params: ParamsCalculo): Resultado {
       case 'losa':      return calcLosa(params as ParamsLosa);
       case 'acabados':  return calcAcabados(params as ParamsAcabados);
       case 'escalera':  return calcEscalera(params as ParamsEscalera);
+      case 'zapata':    return calcZapata(params as ParamsZapata);
       default:          return { error: `Calculadora desconocida: ${id}` };
     }
   } catch (e) {

@@ -360,6 +360,138 @@ body {
 }
 .btn-ejemplo:hover { background: #d7e3f6; }
 
+/* ─── Dos puertas: "No sé la medida" / "Ya tengo la medida" ─── */
+.modo-switch {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.modo-switch button {
+  flex: 1;
+  min-height: 44px;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  color: var(--c-muted);
+  font-family: var(--font);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 9px 8px;
+  transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+.modo-switch button.active {
+  border-color: var(--c-accent);
+  background: var(--c-accent-dim);
+  color: var(--c-text);
+}
+
+/* ─── Tarjeta "Sugiéreme la medida" ─────────────────────────── */
+.sugerir-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.sugerir-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.sugerir-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--c-text);
+  letter-spacing: -0.2px;
+}
+.sugerir-sub {
+  font-size: 0.76rem;
+  color: var(--c-muted);
+  line-height: 1.45;
+  margin-top: 3px;
+}
+.sugerir-beta {
+  flex-shrink: 0;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  color: var(--c-warn);
+  border: 1px solid var(--c-warn);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--c-warn-bg);
+}
+
+.form-hint {
+  font-size: 0.72rem;
+  color: var(--c-muted);
+  line-height: 1.4;
+  margin-top: 5px;
+}
+
+.sugerir-resultado {
+  margin-top: 12px;
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  border: 1.5px solid var(--c-border);
+  background: var(--c-surface2);
+  animation: fadeUp 0.18s ease;
+}
+.sugerir-resultado.ok {
+  border-color: var(--c-blue);
+  background: var(--c-blue-bg);
+}
+.sugerir-resultado.warn {
+  border-color: var(--c-warn);
+  background: var(--c-warn-bg);
+}
+.sugerir-medida {
+  font-family: var(--font-mono);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--c-text);
+}
+.sugerir-fierro {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--c-text);
+  margin-top: 4px;
+}
+.sugerir-resultado p {
+  font-size: 0.78rem;
+  color: var(--c-muted);
+  line-height: 1.45;
+  margin-top: 7px;
+}
+.sugerir-resultado p.sugerir-motivo {
+  color: #6e3f00;
+  font-weight: 700;
+}
+.sugerir-resultado details {
+  margin-top: 9px;
+  font-size: 0.74rem;
+  color: var(--c-muted);
+}
+.sugerir-resultado summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.sugerir-detalle { margin-top: 7px; line-height: 1.45; }
+.sugerir-detalle strong { display: block; margin-top: 6px; color: var(--c-text); }
+.sugerir-detalle ul { margin: 3px 0 0 18px; }
+.sugerir-nota {
+  font-size: 0.72rem;
+  color: var(--c-muted);
+  line-height: 1.4;
+  margin-top: 9px;
+}
+
+
 /* Chip para quitar (ej. puertas/ventanas) */
 .chip-remove {
   font-size: 0.72rem; font-family: var(--font);
@@ -874,6 +1006,92 @@ body {
   text-align: center;
 }
 .viewer-2d-desc strong { color: #e8eaf0; }
+
+/* ─── Burbujas ancladas al plano 2D ───────────────────────────── */
+.viewer-2d-plan { position: relative; }
+
+.hotspot-mark { outline: none; }
+.hotspot-mark:hover circle { fill: rgba(56, 189, 248, 0.3); }
+.hotspot-mark:focus-visible circle {
+  stroke: #fbbf24;
+  stroke-width: 3;
+}
+
+.hotspot-tip {
+  position: absolute;
+  z-index: 5;
+  width: 210px;
+  max-width: calc(100% - 16px);
+  background: #0f172a;
+  border: 1px solid #38bdf8;
+  border-radius: 10px;
+  padding: 10px 11px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  color: #e2e8f0;
+  font-family: var(--font);
+  animation: fadeUp 0.14s ease;
+}
+.hotspot-tip__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hotspot-tip__title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #7dd3fc;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+}
+.hotspot-tip__close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.hotspot-tip__close:hover { color: #e2e8f0; }
+.hotspot-tip__value {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-top: 4px;
+}
+.hotspot-tip__text {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  margin-top: 5px;
+}
+.hotspot-tip__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 9px;
+}
+.hotspot-tip__btn {
+  flex: 1;
+  min-height: 30px;
+  border: 1px solid #f5b70a;
+  background: #f5b70a;
+  color: #22252c;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 5px 8px;
+}
+.hotspot-tip__btn.ghost {
+  background: transparent;
+  color: #7dd3fc;
+  border-color: #38bdf8;
+}
+.hotspot-tip__btn:hover { filter: brightness(1.05); }
 
 /* ─── Pestaña "Referencia" unificada ──────────────────────────── */
 .ref-wrap {

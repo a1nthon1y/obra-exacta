@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useObraStore, CATALOGO, totalizarObra } from '../store/obraStore';
 import { exportarReportePdf } from '../utils/exportarPdf';
 
@@ -20,25 +20,142 @@ function labelPrecioUnidad(unidad: string) {
   return unidad;
 }
 
+function chipStyle(active: boolean): React.CSSProperties {
+  return {
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    lineHeight: 1.35,
+    background: active ? 'var(--c-accent-dim)' : 'var(--c-surface2)',
+    borderColor: active ? 'var(--c-accent)' : 'var(--c-border)',
+    color: active ? 'var(--c-text)' : 'var(--c-muted)',
+  };
+}
+
 export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalculadoras }) => {
   const etapas    = useObraStore(s => s.etapas);
   const precios   = useObraStore(s => s.precios);
+  const proyectos = useObraStore(s => s.proyectos);
+  const proyectoActivoId = useObraStore(s => s.proyectoActivoId);
   const quitarEtapa = useObraStore(s => s.quitarEtapa);
   const setPrecio = useObraStore(s => s.setPrecio);
   const quitarPrecio = useObraStore(s => s.quitarPrecio);
   const limpiarPrecios = useObraStore(s => s.limpiarPrecios);
 
+  const [filtro, setFiltro] = useState<string>(() => {
+    if (!proyectoActivoId) return 'todo';
+    return etapas.some(e => e.proyectoId === proyectoActivoId) ? proyectoActivoId : 'todo';
+  });
+  const [pisoFiltro, setPisoFiltro] = useState<'todos' | number>('todos');
+
+  const proyectoSeleccionado = proyectos.find(p => p.id === filtro) ?? null;
+  const pisosProyecto = proyectoSeleccionado
+    ? Array.from({ length: proyectoSeleccionado.pisos }, (_, i) => i + 1)
+    : [];
+
+  const etapasFiltradas = etapas.filter(e => {
+    if (filtro === 'todo') return true;
+    if (filtro === 'casa') return !e.proyectoId;
+    if (e.proyectoId !== filtro) return false;
+    if (pisoFiltro !== 'todos' && e.piso !== pisoFiltro) return false;
+    return true;
+  });
+
+  const { lineas, totalSoles } = totalizarObra(etapasFiltradas, precios);
+  const grupos = [...new Set(lineas.map(l => l.grupo))];
+  const hayProyectos = proyectos.length > 0 || etapas.some(e => !!e.proyectoId);
+
+  const scopeLabel = filtro === 'todo'
+    ? 'Toda la obra'
+    : filtro === 'casa'
+      ? 'Casa / obra general'
+      : `${proyectoSeleccionado?.nombre ?? 'Proyecto'}${pisoFiltro === 'todos' ? ' · Todos los pisos' : ` · Piso ${pisoFiltro}`}`;
+
   const hayPreciosEditados = Object.keys(precios).length > 0;
 
-  const { lineas, totalSoles } = totalizarObra(etapas, precios);
+  const filtrosUI = (
+    <div style={{ marginBottom: 14 }}>
+      {hayProyectos && (
+        <>
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--c-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+            Ver metrado
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <button
+              type="button"
+              className="etapa-tag"
+              aria-pressed={filtro === 'todo'}
+              style={chipStyle(filtro === 'todo')}
+              onClick={() => { setFiltro('todo'); setPisoFiltro('todos'); }}
+            >
+              Toda la obra
+            </button>
+            <button
+              type="button"
+              className="etapa-tag"
+              aria-pressed={filtro === 'casa'}
+              style={chipStyle(filtro === 'casa')}
+              onClick={() => { setFiltro('casa'); setPisoFiltro('todos'); }}
+            >
+              Casa / general
+            </button>
+            {proyectos.map(p => (
+              <button
+                key={p.id}
+                type="button"
+                className="etapa-tag"
+                aria-pressed={filtro === p.id}
+                style={chipStyle(filtro === p.id)}
+                onClick={() => { setFiltro(p.id); setPisoFiltro('todos'); }}
+              >
+                🏢 {p.nombre}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
-  const grupos = [...new Set(lineas.map(l => l.grupo))];
+      {proyectoSeleccionado && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginTop: hayProyectos ? 8 : 0 }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--c-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Piso
+          </span>
+          <button
+            type="button"
+            className="etapa-tag"
+            aria-pressed={pisoFiltro === 'todos'}
+            style={chipStyle(pisoFiltro === 'todos')}
+            onClick={() => setPisoFiltro('todos')}
+          >
+            Todos
+          </button>
+          {pisosProyecto.map(n => (
+            <button
+              key={n}
+              type="button"
+              className="etapa-tag"
+              aria-pressed={pisoFiltro === n}
+              style={chipStyle(pisoFiltro === n)}
+              onClick={() => setPisoFiltro(n)}
+            >
+              Piso {n}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   function compartirWhatsApp() {
-    const etapasUsadas = [...new Set(etapas.map(e => e.titulo))].join(' · ');
-    let texto = `*OBRA EXACTA — Lista de materiales*\n`;
+    const etapasUsadas = [...new Set(etapasFiltradas.map(e => {
+      const proyectoNombre = e.proyectoNombre
+        ?? (e.proyectoId ? proyectos.find(p => p.id === e.proyectoId)?.nombre : undefined);
+      const base = `${e.titulo}${e.piso ? ` P${e.piso}` : ''}`;
+      return filtro === 'todo' && proyectoNombre ? `${base} (${proyectoNombre})` : base;
+    }))].join(' · ');
+
+    let texto = `*OBRA EXACTA — ${scopeLabel.toUpperCase()}*\n`;
     texto += `📅 Calculado el ${fechaHoy()}\n`;
-    texto += `Etapas: ${etapasUsadas}\n\n`;
+    texto += `Partidas: ${etapasUsadas}\n\n`;
 
     for (const grupo of grupos) {
       texto += `*${grupo.toUpperCase()}*\n`;
@@ -58,9 +175,11 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
   }
 
   function exportarPdf() {
-    const etapasStr = etapas.map(e => `${e.titulo} (${e.detalle})`).join(', ');
+    const etapasStr = etapasFiltradas
+      .map(e => `${e.titulo}${e.piso ? ` · Piso ${e.piso}` : ''} (${e.detalle})`)
+      .join(', ');
     exportarReportePdf({
-      titulo: 'Presupuesto Consolidado de Materiales',
+      titulo: `Presupuesto Consolidado de Materiales — ${scopeLabel}`,
       etapasStr,
       totalEstimado: totalSoles,
       items: lineas.map(l => ({
@@ -72,7 +191,8 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
         subtotal: l.subtotal,
       })),
       pasos: [
-        `Consolidado de ${etapas.length} etapa(s) de obra sumadas antes del redondeo comercial.`,
+        `Alcance: ${scopeLabel}. ${etapasFiltradas.length} partida(s) incluidas.`,
+        `Consolidado de ${etapasFiltradas.length} etapa(s) de obra sumadas antes del redondeo comercial.`,
         `Precios referenciales actualizados al mercado de Lima/Perú.`,
       ],
     });
@@ -92,15 +212,32 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
     );
   }
 
+  if (etapasFiltradas.length === 0) {
+    return (
+      <div className="page">
+        {filtrosUI}
+        <div className="empty-state">
+          <div className="e-icon">📐</div>
+          <p>No hay partidas en <strong>{scopeLabel}</strong>.</p>
+          <button className="btn-primary" style={{ marginTop: 18, maxWidth: 280 }} onClick={onIrCalculadoras}>
+            📐 Ir a las calculadoras
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
+      {filtrosUI}
+
       {/* Banner total */}
       <div className="obra-total-banner">
         <div>
-          <div className="obra-total-label">Total estimado</div>
+          <div className="obra-total-label">Total estimado · {scopeLabel}</div>
           <div className="obra-total-valor">S/ {totalSoles.toFixed(0)}</div>
           <div style={{ fontSize: '0.72rem', color: 'var(--c-muted)', marginTop: 4 }}>
-            Precios de ref. {FECHA_PRECIOS}
+            Precios de ref. {FECHA_PRECIOS} · {etapasFiltradas.length} partida{etapasFiltradas.length === 1 ? '' : 's'}
           </div>
         </div>
         <div style={{ fontSize: '2.5rem' }}>🏗️</div>
@@ -108,12 +245,19 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
 
       {/* Etapas incluidas */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-        {etapas.map((e, i) => (
-          <span key={i} className="etapa-tag">
-            {e.titulo} <span style={{ opacity: 0.7 }}>· {e.detalle}</span>
-            <button onClick={() => quitarEtapa(i)} title="Quitar etapa" aria-label={`Quitar etapa ${e.titulo}`}>✕</button>
-          </span>
-        ))}
+        {etapasFiltradas.map((e) => {
+          const idxReal = etapas.indexOf(e);
+          const proyectoNombre = e.proyectoNombre
+            ?? (e.proyectoId ? proyectos.find(p => p.id === e.proyectoId)?.nombre : undefined);
+          return (
+            <span key={`${e.timestamp}-${idxReal}`} className="etapa-tag">
+              {e.titulo} <span style={{ opacity: 0.7 }}>· {e.detalle}</span>
+              {e.piso ? <span style={{ color: 'var(--c-text)', opacity: 0.8 }}>· Piso {e.piso}</span> : null}
+              {filtro === 'todo' && proyectoNombre ? <span style={{ opacity: 0.7 }}>· {proyectoNombre}</span> : null}
+              <button onClick={() => quitarEtapa(idxReal)} title="Quitar etapa" aria-label={`Quitar etapa ${e.titulo}`}>✕</button>
+            </span>
+          );
+        })}
       </div>
 
       {/* Lista de materiales agrupada */}
