@@ -3,6 +3,8 @@ import { calcular } from '../engine/calc';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
 import { MuroViewer3D } from '../components/MuroViewer3D';
+import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerEspera } from '../components/ViewerEspera';
 import { getEtapa } from '../config/etapas';
 
 const etapa = getEtapa('muros');
@@ -74,26 +76,36 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="calc-title">{etapa.icon} {etapa.tituloCalc}</div>
       </div>
 
+      <ProyectoActivoBar />
+
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
       {/* Visualizador 3D y Técnico */}
-      <MuroViewer3D
-        largo={Number(largo) || 0}
-        alto={Number(alto) || 0}
-        aparejo={aparejo}
-        ladrillo={ladrillo}
-        uso={uso}
-        puertas={numPuertasEfectivo}
-        altoP={Number(altoP) || 2.10}
-        anchoP={Number(anchoP) || 0.90}
-        ventanas={numVentanasEfectivo}
-        altoV={Number(altoV) || 1.20}
-        anchoV={Number(anchoV) || 1.20}
-        lb={Number(lb) || 24}
-        ab={Number(ab) || 13}
-        hb={Number(hb) || 9}
-        campoActivo={campoActivo}
-      />
+      {Number(largo) > 0 && Number(alto) > 0 ? (
+        <MuroViewer3D
+          largo={Number(largo) || 0}
+          alto={Number(alto) || 0}
+          aparejo={aparejo}
+          ladrillo={ladrillo}
+          uso={uso}
+          puertas={numPuertasEfectivo}
+          altoP={Number(altoP) || 2.10}
+          anchoP={Number(anchoP) || 0.90}
+          ventanas={numVentanasEfectivo}
+          altoV={Number(altoV) || 1.20}
+          anchoV={Number(anchoV) || 1.20}
+          lb={Number(lb) || 24}
+          ab={Number(ab) || 13}
+          hb={Number(hb) || 9}
+          campoActivo={campoActivo}
+        />
+      ) : (
+        <ViewerEspera
+          icon={etapa.icon}
+          titulo={etapa.tituloVisor}
+          mensaje="Ingresa largo y alto del muro. El visor y la esbeltez se activan recién con tus medidas."
+        />
+      )}
 
       <div className="form-card">
         <div className="form-section-title">Medidas de la obra</div>

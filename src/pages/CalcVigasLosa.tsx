@@ -4,6 +4,8 @@ import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
 import { VigaViewer3D } from '../components/VigaViewer3D';
 import { LosaViewer3D } from '../components/LosaViewer3D';
+import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerEspera } from '../components/ViewerEspera';
 import { FC_OPCIONES, FC_AYUDA } from '../utils/fcOpciones';
 import { getEtapa } from '../config/etapas';
 
@@ -57,20 +59,30 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="calc-title">{etapaVigas.icon} {etapaVigas.tituloCalc}</div>
       </div>
 
+      <ProyectoActivoBar />
+
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
-      <VigaViewer3D
-        b={Number(b) || 0}
-        h={Number(h) || 0}
-        luz={Number(luz) || 0}
-        nSup={Number(nSup) || 0}
-        dSup={dSup}
-        nInf={Number(nInf) || 0}
-        dInf={dInf}
-        dEst={dEst}
-        rec={Number(rec) || 0}
-        campoActivo={campoActivo}
-      />
+      {Number(b) > 0 && Number(h) > 0 && Number(luz) > 0 ? (
+        <VigaViewer3D
+          b={Number(b) || 0}
+          h={Number(h) || 0}
+          luz={Number(luz) || 0}
+          nSup={Number(nSup) || 0}
+          dSup={dSup}
+          nInf={Number(nInf) || 0}
+          dInf={dInf}
+          dEst={dEst}
+          rec={Number(rec) || 0}
+          campoActivo={campoActivo}
+        />
+      ) : (
+        <ViewerEspera
+          icon={etapaVigas.icon}
+          titulo={etapaVigas.tituloVisor}
+          mensaje="Ingresa la base, el alto y el largo de la viga. El visor mostrará tu viga, no medidas de ejemplo."
+        />
+      )}
 
       <div className="form-card">
         <div className="form-section-title">Medidas de la obra</div>
@@ -202,14 +214,24 @@ export const CalcLosa: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="calc-title">{etapaLosa.icon} {etapaLosa.tituloCalc}</div>
       </div>
 
+      <ProyectoActivoBar />
+
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
-      <LosaViewer3D
-        largo={Number(largo) || 0}
-        ancho={Number(ancho) || 0}
-        espesor={espesor === 'auto' ? 0 : Number(espesor)}
-        campoActivo={campoActivo}
-      />
+      {Number(largo) > 0 && Number(ancho) > 0 ? (
+        <LosaViewer3D
+          largo={Number(largo) || 0}
+          ancho={Number(ancho) || 0}
+          espesor={espesor === 'auto' ? 0 : Number(espesor)}
+          campoActivo={campoActivo}
+        />
+      ) : (
+        <ViewerEspera
+          icon={etapaLosa.icon}
+          titulo={etapaLosa.tituloVisor}
+          mensaje="Ingresa largo y ancho del paño. El visor mostrará tu losa, no medidas de ejemplo."
+        />
+      )}
 
       <div className="form-card">
         <div className="form-section-title">Medidas de la obra</div>
@@ -226,6 +248,9 @@ export const CalcLosa: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               onFocus={() => setCampoActivo('ancho')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setAncho(e.target.value); reset(); }} />
           </div>
+        </div>
+        <div className="form-hint" style={{ marginTop: -6, marginBottom: 10 }}>
+          Las viguetas corren a lo largo. Con espesor “Automático”, la losa se dimensiona con esa luz.
         </div>
 
         <div className="campo">

@@ -3,6 +3,8 @@ import { calcular } from '../engine/calc';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
 import { AcabadosVista } from '../components/AcabadosVista';
+import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerEspera } from '../components/ViewerEspera';
 import { getEtapa } from '../config/etapas';
 
 const etapa = getEtapa('acabados');
@@ -49,18 +51,28 @@ export const CalcAcabados: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="calc-title">{etapa.icon} {etapa.tituloCalc}</div>
       </div>
 
+      <ProyectoActivoBar />
+
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
-      <AcabadosVista
-        aTarr={Number(aTarr) || 0}
-        aPint={Number(aPint) || 0}
-        aPiso={Number(aPiso) || 0}
-        contra={contra}
-        eContra={Number(eContra) || 0}
-        eTarr={Number(eTarr) || 0}
-        manos={Number(manos) || 0}
-        rendP={Number(rendP) || 0}
-      />
+      {Number(aTarr) > 0 || Number(aPint) > 0 || Number(aPiso) > 0 ? (
+        <AcabadosVista
+          aTarr={Number(aTarr) || 0}
+          aPint={Number(aPint) || 0}
+          aPiso={Number(aPiso) || 0}
+          contra={contra}
+          eContra={Number(eContra) || 0}
+          eTarr={Number(eTarr) || 0}
+          manos={Number(manos) || 0}
+          rendP={Number(rendP) || 0}
+        />
+      ) : (
+        <ViewerEspera
+          icon={etapa.icon}
+          titulo={etapa.tituloVisor}
+          mensaje="Ingresa al menos un área: tarrajeo, pintura o piso. La vista se arma con tus m²."
+        />
+      )}
 
       <div className="form-card">
         <div className="form-section-title">Medidas de la obra</div>

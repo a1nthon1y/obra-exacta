@@ -5,7 +5,7 @@ obra y obtienes cuánto material comprar: cemento, arena, piedra, ladrillos, fie
 Sin registro y sin pagos.
 
 > Las cantidades son referenciales y se basan en prácticas habituales peruanas (RNE).
-> Confirma las medidas importantes con el capataz o maestro de obra.
+> Confirma las cantidades con el maestro de obra y las medidas estructurales con un ingeniero colegiado.
 
 ## Etapas cubiertas
 

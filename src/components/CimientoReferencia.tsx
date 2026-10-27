@@ -27,12 +27,12 @@ export const CimientoReferencia: React.FC = () => {
       </div>
 
       <div className="ref-card ref-card--accent">
-        <div className="ref-card__title">📋 Norma técnica peruana (RNE E.070 / E.060)</div>
+        <div className="ref-card__title">📋 Norma y práctica (RNE / CAPECO)</div>
         <div className="ref-card__body">
-          • Profundidad mínima de cimiento: <strong>0.80 m</strong> en suelos normales (E.060 Art. 15.2.2)<br />
-          • Ancho mínimo: <strong>espesor del muro + 0.10 m</strong> a cada lado (E.060 Art. 15.2.3)<br />
-          • Sobrecimiento mínimo: <strong>0.30 m</strong> sobre NTN para evitar humedad (E.070)<br />
-          • Concreto ciclópeo: <strong>1:10</strong> con piedra ≤ 2/3 del espesor del cimiento<br />
+          • Desplante usual en vivienda: <strong>0.80 m o más</strong>; la profundidad la define el estudio de suelos (RNE E.050)<br />
+          • Ancho del cimiento corrido: <strong>0.50 m o más</strong> para muros portantes de 1–2 pisos (regla de obra; el ancho final lo define el diseño de cimentación)<br />
+          • Sobrecimiento: <strong>0.30 m o más</strong> sobre el nivel del terreno para cortar la humedad (práctica CAPECO)<br />
+          • Concreto ciclópeo: <strong>1:10</strong> con piedra grande 8"–10", bien acomodada y separada de las caras<br />
           • Compactación del fondo de zanja obligatoria antes del vaciado<br />
           • Curado mínimo 7 días antes de cargar
         </div>

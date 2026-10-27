@@ -5,6 +5,8 @@ import type { SugerenciaColumna } from '../engine/sugerir';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
 import { AvisoEdificio } from '../components/AvisoEdificio';
+import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerEspera } from '../components/ViewerEspera';
 import { ColumnaViewer3D } from '../components/ColumnaViewer3D';
 import { FC_OPCIONES, FC_AYUDA } from '../utils/fcOpciones';
 import { getEtapa } from '../config/etapas';
@@ -74,8 +76,8 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   function cargarEjemplo() {
     setModo('medida');
-    setB('25'); setH('25'); setAlto('2.5'); setCant('6');
-    setNVar('4'); setDVar('5/8'); setDEst('1/4'); setSis('confinada');
+    setB('13'); setH('25'); setAlto('2.5'); setCant('6');
+    setNVar('4'); setDVar('3/8'); setDEst('1/4'); setSis('confinada');
     setRec('4'); setFc(210);
     setEsEjemplo(true); setResultado(null); setError('');
     setSugerencia(null); setSugerirError('');
@@ -140,7 +142,9 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="calc-title">{etapa.icon} {etapa.tituloCalc}</div>
       </div>
 
-      <AvisoEdificio>
+      <ProyectoActivoBar />
+
+      <AvisoEdificio conProyecto={false}>
         <strong>No usamos “Sugiéreme” en edificios de 3–5 pisos.</strong>{' '}
         Ingresa la sección y el acero de los planos aprobados por tu ingeniero.
       </AvisoEdificio>
@@ -285,27 +289,14 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
       )}
 
-      {esEdificio && !tieneMedidas ? (
-        <div
-          className="form-card"
-          style={{
-            textAlign: 'center',
-            minHeight: 320,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <div style={{ fontSize: '2rem' }}>📐</div>
-          <div className="form-section-title" style={{ marginTop: 8, textAlign: 'center' }}>
-            Visor en espera
-          </div>
-          <div className="form-hint" style={{ maxWidth: 280, textAlign: 'center' }}>
-            Ingresa las medidas del plano abajo. El visor mostrará la columna con tus datos,
-            no una medida sugerida.
-          </div>
-        </div>
+      {!tieneMedidas ? (
+        <ViewerEspera
+          icon={etapa.icon}
+          titulo={etapa.tituloVisor}
+          mensaje={esEdificio
+            ? 'Ingresa la sección y el acero de los planos abajo. El visor mostrará tu columna, no una medida sugerida.'
+            : 'Ingresa las medidas de la columna o usa “No sé la medida”. El visor se activa con tus datos, no con valores de ejemplo.'}
+        />
       ) : (
         <ColumnaViewer3D
           b={Number(b) || 0}
@@ -333,7 +324,7 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div className="form-grid-2">
               <div className="campo">
                 <label>Ancho de la sección <span className="unidad">(cm)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Ej: 25" value={b}
+                <input type="number" inputMode="decimal" placeholder={sis === 'confinada' ? 'Ej: 13' : 'Ej: 25'} value={b}
                   onFocus={() => setCampoActivo('b')} onBlur={() => setCampoActivo(null)}
                   onChange={e => { setB(e.target.value); reset(); }} />
               </div>
@@ -345,7 +336,9 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               </div>
             </div>
             <div className="form-hint" style={{ marginTop: -6, marginBottom: 10 }}>
-              Se escribe ancho × largo. Por ejemplo: 25 × 25 cm.
+              {sis === 'confinada'
+                ? 'Se escribe ancho × largo. En albañilería confinada: 13 × 25 cm (13 cm es el espesor del muro de soga).'
+                : 'Se escribe ancho × largo. En pórticos: 25 × 25 cm como mínimo.'}
             </div>
             <div className="campo">
               <label>¿Qué tan alta es la columna? <span className="unidad">(m)</span></label>

@@ -5,6 +5,8 @@ import type { SugerenciaZapata } from '../engine/sugerir';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
 import { AvisoEdificio } from '../components/AvisoEdificio';
+import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerEspera } from '../components/ViewerEspera';
 import { ZapataViewer3D } from '../components/ZapataViewer3D';
 import { FC_OPCIONES, FC_AYUDA } from '../utils/fcOpciones';
 import { getEtapa } from '../config/etapas';
@@ -202,7 +204,9 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="calc-title">{etapa.icon} {etapa.tituloCalc}</div>
       </div>
 
-      <AvisoEdificio>
+      <ProyectoActivoBar />
+
+      <AvisoEdificio conProyecto={false}>
         <strong>No usamos “Sugiéreme” en edificios de 3–5 pisos.</strong>{' '}
         Ingresa la medida, la carga y el suelo de los planos aprobados por tu ingeniero.
       </AvisoEdificio>
@@ -410,27 +414,14 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
       )}
 
-      {esEdificio && !tieneMedidas ? (
-        <div
-          className="form-card"
-          style={{
-            textAlign: 'center',
-            minHeight: 320,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <div style={{ fontSize: '2rem' }}>📐</div>
-          <div className="form-section-title" style={{ marginTop: 8, textAlign: 'center' }}>
-            Visor en espera
-          </div>
-          <div className="form-hint" style={{ maxWidth: 280, textAlign: 'center' }}>
-            Ingresa la medida y la carga del plano abajo. El visor mostrará tu zapata,
-            no una medida sugerida.
-          </div>
-        </div>
+      {!tieneMedidas ? (
+        <ViewerEspera
+          icon={etapa.icon}
+          titulo={etapa.tituloVisor}
+          mensaje={esEdificio
+            ? 'Ingresa la medida y la carga del plano abajo. El visor mostrará tu zapata, no una medida sugerida.'
+            : 'Ingresa las medidas de la zapata o usa “No sé la medida”. El visor se activa con tus datos, no con valores de ejemplo.'}
+        />
       ) : (
         <ZapataViewer3D
           bCol={nBCol}

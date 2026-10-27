@@ -3,6 +3,8 @@ import { calcular } from '../engine/calc';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
 import { EscaleraViewer3D } from '../components/EscaleraViewer3D';
+import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerEspera } from '../components/ViewerEspera';
 import { FC_OPCIONES, FC_AYUDA } from '../utils/fcOpciones';
 import { getEtapa } from '../config/etapas';
 
@@ -11,7 +13,6 @@ const etapa = getEtapa('escalera');
 const HUELLAS = ['auto', 26, 27, 28] as const;
 
 export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  console.log('[CalcEscalera] montado');
   const [altura, setAltura] = useState('');
   const [ancho, setAncho]   = useState('');
   const [huella, setHuella] = useState<'auto' | 26 | 27 | 28>('auto');
@@ -48,14 +49,24 @@ export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="calc-title">{etapa.icon} {etapa.tituloCalc}</div>
       </div>
 
+      <ProyectoActivoBar />
+
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
-      <EscaleraViewer3D
-        altura={Number(altura) || 0}
-        ancho={Number(ancho) || 0}
-        huellaCm={huellaCm}
-        campoActivo={campoActivo}
-      />
+      {Number(altura) > 0 && Number(ancho) > 0 ? (
+        <EscaleraViewer3D
+          altura={Number(altura) || 0}
+          ancho={Number(ancho) || 0}
+          huellaCm={huellaCm}
+          campoActivo={campoActivo}
+        />
+      ) : (
+        <ViewerEspera
+          icon={etapa.icon}
+          titulo={etapa.tituloVisor}
+          mensaje="Ingresa la altura entre pisos y el ancho de la escalera. El visor mostrará tus escalones, no medidas de ejemplo."
+        />
+      )}
 
       <div className="form-card">
         <div className="form-section-title">Medidas de la obra</div>

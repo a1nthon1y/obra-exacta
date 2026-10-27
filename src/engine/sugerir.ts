@@ -2,7 +2,8 @@
  * Predimensionado orientativo de columnas para vivienda.
  *
  * IMPORTANTE: esto NO es un diseño estructural. Son reglas prácticas de obra
- * para una casa de 1–2 pisos de albañilería confinada, con luces chicas.
+ * para una casa de 1–2 pisos de albañilería confinada con muro de soga
+ * (13 cm), con luces chicas.
  * Fuera de ese caso, la función devuelve `requiereIngeniero: true` y la app
  * no debe presentar la medida como segura.
  *
@@ -29,6 +30,7 @@ export interface SugerenciaColumna {
 const NO_APLICA = [
   '3 pisos o más',
   'Columnas libres o pórticos',
+  'Muros que no sean de soga (13 cm)',
   'Luces mayores a 5 m',
   'Suelo blando, relleno o ladera',
   'Ampliaciones o plantas irregulares',
@@ -42,11 +44,13 @@ export function sugerirColumna(p: {
   const supuestos = [
     `Vivienda familiar de ${p.pisos} piso${p.pisos > 1 ? 's' : ''}`,
     p.sis === 'confinada'
-      ? 'Albañilería confinada (columnas entre muros)'
+      ? 'Albañilería confinada con muro de soga (13 cm)'
       : 'Pórticos (columnas libres)',
     `Luz entre columnas: ${p.luz.toFixed(1)} m`,
     'Suelo con capacidad media',
-    'Fierro calculado para el mínimo de 1% de la sección',
+    p.sis === 'confinada'
+      ? 'Refuerzo mínimo de confinamiento: 4 varillas de 3/8" (RNE E.070)'
+      : 'Cuantía entre 1% y 4% de la sección (RNE E.060)',
   ];
 
   // Pórticos: la columna trabaja con la viga y la losa. No hay regla práctica segura.
@@ -106,32 +110,35 @@ export function sugerirColumna(p: {
   }
 
   // Caso usual: 1 piso, o 2 pisos con luz chica.
+  // En albañilería confinada la columna debe tener el espesor del muro (13 cm
+  // en aparejo de soga). El peralte usual es 25 cm.
   if (p.pisos === 1 || p.luz <= 4) {
+    const dVar = p.pisos === 1 ? '3/8' : '1/2';
     return {
-      b: 25,
+      b: 13,
       h: 25,
       nVar: 4,
-      dVar: '5/8',
+      dVar,
       dEst: '1/4',
-      rango: [25, 30],
+      rango: [13, 25],
       titulo: 'Medida usual para tu caso',
-      explicacion: `Para ${p.pisos === 1 ? 'una casa de 1 piso' : 'una casa de 2 pisos'} con columnas entre muros y luz de ${p.luz.toFixed(1)} m, lo usual es 25 × 25 cm con 4 varillas de 5/8".`,
+      explicacion: `Para ${p.pisos === 1 ? 'una casa de 1 piso' : 'una casa de 2 pisos'} con muro de soga (13 cm) y luz de ${p.luz.toFixed(1)} m, la columna de confinamiento va del ancho del muro: 13 × 25 cm con 4 varillas de ${dVar}".`,
       supuestos,
       noAplica: NO_APLICA,
       requiereIngeniero: false,
     };
   }
 
-  // 2 pisos con luz entre 4 y 5 m: se sube la sección y el fierro.
+  // 2 pisos con luz entre 4 y 5 m: se sube el peralte y el fierro.
   return {
-    b: 30,
+    b: 13,
     h: 30,
-    nVar: 6,
-    dVar: '5/8',
+    nVar: 4,
+    dVar: '1/2',
     dEst: '1/4',
-    rango: [30, 30],
+    rango: [13, 30],
     titulo: 'Medida usual para tu caso',
-    explicacion: `Para 2 pisos con luz de ${p.luz.toFixed(1)} m, lo usual es 30 × 30 cm con 6 varillas de 5/8".`,
+    explicacion: `Para 2 pisos con muro de soga y luz de ${p.luz.toFixed(1)} m, lo usual es 13 × 30 cm con 4 varillas de 1/2".`,
     supuestos,
     noAplica: NO_APLICA,
     requiereIngeniero: false,

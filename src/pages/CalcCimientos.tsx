@@ -3,6 +3,8 @@ import { calcular } from '../engine/calc';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
 import { CimientoViewer3D } from '../components/CimientoViewer3D';
+import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerEspera } from '../components/ViewerEspera';
 import { getEtapa } from '../config/etapas';
 
 const etapa = getEtapa('cimientos');
@@ -49,16 +51,26 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="calc-title">{etapa.icon} {etapa.tituloCalc}</div>
       </div>
 
+      <ProyectoActivoBar />
+
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
-      <CimientoViewer3D
-        largo={Number(largo) || 0}
-        ancho={Number(ancho) || 0}
-        prof={Number(prof) || 0}
-        esp={Number(esp) || 0}
-        alto={Number(alto) || 0}
-        campoActivo={campoActivo}
-      />
+      {Number(largo) > 0 && Number(ancho) > 0 && Number(prof) > 0 && Number(alto) > 0 ? (
+        <CimientoViewer3D
+          largo={Number(largo) || 0}
+          ancho={Number(ancho) || 0}
+          prof={Number(prof) || 0}
+          esp={Number(esp) || 0}
+          alto={Number(alto) || 0}
+          campoActivo={campoActivo}
+        />
+      ) : (
+        <ViewerEspera
+          icon={etapa.icon}
+          titulo={etapa.tituloVisor}
+          mensaje="Ingresa largo, ancho, profundidad y alto del sobrecimiento. El visor mostrará tu cimiento, no medidas de ejemplo."
+        />
+      )}
 
       <div className="form-card">
         <div className="form-section-title">Medidas de la obra</div>

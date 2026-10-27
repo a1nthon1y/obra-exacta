@@ -168,7 +168,7 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
 
     texto += `*TOTAL ESTIMADO: S/ ${totalSoles.toFixed(0)}*\n`;
     texto += `\nPrecios de referencia ${FECHA_PRECIOS}.\n`;
-    texto += `Cantidades referenciales. Confirmar con el capataz.`;
+    texto += `Cantidades referenciales. Las medidas estructurales debe validarlas un ingeniero colegiado.`;
 
     const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
     window.open(url, '_blank');
@@ -341,7 +341,7 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
       </div>
 
       <p className="aviso-legal" style={{ marginTop: 16 }}>
-        Cantidades referenciales. Confirmar con el maestro o capataz antes de comprar.
+        Cantidades referenciales: confírmalas con el maestro de obra. Las medidas estructurales, con un ingeniero colegiado.
       </p>
     </div>
   );

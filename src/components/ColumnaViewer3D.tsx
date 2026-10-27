@@ -240,7 +240,7 @@ export const ColumnaViewer3D: React.FC<Props> = ({
       y: secY + secH + 28,
       title: 'Base (ancho)',
       value: `${realB} cm`,
-      text: 'Es el ancho de la columna. En una casa de 1–2 pisos, lo usual es 25 cm.',
+      text: 'Es el ancho de la columna. En albañilería confinada coincide con el espesor del muro (13 cm en soga); en pórticos, lo usual es 25 cm.',
     },
     {
       id: 'h',
@@ -248,7 +248,7 @@ export const ColumnaViewer3D: React.FC<Props> = ({
       y: 165,
       title: 'Largo (otro lado)',
       value: `${realH} cm`,
-      text: 'Es el otro lado de la sección. Casi siempre es igual al ancho: 25 × 25 cm.',
+      text: 'Es el otro lado de la sección. En confinada suele ser 25 cm (13 × 25); en pórticos, 25 × 25 cm o más.',
     },
     {
       id: 'alto',
@@ -264,7 +264,7 @@ export const ColumnaViewer3D: React.FC<Props> = ({
       y: 165,
       title: 'Fierro vertical',
       value: `${realNVar} Ø ${dVar}"`,
-      text: 'Son las varillas que van de abajo hacia arriba. Para 25 × 25, lo usual es 4 de 5/8".',
+      text: 'Son las varillas que van de abajo hacia arriba. Mínimo 4: en confinada, 4 de 3/8"; en pórticos, 4 de 5/8" o más.',
     },
     {
       id: 'dEst',
@@ -474,7 +474,8 @@ export const ColumnaViewer3D: React.FC<Props> = ({
             <div style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.55 }}>
               Las columnas llevan varillas verticales unidas entre sí con estribos.
               El recubrimiento (capa de concreto entre el fierro y el borde) protege
-              el acero de la humedad. Lo usual en casa: recubrimiento de 4 cm.
+              el acero de la humedad. Lo usual en casa: 4 cm en interiores; 5 cm si
+              la columna queda expuesta a la intemperie.
             </div>
           </div>
           <div style={{ border: '1px solid #0284c7', borderRadius: 8, padding: '10px 12px', background: 'rgba(56, 189, 248, 0.08)' }}>
@@ -482,9 +483,10 @@ export const ColumnaViewer3D: React.FC<Props> = ({
               📋 Norma técnica (NTE E.060)
             </div>
             <div style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.55 }}>
-              El espaciamiento de los estribos no debe superar la dimensión menor
-              de la sección ni 15 cm en los extremos (zonas de confinamiento).
-              Confirma siempre el armado del plano estructural antes de tenderlo.
+              El espaciamiento de los estribos no debe exceder la mitad de la menor
+              dimensión de la sección ni 30 cm (RNE E.060). Hacia los extremos del
+              elemento, el plano estructural indica estribos más juntos.
+              Confirma siempre el armado del plano antes de tenderlo.
             </div>
           </div>
           <ConsejosZona />

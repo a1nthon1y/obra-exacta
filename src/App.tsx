@@ -31,7 +31,6 @@ export default function App() {
   }, [tab, calc, enEdificio]);
 
   function abrirCalc(id: Calc) {
-    console.log('[APP] abrirCalc ->', id);
     setEnEdificio(false);
     setCalc(id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -46,7 +45,6 @@ export default function App() {
   // Render de calculadora activa
   const renderCalc = () => {
     if (!calc) return null;
-    console.log('[APP] renderCalc para ->', calc);
     const back = () => { setCalc(null); };
     try {
       switch (calc) {
@@ -56,7 +54,7 @@ export default function App() {
         case 'columnas':  return <CalcColumnas  onBack={back} />;
         case 'vigas':     return <CalcVigas     onBack={back} />;
         case 'losa':      return <CalcLosa      onBack={back} />;
-        case 'escalera':  console.log('[APP] -> Calculadora ESCALERA'); return <CalcEscalera  onBack={back} />;
+        case 'escalera':  return <CalcEscalera  onBack={back} />;
         case 'acabados':  return <CalcAcabados  onBack={back} />;
         default:          console.error('[APP] DESCONOCIDA', calc); return <div style={{ padding: 20 }}>Calculadora: {String(calc)}</div>;
       }
@@ -157,7 +155,7 @@ export default function App() {
             {/* Aviso referencial */}
             <p className="aviso-legal" style={{ marginTop: 20 }}>
               Obra Exacta muestra cantidades referenciales basadas en prácticas habituales peruanas (RNE).<br />
-              Confirmar medidas importantes con el capataz o maestro de obra.
+              Confirmar las cantidades con el maestro de obra y las medidas estructurales con un ingeniero colegiado.
             </p>
           </div>
         ) : (

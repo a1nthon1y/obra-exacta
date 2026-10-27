@@ -22,6 +22,9 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
   const pisoActivo = useObraStore(s => s.pisoActivo);
   const setPisoActivo = useObraStore(s => s.setPisoActivo);
   const proyectoActivo = proyectos.find(p => p.id === proyectoActivoId) ?? null;
+  // Un ejemplo sirve para entender la pantalla, pero no es una medida de plano.
+  // En un edificio 3–5 no debe terminar guardado en un piso real.
+  const ejemploEnEdificio = Boolean(proyectoActivo && esEjemplo);
 
   const hayBad = resultado.avisos.some(a => a.n === 'bad');
 
@@ -34,11 +37,13 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
   const okCount = resultado.avisos.filter(a => a.n === 'ok').length;
 
   function handleAgregar() {
+    if (ejemploEnEdificio) return;
     if (hayBad) { setConfirmar(true); return; }
     doAgregar();
   }
 
   function doAgregar() {
+    if (ejemploEnEdificio) return;
     const etapa: EtapaGuardada = {
       id: idCalc,
       titulo: resultado.titulo,
@@ -242,8 +247,18 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
 
       {/* Botones de acción */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-        <button className="btn-miobra" style={{ flex: 1.3 }} onClick={handleAgregar}>
-          {guardado ? '✓ Guardado' : '+ Agregar a Mi obra'}
+        <button
+          className="btn-miobra"
+          style={{
+            flex: 1.3,
+            opacity: ejemploEnEdificio ? 0.55 : 1,
+            cursor: ejemploEnEdificio ? 'not-allowed' : 'pointer',
+          }}
+          onClick={handleAgregar}
+          disabled={ejemploEnEdificio}
+          title={ejemploEnEdificio ? 'Los ejemplos no se guardan en un proyecto de edificio' : undefined}
+        >
+          {ejemploEnEdificio ? 'Ejemplo: no se guarda' : guardado ? '✓ Guardado' : '+ Agregar a Mi obra'}
         </button>
         <button
           type="button"
@@ -255,10 +270,16 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
         </button>
       </div>
 
+      {ejemploEnEdificio && (
+        <div className="form-hint" style={{ marginTop: -4, marginBottom: 10 }}>
+          Para guardar en {proyectoActivo?.nombre} · Piso {pisoActivo}, ingresa las medidas del plano.
+        </div>
+      )}
+
       {/* Aviso legal */}
       <p className="aviso-legal">
         Obra Exacta calcula cantidades referenciales y muestra reglas mínimas habituales de obra.<br />
-        No es un diseño estructural. Confirmar con el maestro o un ingeniero antes de comprar.
+        No es un diseño estructural. Las cantidades, con el maestro de obra; la estructura, con un ingeniero colegiado.
       </p>
 
       {/* Confirmación si hay bad */}

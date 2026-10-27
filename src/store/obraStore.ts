@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import CATALOGO_JSON from '../engine/catalogo.json';
-import type { Catalogo, ResultadoCalculo } from '../engine/types';
+import type { ResultadoCalculo } from '../engine/types';
+import type { PreciosUsuario } from './totalizar';
 
 export type { CatItem, Catalogo } from '../engine/types';
-
-export const CATALOGO: Catalogo = CATALOGO_JSON as Catalogo;
+export { CATALOGO } from './catalogo';
+export type { EtapaParaTotalizar, PreciosUsuario } from './totalizar';
 
 export interface EtapaGuardada {
   id: string;         // 'cimientos' | 'muros' | ...
@@ -23,10 +23,6 @@ export interface ProyectoEdificio {
   nombre: string;
   pisos: number;   // 3..5 (límite de producto)
   creado: number;
-}
-
-export interface PreciosUsuario {
-  [matId: string]: number;
 }
 
 interface ObraState {
@@ -127,75 +123,6 @@ export const useObraStore = create<ObraState>()(
   )
 );
 
-// ─── Totalizar Mi obra (suma antes de redondear) ───────────────────────────────
-export function totalizarObra(etapas: EtapaGuardada[], precios: PreciosUsuario) {
-  const etiquetaParte = (p: { etapa: string; piso?: number; proyecto?: string }) =>
-    [p.etapa, p.piso ? `Piso ${p.piso}` : '', p.proyecto ?? ''].filter(Boolean).join(' · ');
-
-  const acum: Record<string, {
-    cant: number;
-    comprar: number;
-    partes: Array<{ etapa: string; cant: number; piso?: number; proyecto?: string }>;
-  }> = {};
-
-  for (const etapa of etapas) {
-    for (const mat of etapa.resultado.mats) {
-      if (!acum[mat.id]) acum[mat.id] = { cant: 0, comprar: 0, partes: [] };
-      acum[mat.id].cant += mat.cant;
-      acum[mat.id].partes.push({
-        etapa: etapa.titulo,
-        cant: mat.cant,
-        piso: etapa.piso,
-        proyecto: etapa.proyectoNombre,
-      });
-    }
-  }
-
-  // Redondear después de sumar (regla de oro de obra: sumar antes de redondear)
-  for (const id in acum) {
-    const cat = CATALOGO[id];
-    if (!cat) continue;
-    // Si la unidad es m³ redondeamos a 1 decimal para fletes/camión, si es bolsa/varilla/und al entero superior
-    if (cat.unidad.includes('m³') || cat.unidad.includes('m²')) {
-      acum[id].comprar = Math.ceil(acum[id].cant * 10) / 10;
-    } else {
-      acum[id].comprar = Math.ceil(acum[id].cant);
-    }
-  }
-
-  let totalSoles = 0;
-  const lineas = Object.entries(acum)
-    .filter(([, v]) => v.cant > 0)
-    .map(([id, v]) => {
-      const cat = CATALOGO[id];
-      const precio = precios[id] ?? cat?.precio ?? 0;
-      const subtotal = v.comprar * precio;
-      totalSoles += subtotal;
-
-      // Desglose de origen consolidado
-      let desglose = '';
-      if (v.partes.length > 1) {
-        const sumandos = v.partes.map(p => {
-          const valStr = p.cant < 10 ? p.cant.toFixed(1) : Math.round(p.cant).toString();
-          return `${etiquetaParte(p)} (${valStr})`;
-        }).join(' + ');
-        desglose = `${sumandos} = ${v.cant < 10 ? v.cant.toFixed(2) : v.cant.toFixed(1)} ${cat?.unidad ?? ''}`;
-      } else if (v.partes.length === 1) {
-        desglose = `${etiquetaParte(v.partes[0])}: ${v.cant < 10 ? v.cant.toFixed(2) : v.cant.toFixed(1)} ${cat?.unidad ?? ''}`;
-      }
-
-      return {
-        id,
-        nombre: cat?.nombre ?? id,
-        unidad: cat?.unidad ?? '',
-        cantidad: v.comprar,
-        cantCalculada: v.cant,
-        desglose,
-        precio,
-        subtotal,
-        grupo: cat?.grupo ?? 'Otros',
-      };
-    });
-
-  return { lineas, totalSoles };
-}
+// ─── Consolidado de Mi obra ───────────────────────────────────────────────────
+// La lógica vive en ./totalizar para poder probarla sin montar zustand.
+export { totalizarObra } from './totalizar';
