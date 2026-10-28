@@ -47,11 +47,12 @@ export type Catalogo = Record<string, CatItem>;
 
 // ─── Parámetros de entrada por calculadora ────────────────────────────────────
 export interface ParamsCimientos {
-  largo: number;     // m — largo total del cimiento
-  ancho: number;     // m — ancho del cimiento
-  prof: number;      // m — profundidad de excavación
-  esp: number;       // m — espesor del sobrecimiento
-  alto: number;      // m — alto del sobrecimiento
+  largo: number;        // m — largo total del cimiento
+  ancho: number;        // m — ancho del cimiento
+  prof: number;         // m — profundidad de excavación (zanja)
+  esp: number;          // m — espesor del sobrecimiento
+  alto: number;         // m — alto visible del sobrecimiento sobre el terreno
+  altoCimiento?: number; // m — altura del cimiento ciclópeo (usual 0.50)
 }
 
 export interface ParamsMuros {
@@ -85,7 +86,7 @@ export interface ParamsColumnas {
 
 export interface ParamsVigas {
   b: number;         // cm base
-  h: number;         // cm peralte
+  h: number;         // cm peralte total
   luz: number;       // m longitud
   cant: number;
   nSup: number;      // varillas superiores
@@ -95,6 +96,8 @@ export interface ParamsVigas {
   dEst: string;
   rec: number;       // cm
   fc: 140 | 175 | 210 | 245 | 280;
+  sis?: 'confinada' | 'porticos'; // sistema estructural (default: confinada)
+  espesorLosa?: number;           // cm de losa apoyada sobre la viga (default: 0)
 }
 
 export interface ParamsLosa {

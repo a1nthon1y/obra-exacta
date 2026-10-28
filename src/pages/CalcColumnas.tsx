@@ -193,7 +193,7 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   type="button"
                   className={`aparejo-btn ${sis === v ? 'active' : ''}`}
                   style={{ flex: 1 }}
-                  onClick={() => { setSis(v); limpiarSugerencia(); }}
+                  onClick={() => { setSis(v); setRec(v === 'confinada' ? '2' : '4'); limpiarSugerencia(); }}
                 >
                   <span className="ap-label" style={{ fontSize: '0.76rem' }}>{label}</span>
                 </button>
@@ -365,7 +365,7 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <label>¿La columna está entre muros o es libre?</label>
               <div className="btn-row">
                 {([['confinada','Entre muros (confinada)'],['porticos','Libre (pórtico)']] as const).map(([v, label]) => (
-                  <button key={v} className={`aparejo-btn ${sis === v ? 'active' : ''}`} style={{ flex: 1 }} onClick={() => { setSis(v); reset(); }}>
+                  <button key={v} className={`aparejo-btn ${sis === v ? 'active' : ''}`} style={{ flex: 1 }} onClick={() => { setSis(v); setRec(v === 'confinada' ? '2' : '4'); reset(); }}>
                     <span className="ap-label" style={{ fontSize: '0.76rem' }}>{label}</span>
                   </button>
                 ))}

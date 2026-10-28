@@ -11,10 +11,14 @@ describe('predimensionado de columnas', () => {
     expect(s.explicacion).toMatch(/13 × 25/);
   });
 
-  it('2 pisos con luz de 4.5 m pide 13 × 30', () => {
+  it('2 pisos con luz de 4.5 m pide 13 × 30 con 6 Ø 3/8" (constructible en 13 cm)', () => {
     const s = sugerirColumna({ pisos: 2, sis: 'confinada', luz: 4.5 });
     expect(s.b).toBe(13);
     expect(s.h).toBe(30);
+    expect(s.nVar).toBe(6);
+    expect(s.dVar).toBe('3/8');
+    expect(s.requiereIngeniero).toBe(false);
+    expect(s.explicacion).toMatch(/6 varillas de 3\/8"/);
   });
 
   it('en pórticos no sugiere medida: exige ingeniero', () => {

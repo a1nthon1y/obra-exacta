@@ -6,6 +6,7 @@ interface Props {
   realProf: number;
   realEsp: number;
   realAlto: number;
+  realAltoCimiento: number;
 }
 
 export const CimientoCorte2D: React.FC<Props> = ({
@@ -14,7 +15,15 @@ export const CimientoCorte2D: React.FC<Props> = ({
   realProf,
   realEsp,
   realAlto,
+  realAltoCimiento,
 }) => {
+  // Escala vertical: 140 px representan realProf m (zanja desde NTN y=200 hasta y=340)
+  const escY = 140 / realProf;
+  const cimientoPx = realAltoCimiento * escY;
+  const cimientoY = 340 - cimientoPx;          // cabeza del cimiento
+  const sobreTotalPx = (realProf - realAltoCimiento) * escY + 80; // enterrado + visible
+  const sobreY = 200 + 80 - sobreTotalPx;     // tope del sobrecimiento
+
   return (
     <div className="viewer-2d">
       <svg
@@ -48,28 +57,25 @@ export const CimientoCorte2D: React.FC<Props> = ({
         <line x1="30" y1="200" x2="510" y2="200" stroke="#64748b" strokeWidth="1.5" strokeDasharray="6 4" />
         <text x="30" y="194" fill="#94a3b8" fontSize="10" fontFamily="sans-serif">▼ N.T.N. (Terreno natural ±0.00)</text>
 
-        {/* Suelo a los lados */}
-        <rect x="30" y="200" width="130" height="140" fill="#2d1c10" fillOpacity="0.5" />
-        <rect x="380" y="200" width="130" height="140" fill="#2d1c10" fillOpacity="0.5" />
-
-        {/* Cimiento Corrido */}
-        <rect x="160" y="200" width="220" height="140" fill="#334155" stroke="#38bdf8" strokeWidth="2" />
-        <rect x="160" y="200" width="220" height="140" fill="url(#hatch-piedra)" />
-        <text x="270" y="260" fill="#e2e8f0" fontSize="12" fontWeight="bold" textAnchor="middle">
+        {/* Cimiento Corrido (fondo de zanja) */}
+        <rect x="30" y="200" width="480" height="140" fill="#2d1c10" fillOpacity="0.25" />
+        <rect x="160" y={cimientoY} width="220" height={cimientoPx} fill="#334155" stroke="#38bdf8" strokeWidth="2" />
+        <rect x="160" y={cimientoY} width="220" height={cimientoPx} fill="url(#hatch-piedra)" />
+        <text x="270" y={cimientoY + 26} fill="#e2e8f0" fontSize="12" fontWeight="bold" textAnchor="middle">
           Cimiento Corrido 1:10
         </text>
-        <text x="270" y="282" fill="#94a3b8" fontSize="10" textAnchor="middle">
-          (+30% Piedra Grande)
+        <text x="270" y={cimientoY + 48} fill="#94a3b8" fontSize="10" textAnchor="middle">
+          (+30% Piedra Grande) · {realAltoCimiento.toFixed(2)} m
         </text>
 
-        {/* Sobrecimiento */}
-        <rect x="195" y="120" width="70" height="80" fill="#475569" stroke="#fbbf24" strokeWidth="2" />
-        <rect x="195" y="120" width="70" height="80" fill="url(#hatch-sobrecimiento)" />
-        <text x="230" y="152" fill="#fbbf24" fontSize="11" fontWeight="bold" textAnchor="middle">
+        {/* Sobrecimiento (desde cabeza del cimiento hasta altura visible) */}
+        <rect x="195" y={sobreY} width="70" height={sobreTotalPx} fill="#475569" stroke="#fbbf24" strokeWidth="2" />
+        <rect x="195" y={sobreY} width="70" height={sobreTotalPx} fill="url(#hatch-sobrecimiento)" />
+        <text x="230" y={sobreY + sobreTotalPx / 2 + 6} fill="#fbbf24" fontSize="11" fontWeight="bold" textAnchor="middle">
           Sobrecimiento
         </text>
-        <text x="230" y="167" fill="#cbd5e1" fontSize="9" textAnchor="middle">
-          1:8 + 25% PM
+        <text x="230" y={sobreY + sobreTotalPx / 2 + 22} fill="#cbd5e1" fontSize="9" textAnchor="middle">
+          1:8 + 25% PM · {(realProf - realAltoCimiento + realAlto).toFixed(2)} m total
         </text>
 
         {/* Muro guía */}
@@ -95,6 +101,15 @@ export const CimientoCorte2D: React.FC<Props> = ({
         <rect x="420" y="258" width="80" height="20" rx="4" fill="#0b1329" stroke="#38bdf8" strokeWidth="1" />
         <text x="460" y="272" fill="#38bdf8" fontSize="11" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
           {realProf.toFixed(2)} m
+        </text>
+
+        {/* 2b. Cota Altura del Cimiento */}
+        <line x1="395" y1={cimientoY} x2="395" y2="340" stroke="#38bdf8" strokeWidth="2" markerStart="url(#arrow-cyan)" markerEnd="url(#arrow-cyan)" strokeDasharray="4 3" />
+        <line x1="385" y1={cimientoY} x2="405" y2={cimientoY} stroke="#38bdf8" strokeWidth="1" />
+        <line x1="385" y1="340" x2="405" y2="340" stroke="#38bdf8" strokeWidth="1" />
+        <rect x="360" y={cimientoY + 20} width="70" height="20" rx="4" fill="#0b1329" stroke="#38bdf8" strokeWidth="1" />
+        <text x="395" y={cimientoY + 35} fill="#38bdf8" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+          {realAltoCimiento.toFixed(2)} m
         </text>
 
         {/* 3. Cota Altura Sobrecimiento */}

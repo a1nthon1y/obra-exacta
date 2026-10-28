@@ -5,7 +5,7 @@
     "cimientoCiclopeo": "Capeco APU cimiento corrido 1:10+30% P.G. y sobrecimiento 1:8+25% P.M.",
     "ladrillos": "Rendimiento de ladrillo King Kong 18 huecos y pandereta. Para medidas estándar (KK18 24×13×9 y pandereta 24×12×9, junta 1.5 cm) se usa la Tabla 2.28 de Capeco; si el usuario cambia las medidas del ladrillo o la junta, el motor CALCULA con la fórmula del Manual del Maestro Constructor (Aceros Arequipa): 1 ÷ [(cara visible + junta) × (alto + junta)]. Mortero de asentado por defecto para KK18 (el de ladrillo hueco puede consumir hasta el doble: el % de desperdicio lo regula el usuario).",
     "ladrilloTecho": "Fórmula estándar: ladrillo de techo 30×30 cm entre viguetas cada 40 cm = 8.33 und/m² (+5% desperdicio).",
-    "espesorLosa": "Regla práctica de obra: peralte de losa aligerada h ≈ L/25. Confirmar con E.060 (2009) y el plano estructural.",
+    "espesorLosa": "Regla práctica de obra: peralte de losa aligerada h ≈ L/25. Para 5.5 m se sugiere 22 cm (no 20). Confirmar con E.060 (2009) y el plano estructural.",
     "acero": "Tablas comerciales: varilla corrugada 9.00 m (peso por metro lineal según diámetro nominal ABENEO/UNI).",
     "normas": "Verificaciones según RNE E.050 (2018), E.060 (2009) y E.070 (2006). Son reglas prácticas de obra; pendiente de validación por ingeniero. Capeco es referencia de rendimientos, no norma."
   },
@@ -70,7 +70,7 @@
   "espesorLosa": {
     "auto": [
       { "luz_max": 4.0,  "esp": 17 },
-      { "luz_max": 5.5,  "esp": 20 },
+      { "luz_max": 5.5,  "esp": 22 },
       { "luz_max": 6.5,  "esp": 25 },
       { "luz_max": 7.5,  "esp": 30 }
     ]
@@ -78,6 +78,7 @@
   "volumenConcretoLosa": {
     "17": 0.080,
     "20": 0.0875,
+    "22": 0.0925,
     "25": 0.100,
     "30": 0.1125
   }

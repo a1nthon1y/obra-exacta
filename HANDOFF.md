@@ -50,9 +50,65 @@ Verificado: `npm test` (21/21), `npx tsc --noEmit`, `npx oxlint src` (0), `npm r
 resultado de confinada sin aviso de cuantía, losa con malla de temperatura y edición de
 la expectativa de `sugerir-edificio`.
 
+## Cambios 27/10/2026 — Correcciones P0/P1 de la revisión civil (RNE/Capeco)
+
+### P0 — Cimientos, contrapiso, zapata
+
+**Cimientos (`src/engine/calc.ts`, `types.ts`, `CalcCimientos.tsx`, `CimientoViewer3D.tsx`, `CimientoCorte2D.tsx`)**
+- `ParamsCimientos` acepta ahora `altoCimiento` (m, opcional, default 0.50) separado de `prof` (profundidad de excavación). Antes `volCimiento = largo × ancho × prof` llenaba toda la zanja de concreto ciclópeo, sobreestimando cemento.
+- Volumen de cimiento = `largo × ancho × altoCimiento`; excavación = `largo × ancho × prof` (sin cambios).
+- El sobrecimiento sube desde la cabeza del cimiento hasta la altura visible: altura total = `prof − altoCimiento + alto`. Su volumen y cemento se calculan sobre esa altura total; el encofrado solo cubre la parte visible (`largo × alto × 2`).
+- El visor 3D dibuja el cimiento en el fondo de la zanja, el relleno sobre él y el sobrecimiento desde la cabeza del cimiento; el plano 2D acota profundidad de zanja, altura de cimiento y altura de sobrecimiento.
+- Nuevo aviso: cimiento menor a 0.30 m; sobrecimiento enterrado > 0.50 m.
+
+**Contrapiso (`src/engine/calc.ts`, `catalogo.json`, `CalcAcabados.tsx`)**
+- Si `eContra < 8 cm`: mortero 1:5 sin piedra (la piedra mediana 3"–4" no cabe); si ≥ 8 cm: concreto 1:8 + 25% PM como antes.
+- Catálogo: agregados `arena_fina` (tarrajeo), `pegamento_ceramico` (~4.5 kg/m², bolsa 25 kg) y `fragua` (~0.5 kg/m²). El tarrajeo usa `arena_fina`; el contrapiso usa `arena_gruesa` solo si lleva piedra.
+- Resumen y lista de compras incluyen pegamento y fragua cuando hay piso cerámico.
+- Aviso: "Contrapiso de X cm: se calcula con mortero 1:5 sin piedra..."
+
+**Zapata aislada (`src/engine/calc.ts`)**
+- `dimensionarZapata` y `calcZapata` mayoran la carga 10% por peso propio y relleno (`MAYORACION_ZAPATA = 1.10`) antes de hallar el área y el lado. El texto de `pasos` ya no dice "agreguele ~10%", sino que informa que está incluido.
+- Lado de ejemplo con carga 15 tn y pa 1.2: pasa de 1.15 m a 1.20 m.
+
+### P1 — Citas, umbrales, vigas, losa, muros, acabados, columnas
+
+**Citas y umbrales normativos**
+- Muros: cita de esbeltez corregida de "E.070 Art. 19.1.b" a "19.1.a".
+- Escalera: Blondel acepta 60–64 cm (era 60–65); contrahuella máxima 0.18 m (era 0.195); ancho mínimo 0.90 m entre muros (0.80 m solo si un lado está abierto, RNE A.020 Art. 15.1).
+
+**Vigas (`src/engine/calc.ts`, `types.ts`, `CalcVigasLosa.tsx`, `VigaViewer3D.tsx`)**
+- Nuevo `sis` ('confinada' | 'porticos', default 'confinada'): en pórticos se rechaza base < 25 cm y b/h < 0.3 (E.060); en confinada no se exige 25 cm (el ancho suele ser el del muro, 13 cm).
+- Nuevo `espesorLosa` (cm): se descuenta del hormigón y del encofrado lateral (`hUtil = h − espesorLosa`); el visor dibuja la losa de compresión sobre la viga.
+- `d` efectivo mejora a `h − rec − Øestribo − Øbarra/2` para el As,mín de E.060.
+- Estribo bajo la losa usa `hUtil`.
+
+**Losa aligerada (`src/engine/tablas.json`, `src/engine/calc.ts`, `src/engine/calc.test.ts`)**
+- Espesor automático: 5.5 m → 22 cm (L/25), tabla `volumenConcretoLosa` agrega `"22": 0.0925`.
+- Viguetas: `floor(ancho / 0.40) + 1` (una en cada borde; antes `ceil`, que en 4.0 m daba 10 y ahora da 11).
+
+**Muros (`src/engine/calc.ts`)**
+- Se usa siempre la fórmula geométrica `1 ÷ [(cara + junta) × (alto + junta)]` para `und/m²` (se elimina el salto tabla/fórmula); la tabla de Capeco queda solo como referencia de mortero.
+- Aviso para pandereta: el mortero puede ser 1.5–2× el del KK18; subir desperdicio de mezcla.
+
+**Columnas (`src/engine/sugerir.ts`, `src/pages/CalcColumnas.tsx`)**
+- 2 pisos, luz 4–5 m: sugiere 13 × 30 con 6 Ø 3/8" (2 por capa) en vez de 4 Ø 1/2" (no constructible en una capa de 13 cm).
+- Al cambiar el sistema a "Entre muros (confinada)" el recubrimiento por defecto pasa a 2 cm (con 4 cm una columna de 13 cm no es construible); en pórticos se mantiene 4 cm.
+
+### Pruebas agregadas
+- `calc.test.ts`: cimientos con cimiento separado (menos cemento que llenar la zanja), error si cimiento > zanja; contrapiso 4 cm sin piedra mediana y con arena_fina; contrapiso 10 cm con piedra mediana, pegamento y fragua; zapata lado 1.20 m con 10% de sobrecarga; vigas con losa (menos hormigón y encofrado 0.45 m), pórtico base < 25 cm rechaza, confinada no, fórmula de `d`; muros KK18 cabeza ~65.7 und/m² por fórmula, aviso de pandereta; losa 5.5 m → 22 cm, 4.0 m ancho → 11 viguetas, factor 0.0925; escalera ancho < 0.90 m, contrahuella > 0.18 m, Blondel 60–64 cm.
+- `sugerir.test.ts`: 2 pisos 4.5 m espera nVar 6, dVar '3/8'.
+
+### Verificación
+```
+npm test        → 38 passed (3 files)
+npx tsc --noEmit → OK
+npx oxlint src   → OK (0 errores)
+npm run build    → OK (vite build, mismo aviso de chunk >500 kB por Three.js)
+```
+
 Pendiente de validación con ingeniero: fórmula de As,mín de vigas (se dejó 0.7√f'c/fy y
-hay que confirmarla contra la edición impresa de E.060), y si la carga de zapata debe
-mayorarse 10% por peso propio (hoy solo se avisa en `pasos`).
+hay que confirmarla contra la edición impresa de E.060).
 
 
 ## Estado actual

@@ -24,9 +24,10 @@ const etapa = getEtapa('cimientos');
 interface Props {
   largo: number;      // m
   ancho: number;      // m
-  prof: number;       // m
+  prof: number;       // m (profundidad de zanja)
   esp: number;        // m (sobrecimiento)
-  alto: number;       // m (sobrecimiento)
+  alto: number;       // m (sobrecimiento visible)
+  altoCimiento?: number; // m (altura del cimiento en el fondo de la zanja)
   campoActivo?: string | null;
 }
 
@@ -36,6 +37,7 @@ export const CimientoViewer3D: React.FC<Props> = ({
   prof,
   esp,
   alto,
+  altoCimiento,
   campoActivo,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -49,13 +51,18 @@ export const CimientoViewer3D: React.FC<Props> = ({
   const realProf = prof > 0 ? prof : 0.8;
   const realEsp = esp > 0 ? esp : 0.15;
   const realAlto = alto > 0 ? alto : 0.4;
+  // El cimiento ocupa la parte inferior de la zanja; default 0.50 m si no se indica
+  const realAltoCimiento = (altoCimiento && altoCimiento > 0 ? altoCimiento : Math.min(0.50, realProf));
 
   // Escalas visuales proporcionadas (consistentes con MuroViewer3D)
   const visualLargo = Math.min(Math.max(realLargo * 0.35, 3.0), 6.0);
   const visualAncho = Math.max(realAncho * 1.8, 0.5);
   const visualProf = Math.max(realProf * 1.2, 0.5);
+  const visualAltoCimiento = Math.max(realAltoCimiento * 1.2, 0.25);
   const visualEsp = Math.max(realEsp * 2.5, 0.18);
   const visualAlto = Math.max(realAlto * 2.5, 0.3);
+  // El sobrecimiento sube desde la cabeza del cimiento hasta la altura visible.
+  const visualSobreTotal = Math.max(visualProf - visualAltoCimiento, 0.1) + visualAlto;
 
   // Texturas procedurales
   const stoneTexture = useMemo(() => createStoneTexture(campoActivo === 'ancho' || campoActivo === 'prof'), [campoActivo]);
@@ -73,7 +80,7 @@ export const CimientoViewer3D: React.FC<Props> = ({
 
     // Cámara en ángulo isométrico 3/4 estándar (encuadre compartido: viewerUtils.isoCameraPosition)
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-    const sceneSize = Math.max(visualLargo, visualAncho, visualAlto + visualProf);
+    const sceneSize = Math.max(visualLargo, visualAncho, visualSobreTotal + visualProf);
 
     const renderer = createStandardRenderer(container, width, height);
     rendererRef.current = renderer;
@@ -104,8 +111,9 @@ export const CimientoViewer3D: React.FC<Props> = ({
     scene.add(sueloBase);
 
     // ── 1. CIMIENTO CORRIDO (Concreto ciclópeo) ───────────────────
-    const cimientoGeo = new THREE.BoxGeometry(visualAncho, visualProf, visualLargo);
-    const isCimientoActive = campoActivo === 'ancho' || campoActivo === 'prof';
+    // Se coloca en el fondo de la zanja: de y=-visualProf a y=-visualProf+visualAltoCimiento.
+    const cimientoGeo = new THREE.BoxGeometry(visualAncho, visualAltoCimiento, visualLargo);
+    const isCimientoActive = campoActivo === 'ancho' || campoActivo === 'prof' || campoActivo === 'altoCimiento';
     const cimientoMat = new THREE.MeshStandardMaterial({
       map: stoneTexture,
       roughness: 0.85,
@@ -113,7 +121,7 @@ export const CimientoViewer3D: React.FC<Props> = ({
       color: isCimientoActive ? 0xfef08a : 0xffffff,
     });
     const cimiento = new THREE.Mesh(cimientoGeo, cimientoMat);
-    cimiento.position.set(0, -visualProf / 2, 0);
+    cimiento.position.set(0, -visualProf + visualAltoCimiento / 2, 0);
     cimiento.castShadow = true;
     cimiento.receiveShadow = true;
     scene.add(cimiento);
@@ -128,7 +136,7 @@ export const CimientoViewer3D: React.FC<Props> = ({
       const pMesh = new THREE.Mesh(piedraGeo, piedraMat);
       pMesh.position.set(
         (Math.random() - 0.5) * (visualAncho * 0.75),
-        (Math.random() - 0.5) * (visualProf * 0.8),
+        (Math.random() - 0.5) * (visualAltoCimiento * 0.8),
         (Math.random() - 0.5) * (visualLargo * 0.9)
       );
       const s = 0.7 + Math.random() * 0.6;
@@ -137,8 +145,16 @@ export const CimientoViewer3D: React.FC<Props> = ({
       cimiento.add(pMesh);
     }
 
+    // Relleno sobre el cimiento hasta el terreno (visual, semitransparente)
+    const rellenoGeo = new THREE.BoxGeometry(visualAncho + 1.0, visualProf - visualAltoCimiento + 0.15, visualLargo + 1.0);
+    const rellenoMat = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.9, transparent: true, opacity: 0.35 });
+    const relleno = new THREE.Mesh(rellenoGeo, rellenoMat);
+    relleno.position.set(0, -visualProf + (visualProf - visualAltoCimiento + 0.15) / 2, 0);
+    scene.add(relleno);
+
     // ── 2. SOBRECIMIENTO ──────────────────────────────────────────
-    const sobreGeo = new THREE.BoxGeometry(visualEsp, visualAlto, visualLargo);
+    // Sube desde la cabeza del cimiento (y=-visualProf+visualAltoCimiento) hasta +visualAlto.
+    const sobreGeo = new THREE.BoxGeometry(visualEsp, visualSobreTotal, visualLargo);
     const isSobrecActive = campoActivo === 'esp' || campoActivo === 'alto';
     const sobreMat = new THREE.MeshStandardMaterial({
       map: sobreTexture,
@@ -147,8 +163,9 @@ export const CimientoViewer3D: React.FC<Props> = ({
       color: isSobrecActive ? 0xfef08a : 0xffffff,
     });
     const sobre = new THREE.Mesh(sobreGeo, sobreMat);
-    sobre.position.set(0, visualAlto / 2, 0);
+    sobre.position.set(0, -visualProf + visualAltoCimiento + visualSobreTotal / 2, 0);
     sobre.castShadow = true;
+    sobre.receiveShadow = true;
     scene.add(sobre);
 
     addHighlightEdges(sobre, isSobrecActive, VIEWER_COLORS.highlight, VIEWER_COLORS.sobrecimientoEdge);
@@ -302,11 +319,14 @@ export const CimientoViewer3D: React.FC<Props> = ({
     realProf,
     realEsp,
     realAlto,
+    realAltoCimiento,
     visualLargo,
     visualAncho,
     visualProf,
+    visualAltoCimiento,
     visualEsp,
     visualAlto,
+    visualSobreTotal,
     campoActivo,
     autoRotate,
     stoneTexture,
@@ -378,6 +398,13 @@ export const CimientoViewer3D: React.FC<Props> = ({
           <span>⬇️ Prof: <strong>{prof ? `${prof} m` : '—'}</strong></span>
         </span>
         <span
+          className={`viewer-badge ${campoActivo === 'altoCimiento' ? 'amber' : 'cyan'}`}
+          style={{ transition: 'all 0.2s' }}
+        >
+          <span className="viewer-badge-dot"></span>
+          <span>🧱 Cimiento: <strong>{altoCimiento ? `${altoCimiento} m` : '0.50'}</strong></span>
+        </span>
+        <span
           className={`viewer-badge ${campoActivo === 'alto' ? 'amber' : 'amber'}`}
           style={{ transition: 'all 0.2s' }}
         >
@@ -422,6 +449,8 @@ export const CimientoViewer3D: React.FC<Props> = ({
                 ? 'ANCHO DEL CIMIENTO (Transversal)'
                 : campoActivo === 'prof'
                 ? 'PROFUNDIDAD DE ZANJA (Vertical)'
+                : campoActivo === 'altoCimiento'
+                ? 'ALTURA DEL CIMIENTO CICLÓPEO'
                 : campoActivo === 'alto'
                 ? 'ALTURA DEL SOBRECIMIENTO'
                 : campoActivo === 'esp'
@@ -450,6 +479,7 @@ export const CimientoViewer3D: React.FC<Props> = ({
           realProf={realProf}
           realEsp={realEsp}
           realAlto={realAlto}
+          realAltoCimiento={realAltoCimiento}
         />
       ) : (
         <CimientoReferencia />

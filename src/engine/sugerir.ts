@@ -130,15 +130,17 @@ export function sugerirColumna(p: {
   }
 
   // 2 pisos con luz entre 4 y 5 m: se sube el peralte y el fierro.
+  // En 13 cm de ancho no caben 4 Ø 1/2" en una sola capa de forma segura;
+  // se usa 6 Ø 3/8" (2 por capa en peralte 30 cm), que es constructible.
   return {
     b: 13,
     h: 30,
-    nVar: 4,
-    dVar: '1/2',
+    nVar: 6,
+    dVar: '3/8',
     dEst: '1/4',
     rango: [13, 30],
     titulo: 'Medida usual para tu caso',
-    explicacion: `Para 2 pisos con muro de soga y luz de ${p.luz.toFixed(1)} m, lo usual es 13 × 30 cm con 4 varillas de 1/2".`,
+    explicacion: `Para 2 pisos con muro de soga y luz de ${p.luz.toFixed(1)} m, lo usual es 13 × 30 cm con 6 varillas de 3/8" (2 por capa en peralte de 30 cm).`,
     supuestos,
     noAplica: NO_APLICA,
     requiereIngeniero: false,

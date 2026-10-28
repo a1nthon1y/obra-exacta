@@ -30,6 +30,8 @@ interface Props {
   dInf: string;
   dEst: string;    // pulg — estribo
   rec: number;     // cm
+  sis?: 'confinada' | 'porticos';
+  espesorLosa?: number; // cm de losa apoyada sobre la viga
   campoActivo?: string | null;
 }
 
@@ -46,7 +48,7 @@ const HUD: Record<string, string> = {
 };
 
 export const VigaViewer3D: React.FC<Props> = ({
-  b, h, luz, nSup, dSup, nInf, dInf, dEst, rec, campoActivo,
+  b, h, luz, nSup, dSup, nInf, dInf, dEst, rec, sis: _sis, espesorLosa, campoActivo,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<'3d' | 'plano2d' | 'referencia'>('3d');
@@ -59,11 +61,14 @@ export const VigaViewer3D: React.FC<Props> = ({
   const realNSup = Math.min(Math.max(nSup > 0 ? nSup : 2, 1), 6);
   const realNInf = Math.min(Math.max(nInf > 0 ? nInf : 3, 1), 6);
   const realRec = rec > 0 ? rec : 4;
+  const realEspLosa = (espesorLosa && espesorLosa > 0 ? espesorLosa : 0);
+  const hUtil = Math.max(realH - realEspLosa, 10);
 
   // Escala visual proporcional a la luz
   const visualLuz = Math.min(Math.max(realLuz * 0.6, 2.2), 4.6);
   const escala = visualLuz / realLuz;
-  const vH = Math.min(Math.max((realH / 100) * escala, 0.22), 1.0);
+  const vH = Math.min(Math.max((hUtil / 100) * escala, 0.22), 1.0);
+  const vLosa = Math.min(Math.max((realEspLosa / 100) * escala, 0.04), 0.5);
   const vB = Math.min(Math.max((realB / 100) * escala, 0.20), 0.9);
   const vRec = Math.min(Math.max((realRec / 100) * escala, 0.025), 0.10);
   const rSup = varillaVisual(dSup, escala, 4.5, 0.012, 0.040);
@@ -89,13 +94,30 @@ export const VigaViewer3D: React.FC<Props> = ({
     controls.autoRotate = autoRotate;
     controls.autoRotateSpeed = 1.0;
     controls.maxPolarAngle = Math.PI / 2 + 0.05;
-    applyStandardIsoCamera(camera, controls, Math.max(visualLuz, vH + 0.5, vB + 0.5), vH / 2);
+    applyStandardIsoCamera(camera, controls, Math.max(visualLuz, vH + vLosa + 0.5, vB + 0.5), (vH + vLosa) / 2);
     controls.update();
 
     createStandardLights(scene);
     scene.add(createStandardGrid(8, 16, 0));
 
-    // Concreto semitransparente
+    // Losa de compresión apoyada sobre la viga (si la hay)
+    if (realEspLosa > 0) {
+      const losa = new THREE.Mesh(
+        new THREE.BoxGeometry(visualLuz, vLosa, vB),
+        new THREE.MeshStandardMaterial({
+          color: VIEWER_COLORS.concrete,
+          transparent: true,
+          opacity: 0.55,
+          roughness: 0.85,
+        })
+      );
+      losa.position.y = vLosa / 2;
+      losa.castShadow = true;
+      losa.receiveShadow = true;
+      scene.add(losa);
+    }
+
+    // Concreto semitransparente (peralte bajo la losa)
     const seccionActiva = campoActivo === 'b' || campoActivo === 'h';
     const viga = new THREE.Mesh(
       new THREE.BoxGeometry(visualLuz, vH, vB),
@@ -106,7 +128,9 @@ export const VigaViewer3D: React.FC<Props> = ({
         roughness: 0.85,
       })
     );
-    viga.position.y = vH / 2;
+    viga.position.set(0, vLosa + vH / 2, 0);
+    viga.castShadow = true;
+    viga.receiveShadow = true;
     scene.add(viga);
     addHighlightEdges(
       viga,
@@ -136,8 +160,8 @@ export const VigaViewer3D: React.FC<Props> = ({
         mkBarra(r, 0, y, z);
       }
     };
-    repartir(realNSup, rSup, vH - vRec - rSup);
-    repartir(realNInf, rInf, vRec + rInf);
+    repartir(realNSup, rSup, vLosa + vH - vRec - rSup);
+    repartir(realNInf, rInf, vLosa + vRec + rInf);
 
     // Estribos a lo largo de la luz
     const estriboMat = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.6 });
@@ -149,11 +173,11 @@ export const VigaViewer3D: React.FC<Props> = ({
       // Vertical (a lo largo de Y) en z = ±ez
       [ez, -ez].forEach(pz => {
         const malla = new THREE.Mesh(new THREE.BoxGeometry(t, vH * 0.92, t), estriboMat);
-        malla.position.set(x, vH / 2, pz);
+        malla.position.set(x, vLosa + vH / 2, pz);
         scene.add(malla);
       });
       // Horizontal (a lo largo de Z) arriba y abajo
-      [vH * 0.08, vH * 0.92].forEach(py => {
+      [vLosa + vH * 0.08, vLosa + vH * 0.92].forEach(py => {
         const malla = new THREE.Mesh(new THREE.BoxGeometry(t, t, 2 * ez + t), estriboMat);
         malla.position.set(x, py, 0);
         scene.add(malla);
@@ -182,11 +206,11 @@ export const VigaViewer3D: React.FC<Props> = ({
     ));
 
     const spriteAlto = createDimensionSprite(`Alto: ${realH} cm`, campoActivo === 'h');
-    spriteAlto.position.set(visualLuz / 2 + 0.85, vH + 0.35, 0);
+    spriteAlto.position.set(visualLuz / 2 + 0.85, vLosa + vH + 0.35, 0);
     scene.add(spriteAlto);
     scene.add(createDimensionLine(
-      new THREE.Vector3(visualLuz / 2 + 0.16, 0, vB / 2 + 0.14),
-      new THREE.Vector3(visualLuz / 2 + 0.16, vH, vB / 2 + 0.14),
+      new THREE.Vector3(visualLuz / 2 + 0.16, vLosa, vB / 2 + 0.14),
+      new THREE.Vector3(visualLuz / 2 + 0.16, vLosa + vH, vB / 2 + 0.14),
       campoActivo === 'h' ? VIEWER_COLORS.dimCyanActive : VIEWER_COLORS.dimCyan,
       new THREE.Vector3(0, 0, 1)
     ));
@@ -200,7 +224,7 @@ export const VigaViewer3D: React.FC<Props> = ({
       renderer.dispose();
       container.innerHTML = '';
     };
-  }, [tab, visualLuz, vB, vH, vRec, rSup, rInf, rEst, realNSup, realNInf, realLuz, realB, realH, campoActivo, autoRotate]);
+  }, [tab, visualLuz, vB, vH, vLosa, vRec, rSup, rInf, rEst, realEspLosa, realNSup, realNInf, realLuz, realB, realH, campoActivo, autoRotate]);
 
   // —— Datos del Plano 2D (alzado armado) ——
   const vigX = 70;

@@ -10,7 +10,7 @@ import { getEtapa } from '../config/etapas';
 const etapa = getEtapa('cimientos');
 
 const EJEMPLO: Record<string, object> = {
-  cimientos: { largo: 30, ancho: 0.6, prof: 1.0, esp: 0.15, alto: 0.4 },
+  cimientos: { largo: 30, ancho: 0.6, prof: 1.0, esp: 0.15, alto: 0.4, altoCimiento: 0.5 },
 };
 
 export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -19,6 +19,7 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [prof, setProf]     = useState('');
   const [esp, setEsp]       = useState('0.15');
   const [alto, setAlto]     = useState('0.4');
+  const [altoCimiento, setAltoCimiento] = useState('0.5');
   const [campoActivo, setCampoActivo] = useState<string | null>(null);
   const [avanzado, setAvanzado] = useState(false);
   const [resultado, setResultado] = useState<ResultadoCalculo | null>(null);
@@ -30,7 +31,7 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   function cargarEjemplo() {
     const e = EJEMPLO.cimientos as any;
     setLargo(String(e.largo)); setAncho(String(e.ancho));
-    setProf(String(e.prof));   setEsp(String(e.esp)); setAlto(String(e.alto));
+    setProf(String(e.prof));   setEsp(String(e.esp)); setAlto(String(e.alto)); setAltoCimiento(String(e.altoCimiento));
     setEsEjemplo(true); setResultado(null); setError('');
   }
 
@@ -39,6 +40,7 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const r = calcular('cimientos', {
       largo: Number(largo), ancho: Number(ancho),
       prof: Number(prof), esp: Number(esp), alto: Number(alto),
+      altoCimiento: Number(altoCimiento) || 0.5,
     });
     if ('error' in r) { setError(r.error); return; }
     setResultado(r);
@@ -62,13 +64,14 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           prof={Number(prof) || 0}
           esp={Number(esp) || 0}
           alto={Number(alto) || 0}
+          altoCimiento={Number(altoCimiento) || 0.5}
           campoActivo={campoActivo}
         />
       ) : (
         <ViewerEspera
           icon={etapa.icon}
           titulo={etapa.tituloVisor}
-          mensaje="Ingresa largo, ancho, profundidad y alto del sobrecimiento. El visor mostrará tu cimiento, no medidas de ejemplo."
+          mensaje="Ingresa largo, ancho, profundidad de zanja y alto del sobrecimiento. El visor mostrará el cimiento en el fondo de la zanja, no medidas de ejemplo."
         />
       )}
 
@@ -127,18 +130,32 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           {avanzado ? '▲' : '▼'} Ajustes avanzados
         </button>
         {avanzado && (
-          <div className="campo">
-            <label>Espesor del sobrecimiento <span className="unidad">(m)</span></label>
-            <input
-              type="number"
-              inputMode="decimal"
-              placeholder="Usual: 0.15"
-              value={esp}
-              onFocus={() => setCampoActivo('esp')}
-              onBlur={() => setCampoActivo(null)}
-              onChange={e => { setEsp(e.target.value); reset(); }}
-            />
-          </div>
+          <>
+            <div className="campo">
+              <label>Espesor del sobrecimiento <span className="unidad">(m)</span></label>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="Usual: 0.15"
+                value={esp}
+                onFocus={() => setCampoActivo('esp')}
+                onBlur={() => setCampoActivo(null)}
+                onChange={e => { setEsp(e.target.value); reset(); }}
+              />
+            </div>
+            <div className="campo">
+              <label>Altura del cimiento ciclópeo <span className="unidad">(m)</span></label>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="Usual: 0.50"
+                value={altoCimiento}
+                onFocus={() => setCampoActivo('prof')}
+                onBlur={() => setCampoActivo(null)}
+                onChange={e => { setAltoCimiento(e.target.value); reset(); }}
+              />
+            </div>
+          </>
         )}
       </div>
 

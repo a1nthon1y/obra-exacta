@@ -24,6 +24,8 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [nInf, setNInf]   = useState('3');
   const [dInf, setDInf]   = useState<string>('1/2');
   const [dEst, setDEst]   = useState<string>('3/8');
+  const [sis, setSis]     = useState<'confinada'|'porticos'>('confinada');
+  const [espesorLosa, setEspesorLosa] = useState('0');
   const [avanzado, setAvanzado] = useState(false);
   const [rec, setRec]     = useState('4');
   const [fc, setFc]       = useState<140|175|210|245|280>(210);
@@ -35,7 +37,7 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   function cargarEjemplo() {
     setB('25'); setH('40'); setLuz('4'); setCant('4');
     setNSup('2'); setDSup('1/2'); setNInf('3'); setDInf('1/2');
-    setDEst('3/8'); setRec('4'); setFc(210);
+    setDEst('3/8'); setRec('4'); setFc(210); setSis('confinada'); setEspesorLosa('0');
     setEsEjemplo(true); setResultado(null); setError('');
   }
 
@@ -44,7 +46,7 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const r = calcular('vigas', {
       b: Number(b), h: Number(h), luz: Number(luz), cant: Number(cant),
       nSup: Number(nSup), dSup, nInf: Number(nInf), dInf,
-      dEst, rec: Number(rec), fc,
+      dEst, rec: Number(rec), fc, sis, espesorLosa: Number(espesorLosa) || 0,
     });
     if ('error' in r) { setError(r.error); return; }
     setResultado(r);
@@ -74,6 +76,8 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           dInf={dInf}
           dEst={dEst}
           rec={Number(rec) || 0}
+          sis={sis}
+          espesorLosa={Number(espesorLosa) || 0}
           campoActivo={campoActivo}
         />
       ) : (
@@ -139,6 +143,17 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
         </div>
 
+        <div className="campo">
+          <label>¿La viga está entre muros o es libre?</label>
+          <div className="btn-row">
+            {([['confinada','Entre muros (confinada)'],['porticos','Libre (pórtico)']] as const).map(([v, label]) => (
+              <button key={v} className={`aparejo-btn ${sis === v ? 'active' : ''}`} style={{ flex: 1 }} onClick={() => { setSis(v); reset(); }}>
+                <span className="ap-label" style={{ fontSize: '0.76rem' }}>{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <button className="avanzado-toggle" onClick={() => setAvanzado(a => !a)}>
           {avanzado ? '▲' : '▼'} Ajustes avanzados
         </button>
@@ -153,6 +168,11 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div className="campo">
               <label>Recubrimiento <span className="unidad">(cm)</span></label>
               <input type="number" inputMode="decimal" placeholder="Usual: 4" value={rec} onChange={e => { setRec(e.target.value); reset(); }} />
+            </div>
+            <div className="campo" style={{ gridColumn: 'span 2' }}>
+              <label>Losa apoyada sobre la viga <span className="unidad">(cm)</span></label>
+              <input type="number" inputMode="decimal" placeholder="Usual: 0" value={espesorLosa} onChange={e => { setEspesorLosa(e.target.value); reset(); }} />
+              <div style={{ fontSize: '0.68rem', color: 'var(--c-muted)', marginTop: 4 }}>Si la viga lleva losa encima, se descuenta del hormigón y del encofrado lateral.</div>
             </div>
             <div className="campo" style={{ gridColumn: 'span 2' }}>
               <label>Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>

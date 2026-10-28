@@ -19,6 +19,8 @@ const ceil1 = (n: number) => Math.ceil(n * 10) / 10;
 
 function comprarEntero(n: number): number { return Math.ceil(n); }
 
+const MAYORACION_ZAPATA = 1.10; // 10% peso propio y relleno (regla de obra, RNE E.050)
+
 function aceroData(diam: string) {
   const a = (TABLAS.acero as Record<string, { kg_ml: number; varilla_m: number; id_cat: string }>)[diam];
   if (!a) throw new Error(`Diámetro desconocido: ${diam}`);
@@ -55,26 +57,41 @@ export function calcCimientos(p: ParamsCimientos): Resultado {
   if (p.largo <= 0 || p.ancho <= 0 || p.prof <= 0 || p.alto <= 0)
     return { error: 'Todas las medidas deben ser mayores a cero.' };
 
+  // `prof` es la profundidad de la zanja, no la altura del cimiento. El cimiento
+  // ciclópeo ocupa solo la parte inferior; el sobrecimiento sube desde su
+  // cabeza hasta la altura visible. Antes se llenaba toda la zanja de cimiento
+  // y se multiplicaba el concreto (y el cemento) por la profundidad de excavación.
+  const altoCimiento = p.altoCimiento && p.altoCimiento > 0
+    ? p.altoCimiento
+    : Math.min(0.50, p.prof);
+  if (altoCimiento > p.prof)
+    return { error: 'La altura del cimiento no puede superar la profundidad de la zanja.' };
+
   const avisos: Aviso[] = [];
+  const altoSobreEnterrado = Math.max(p.prof - altoCimiento, 0);
+  const altoSobreTotal = altoSobreEnterrado + p.alto;
 
   // 1. Excavación de zanja
   const volExcavacion = p.largo * p.ancho * p.prof;
 
   // 2. Cimiento ciclópeo 1:10 + 30% piedra grande PG (Capeco)
   const dosC = TABLAS.cimientoCiclopeo['1:10+30%piedra'];
-  const volCimiento = p.largo * p.ancho * p.prof; // volumen zanja
+  const volCimiento = p.largo * p.ancho * altoCimiento;
   const cemCimiento = volCimiento * dosC.bolsas * 1.05; // 2.9 bolsas/m³ + 5% desp.
   const hormigonCimiento = volCimiento * dosC.hormigon; // 0.83 m³/m³
   const piedraCimiento = volCimiento * dosC.piedra;     // 0.48 m³/m³ de PG
 
   // 3. Sobrecimiento 1:8 + 25% piedra mediana PM (Capeco)
+  // Se vacía desde la cabeza del cimiento hasta la altura visible. La parte
+  // enterrada también consume concreto, aunque luego se rellene.
   const dosS = TABLAS.cimientoCiclopeo['1:8+25%piedra'];
-  const volSobre = p.largo * p.esp * p.alto;
+  const volSobre = p.largo * p.esp * altoSobreTotal;
   const cemSobre = volSobre * dosS.bolsas * 1.05;      // 3.7 bolsas/m³ + 5% desp.
   const hormigonSobre = volSobre * dosS.hormigon;      // 0.85 m³/m³
   const piedraSobre = volSobre * dosS.piedra;          // 0.40 m³/m³ de PM
 
-  // Encofrado de sobrecimiento: 2 caras laterales de madera
+  // Encofrado de sobrecimiento: 2 caras laterales de la parte visible. La
+  // zanja hace de encofrado en la parte enterrada.
   const encofrado = p.largo * p.alto * 2;
 
   const cemTotal = cemCimiento + cemSobre;
@@ -84,25 +101,31 @@ export function calcCimientos(p: ParamsCimientos): Resultado {
   // los define el estudio de suelos (RNE E.050) y el detalle de cimentación;
   // aquí solo avisamos cuando la medida se aleja de lo usual en vivienda.
   if (p.prof < 0.80)
-    avisos.push({ n: 'warn', t: `Profundidad de cimiento ${p.prof.toFixed(2)} m: en vivienda lo usual es desplantar 0.80 m o más. La profundidad real la define el estudio de suelos (RNE E.050).` });
+    avisos.push({ n: 'warn', t: `Profundidad de zanja ${p.prof.toFixed(2)} m: en vivienda lo usual es desplantar 0.80 m o más. La profundidad real la define el estudio de suelos (RNE E.050).` });
   if (p.ancho < 0.50)
     avisos.push({ n: 'bad', t: `Ancho de cimiento ${p.ancho.toFixed(2)} m: para muros portantes de vivienda lo habitual es 0.50 m o más (regla de obra; el ancho final lo define el diseño de cimentación).` });
   if (p.alto < 0.30)
-    avisos.push({ n: 'warn', t: `Sobrecimiento de ${p.alto.toFixed(2)} m: se recomienda mínimo 0.30 m sobre el nivel del terreno para proteger el ladrillo de la humedad.` });
+    avisos.push({ n: 'warn', t: `Sobrecimiento visible de ${p.alto.toFixed(2)} m: se recomienda mínimo 0.30 m sobre el nivel del terreno para proteger el ladrillo de la humedad.` });
+  if (altoCimiento < 0.30)
+    avisos.push({ n: 'warn', t: `Altura de cimiento ${altoCimiento.toFixed(2)} m: es baja para un cimiento ciclópeo; lo usual en vivienda es 0.40–0.60 m.` });
+  if (altoSobreEnterrado > 0.50)
+    avisos.push({ n: 'warn', t: `El sobrecimiento tiene ${altoSobreEnterrado.toFixed(2)} m enterrados: ese concreto no se ve pero se paga. Si el estudio de suelos lo permite, sube la altura del cimiento o reduce la zanja.` });
 
   const pasos = [
     `1. EXCAVACIÓN DE ZANJA:`,
     `   ${p.largo} m (largo) × ${p.ancho} m (ancho) × ${p.prof} m (prof.) = ${volExcavacion.toFixed(2)} m³ de zanja.`,
     `2. CIMIENTO CORRIDO (Mezcla 1:10 + 30% Piedra Grande - Capeco):`,
+    `   • Volumen: ${p.largo} m × ${p.ancho} m × ${altoCimiento.toFixed(2)} m (alto del cimiento) = ${volCimiento.toFixed(2)} m³.`,
     `   • Cemento: ${volCimiento.toFixed(2)} m³ × ${dosC.bolsas} bol/m³ × 1.05 (desp. 5%) = ${cemCimiento.toFixed(1)} bolsas.`,
     `   • Hormigón de río: ${volCimiento.toFixed(2)} m³ × ${dosC.hormigon} m³/m³ = ${hormigonCimiento.toFixed(2)} m³.`,
     `   • Piedra Grande de Zanja (8"-10"): ${volCimiento.toFixed(2)} m³ × ${dosC.piedra} m³/m³ = ${piedraCimiento.toFixed(2)} m³.`,
     `3. SOBRECIMIENTO (Mezcla 1:8 + 25% Piedra Mediana - Capeco):`,
-    `   Volumen: ${p.largo} m × ${p.esp} m × ${p.alto} m = ${volSobre.toFixed(2)} m³.`,
+    `   • Altura total: ${p.prof.toFixed(2)} m (zanja) − ${altoCimiento.toFixed(2)} m (cimiento) + ${p.alto.toFixed(2)} m (visible) = ${altoSobreTotal.toFixed(2)} m.`,
+    `   • Volumen: ${p.largo} m × ${p.esp} m × ${altoSobreTotal.toFixed(2)} m = ${volSobre.toFixed(2)} m³.`,
     `   • Cemento: ${volSobre.toFixed(2)} m³ × ${dosS.bolsas} bol/m³ × 1.05 = ${cemSobre.toFixed(1)} bolsas.`,
     `   • Hormigón: ${volSobre.toFixed(2)} m³ × ${dosS.hormigon} m³/m³ = ${hormigonSobre.toFixed(2)} m³.`,
     `   • Piedra Mediana (3"-4"): ${volSobre.toFixed(2)} m³ × ${dosS.piedra} m³/m³ = ${piedraSobre.toFixed(2)} m³.`,
-    `4. ENCOFRADO DE SOBRECIMIENTO:`,
+    `4. ENCOFRADO DE SOBRECIMIENTO (parte visible):`,
     `   ${p.largo} m × ${p.alto} m × 2 caras = ${encofrado.toFixed(1)} m² de contacto de madera.`,
     `5. QUÉ COMPRAR EN FERRETERÍA (Redondeo comercial seguro):`,
     `   • Cemento Portland Tipo I: ${cemTotal.toFixed(1)} bolsas → Comprar ${comprarEntero(cemTotal)} bolsas.`,
@@ -114,9 +137,11 @@ export function calcCimientos(p: ParamsCimientos): Resultado {
 
   return {
     titulo: 'Cimientos',
-    detalle: `${p.largo} m de cimiento corrido (${p.ancho}×${p.prof} m) + sobrecimiento`,
+    detalle: `${p.largo} m de cimiento corrido (${p.ancho}×${altoCimiento.toFixed(2)} m) + sobrecimiento ${altoSobreTotal.toFixed(2)} m total (${p.alto.toFixed(2)} m visible)`,
     resumen: [
       { nombre: 'Excavación', valor: volExcavacion.toFixed(2), unidad: 'm³' },
+      { nombre: 'Cimiento', valor: volCimiento.toFixed(2), unidad: 'm³' },
+      { nombre: 'Sobrecimiento', valor: volSobre.toFixed(2), unidad: 'm³' },
       { nombre: 'Cemento total', valor: comprarEntero(cemTotal), unidad: 'bolsas' },
       { nombre: 'Hormigón', valor: ceil1(hormigonTotal), unidad: 'm³' },
       { nombre: 'Piedra Grande (PG)', valor: ceil1(piedraCimiento), unidad: 'm³' },
@@ -126,9 +151,9 @@ export function calcCimientos(p: ParamsCimientos): Resultado {
     mats: [
       { id: 'cemento',         cant: cemTotal,           comprar: comprarEntero(cemTotal), desglose: `Cimiento: ${cemCimiento.toFixed(1)} bol + Sobrecimiento: ${cemSobre.toFixed(1)} bol = ${cemTotal.toFixed(1)} bol` },
       { id: 'hormigon',        cant: hormigonTotal,      comprar: ceil1(hormigonTotal),    desglose: `Cimiento: ${hormigonCimiento.toFixed(2)} m³ + Sobrecimiento: ${hormigonSobre.toFixed(2)} m³` },
-      { id: 'piedra_grande',   cant: piedraCimiento,     comprar: ceil1(piedraCimiento), nota: 'Para zanja', desglose: `${volCimiento.toFixed(2)} m³ zanja × 0.48 m³/m³ PG` },
+      { id: 'piedra_grande',   cant: piedraCimiento,     comprar: ceil1(piedraCimiento), nota: 'Para zanja', desglose: `${volCimiento.toFixed(2)} m³ cimiento × 0.48 m³/m³ PG` },
       { id: 'piedra_mediana',  cant: piedraSobre,        comprar: ceil1(piedraSobre),    nota: 'Para sobrecimiento', desglose: `${volSobre.toFixed(2)} m³ sobrec. × 0.40 m³/m³ PM` },
-      { id: 'madera_encofrado', cant: encofrado,         comprar: ceil1(encofrado),      desglose: `${p.largo} m × ${p.alto} m × 2 caras laterales` },
+      { id: 'madera_encofrado', cant: encofrado,         comprar: ceil1(encofrado),      desglose: `${p.largo} m × ${p.alto} m × 2 caras visibles` },
     ],
     avisos,
     pasos,
@@ -154,7 +179,7 @@ export function calcMuros(p: ParamsMuros): Resultado {
   const areaBruta = p.largo * p.alto;
   const areaNeta  = areaBruta - p.aberturas;
 
-  // Esbeltez (altura / espesor efectivo según RNE E.070 Art. 19.1.b: t ≥ h/20)
+  // Esbeltez (altura / espesor efectivo según RNE E.070 Art. 19.1.a: t ≥ h/20)
   const espesorMuro = p.aparejo === 'soga' ? ab / 100
                     : p.aparejo === 'cabeza' ? lb / 100
                     : hb / 100;
@@ -172,30 +197,30 @@ export function calcMuros(p: ParamsMuros): Resultado {
   if (p.ladrillo === 'pand' && p.uso === 'portante')
     avisos.push({ n: 'bad', t: 'NO PERMITIDO EN MURO PORTANTE: el RNE E.070 no admite unidades tubulares (pandereta) en muros portantes y exige f\'b ≥ 50 kg/cm² en la unidad. Use ladrillo King Kong 18 huecos.' });
 
+  if (p.ladrillo === 'pand')
+    avisos.push({ n: 'warn', t: 'Pandereta: el mortero de asentado puede consumir 1.5–2× el del KK18 porque los huecos tubulares se llenan. El cálculo usa el consumo del KK18; sube el desperdicio de mezcla a 50–100% o verifica el consumo con tu maestro de obra.' });
+
   const mezclaNum = Number(p.mezcla);
   if (p.uso === 'portante' && mezclaNum > 5)
     avisos.push({ n: 'warn', t: `Mezcla 1:${mezclaNum}: para muros portantes la norma peruana especifica mortero 1:4 o 1:5.` });
 
-  // Rendimiento unitario: para las medidas estándar manda la Tabla 2.28 de Capeco;
-  // si el usuario cambia el ladrillo o la junta, se calcula con la fórmula del
-  // Manual del Maestro Constructor (Aceros Arequipa).
+  // Rendimiento unitario: fórmula geométrica del Manual del Maestro Constructor
+  // (Aceros Arequipa): 1 ÷ [(cara visible + junta) × (alto + junta)]. La tabla de
+  // Capeco queda solo como referencia; al usar siempre la fórmula se evitan saltos
+  // de medida entre el KK18 soga/cabeza/canto y se cuenta honestamente el ladrillo
+  // que realmente entra en el muro.
   const caraCm  = p.aparejo === 'cabeza' ? ab : lb;   // cara expuesta del ladrillo
   const altCm   = p.aparejo === 'canto'  ? ab : hb;   // otra dimensión de la cara
-  const undFormula = 1 / (((caraCm + junta) / 100) * ((altCm + junta) / 100));
-  const esEstandar =
-    (p.ladrillo === 'kk18' && Math.abs(lb - 24) < 0.01 && Math.abs(ab - 13) < 0.01 && Math.abs(hb - 9) < 0.01) ||
-    (p.ladrillo === 'pand' && Math.abs(lb - 24) < 0.01 && Math.abs(ab - 12) < 0.01 && Math.abs(hb - 9) < 0.01);
-  const usaTabla = esEstandar && Math.abs(junta - 1.5) < 0.01 && dosLad.und_m2 > 0;
-  const undM2 = usaTabla ? dosLad.und_m2 : undFormula;
-  const fuenteUnd = usaTabla ? 'Tabla 2.28 Capeco' : 'fórmula según medidas';
+  const undM2 = 1 / (((caraCm + junta) / 100) * ((altCm + junta) / 100));
+  const fuenteUnd = 'fórmula según medidas';
   const morteroM2 = dosLad.mortero_m3;
 
   // Ladrillos
   const ladNeto = areaNeta * undM2;
   const ladTot  = ladNeto * (1 + p.desL / 100);
 
-  // Mortero (consumo publicado para KK18; el ladrillo hueco puede filtrar el doble —
-  // el usuario ajusta con el % de desperdicio)
+  // Mortero (consumo publicado para KK18; el ladrillo hueco puede filtrar hasta el
+  // doble porque los huecos lo absorben — el usuario ajusta con el % de desperdicio)
   const morNeto = areaNeta * morteroM2;
   const morTot  = morNeto  * (1 + p.desM / 100);
 
@@ -419,8 +444,25 @@ export function calcVigas(p: ParamsVigas): Resultado {
   const avisos: Aviso[] = [];
   const dos = dosConcreto(p.fc);
 
+  const sis = p.sis ?? 'confinada';   // la mayoría de casas de 1-2 pisos son confinadas
+  const espesorLosa = p.espesorLosa && p.espesorLosa > 0 ? p.espesorLosa : 0; // cm de losa sobre la viga
+  const hUtil = Math.max(p.h - espesorLosa, 10); // cm — peralte efectivo bajo losa
+
   if (p.fc < 210)
     avisos.push({ n: 'warn', t: `f'c ${p.fc} kg/cm²: para vigas de vivienda se usa 210 kg/cm² como mínimo (RNE E.060).` });
+
+  // Pórticos sismorresistentes (E.060): menor dimensión 25 cm y b/h ≥ 0.3.
+  // Albañilería confinada: el ancho suele ser el del muro (13 cm); no se exige 25 cm.
+  if (sis === 'porticos') {
+    if (p.b < 25)
+      avisos.push({ n: 'bad', t: `En pórticos el ancho de viga no puede ser menor a 25 cm (RNE E.060). Tienes ${p.b} cm.` });
+    if (p.b / p.h < 0.3)
+      avisos.push({ n: 'warn', t: `Relación b/h = ${(p.b / p.h).toFixed(2)} menor que 0.3; en pórticos la E.060 pide b/h ≥ 0.3.` });
+    if (hUtil > p.luz * 100 / 4)
+      avisos.push({ n: 'warn', t: `Peralte efectivo bajo losa (${hUtil.toFixed(0)} cm) supera L/4 de la luz (${(p.luz * 100 / 4).toFixed(0)} cm); revisar con ingeniero.` });
+  } else if (p.b < 13) {
+    avisos.push({ n: 'warn', t: `En confinada el ancho de viga suele ser el del muro (13 cm). Tienes ${p.b} cm.` });
+  }
 
   // Peralte frente a la luz: aun en el caso más favorable de E.060 (viga
   // simplemente apoyada) el peralte no debería bajar de L/16.
@@ -432,14 +474,16 @@ export function calcVigas(p: ParamsVigas): Resultado {
   const aInf = aceroData(p.dInf);
   const aEst = aceroData(p.dEst);
 
-  // 1. Concreto
-  const volViga = (p.b / 100) * (p.h / 100) * p.luz * p.cant;
+  // 1. Concreto — se descuenta el grosor de la losa sobre la viga (no se vacía
+  // debajo de la losa; el encofrado lateral también se reduce al peralte bajo losa).
+  const volViga = (p.b / 100) * (hUtil / 100) * p.luz * p.cant;
   const cemVigas = volViga * dos.bolsas * 1.05;
   const arenaVigas = volViga * dos.arena * 1.05;
   const piedraVigas = volViga * dos.piedra * 1.05;
 
   // Acero mínimo inferior según RNE E.060: As,min = (0.7 * √f'c / fy) * b * d
-  const dEfectivo = (p.h - p.rec); // cm
+  // `d` mejora a h − rec − Ø estribo − Ø bar/2 en vez de solo h − rec.
+  const dEfectivo = p.h - p.rec - (diametroMm(p.dEst) / 10) - (diametroMm(p.dInf) / 10 / 2); // cm
   const AcMinCm2 = (0.7 * Math.sqrt(p.fc) / 4200) * p.b * dEfectivo;
   const AcProvCm2 = (Math.PI / 4) * (diametroMm(p.dInf) / 10) ** 2 * p.nInf;
 
@@ -466,7 +510,7 @@ export function calcVigas(p: ParamsVigas): Resultado {
   const nEstTotal = (nEstZC * 2 + nEstResto) * p.cant;
 
   const anchoEst = Math.max(p.b - 2 * p.rec, 5);
-  const altoEst = Math.max(p.h - 2 * p.rec, 5);
+  const altoEst = Math.max(hUtil - 2 * p.rec, 5); // estribo bajo la losa
   const longEst = (2 * (anchoEst + altoEst) + 15) / 100; // metros
   const varEst = Math.ceil((longEst * nEstTotal * 1.05) / aEst.varilla_m);
   const kgEst = varEst * aEst.varilla_m * aEst.kg_ml;
@@ -474,8 +518,8 @@ export function calcVigas(p: ParamsVigas): Resultado {
   const kgTotal = kgSup + kgInf + kgEst;
   const alambre = Math.max(kgTotal * 0.03, 1.0);
 
-  // Encofrado: fondo + 2 laterales
-  const encofrado = ((p.b + 2 * p.h) / 100) * p.luz * p.cant;
+  // Encofrado: fondo + 2 laterales bajo la losa (la losa hace de encofrado superior).
+  const encofrado = ((p.b + 2 * hUtil) / 100) * p.luz * p.cant;
   const clavos = encofrado * 0.8;
 
   if (AcProvCm2 < AcMinCm2) {
@@ -494,21 +538,21 @@ export function calcVigas(p: ParamsVigas): Resultado {
 
   const pasos = [
     `1. CONCRETO (f'c = ${p.fc} kg/cm²):`,
-    `   • Volumen: ${p.cant} viga(s) × (${p.b}×${p.h} cm) × ${p.luz} m = ${volViga.toFixed(3)} m³.`,
+    `   • Volumen: ${p.cant} viga(s) × (${p.b}×${hUtil.toFixed(0)} cm bajo losa) × ${p.luz} m = ${volViga.toFixed(3)} m³.${espesorLosa > 0 ? ` (se descuenta la losa de ${espesorLosa} cm sobre la viga)` : ''}`,
     `   • Cemento: ${volViga.toFixed(3)} m³ × ${dos.bolsas} bol/m³ × 1.05 = ${cemVigas.toFixed(1)} bolsas.`,
     `   • Arena gruesa: ${volViga.toFixed(3)} m³ × ${dos.arena} × 1.05 (desp.) = ${arenaVigas.toFixed(2)} m³.`,
     `   • Piedra chancada 1/2": ${volViga.toFixed(3)} m³ × ${dos.piedra} × 1.05 (desp.) = ${piedraVigas.toFixed(2)} m³.`,
     `2. FIERRO SUPERIOR E INFERIOR (Varillas de 9 m):`,
-    `   • Acero mínimo inferior RNE E.060 = ${AcMinCm2.toFixed(2)} cm² | Provisto = ${AcProvCm2.toFixed(2)} cm².`,
+    `   • Acero mínimo inferior RNE E.060 = ${AcMinCm2.toFixed(2)} cm² | Provisto = ${AcProvCm2.toFixed(2)} cm² (d = h − rec − estribo − barra/2 = ${dEfectivo.toFixed(1)} cm).`,
     `   • Superior (${p.nSup} varillas Ø ${p.dSup}"): Teórico ${varSup} var. (${kgSup.toFixed(1)} kg) → Comprar ${varSupC} var. (+5% traslape/empalme).`,
     `   • Inferior (${p.nInf} varillas Ø ${p.dInf}"): Teórico ${varInf} var. (${kgInf.toFixed(1)} kg) → Comprar ${varInfC} var. (+5% traslape/empalme).`,
     `3. ESTRIBOS (Ø ${p.dEst}"):`,
-    `   • Dimensión: ${anchoEst}×${altoEst} cm + 15 cm ganchos 135° (orientativo) → ${longEst.toFixed(2)} m por estribo.`,
+    `   • Dimensión: ${anchoEst}×${altoEst.toFixed(0)} cm + 15 cm ganchos 135° (orientativo) → ${longEst.toFixed(2)} m por estribo.`,
     `   • Total estribos: ${nEstTotal} und → Teórico ${varEst} var. (${kgEst.toFixed(1)} kg) → Comprar ${varEstC} var. (+5% traslape/empalme).`,
     `4. ALAMBRE, CLAVOS Y ENCOFRADO:`,
     `   • Alambre N° 16: ${alambre.toFixed(1)} kg.`,
     `   • Clavos 2 1/2": ~${clavos.toFixed(1)} kg.`,
-    `   • Encofrado (fondo + 2 costados): ${encofrado.toFixed(1)} m².`,
+    `   • Encofrado (fondo + 2 costados bajo losa): ${encofrado.toFixed(1)} m².`,
     `   • Nota: Cálculos orientativos. Validar con plano estructural aprobado.`,
   ];
 
@@ -516,9 +560,11 @@ export function calcVigas(p: ParamsVigas): Resultado {
   const clavosV = encofrado * 0.8;
   void alambreV; void clavosV;
 
+  const sisNota = sis === 'porticos' ? ' (pórtico E.060)' : ' (confinada)';
+
   return {
     titulo: 'Vigas',
-    detalle: `${p.cant} viga(s) de ${p.b}×${p.h} cm, luz libre ${p.luz} m`,
+    detalle: `${p.cant} viga(s) de ${p.b}×${p.h} cm${sisNota}, luz libre ${p.luz} m${espesorLosa > 0 ? `, losa ${espesorLosa} cm` : ''}`,
     resumen: [
       { nombre: 'Concreto f\'c ' + p.fc, valor: volViga.toFixed(3), unidad: 'm³' },
       { nombre: 'Cemento', valor: comprarEntero(cemVigas), unidad: 'bolsas' },
@@ -537,7 +583,7 @@ export function calcVigas(p: ParamsVigas): Resultado {
       { id: aEst.id_cat,       cant: varEst * traslapeFactor, comprar: varEstC, nota: `Estribos Ø ${p.dEst}" +5% traslape (~${kgEstC.toFixed(0)} kg)`,                desglose: `${nEstTotal} estribos × ${longEst.toFixed(2)}m desarrollo ÷ 9m` },
       { id: 'alambre_8',       cant: alambre,    comprar: ceil1(alambre), nota: 'Alambre N°16 de amarre',        desglose: `3% del fierro total (${kgTotal.toFixed(0)} kg)` },
       { id: 'clavos_encofrado', cant: clavos,   comprar: ceil1(clavos),   nota: 'Clavos 2 1/2"',                desglose: `${encofrado.toFixed(1)} m² encofrado × 0.8 kg/m²` },
-      { id: 'madera_encofrado', cant: encofrado, comprar: ceil1(encofrado),                                      desglose: `${p.cant} vigas × ${((p.b + 2 * p.h) / 100).toFixed(2)}m perím. × ${p.luz}m` },
+      { id: 'madera_encofrado', cant: encofrado, comprar: ceil1(encofrado),                                      desglose: `${p.cant} vigas × ${((p.b + 2 * hUtil) / 100).toFixed(2)}m perím. × ${p.luz}m` },
     ],
     avisos,
     pasos,
@@ -582,8 +628,9 @@ export function calcLosa(p: ParamsLosa): Resultado {
   // Ladrillos huecos de techo 30×30 cm (8.33 und/m² + 5% desperdicio = 8.75 und/m²)
   const ladTecho = area * TABLAS.losaTecho.und_m2 * (1 + TABLAS.desperdicios.ladrillo_techo);
 
-  // Viguetas: ancho / 0.40 m (espaciadas cada 40 cm entre ejes)
-  const nViguetas = Math.ceil(p.ancho / 0.40);
+  // Viguetas: número de varillas incluyendo una en cada borde. Espaciado máximo
+  // 40 cm entre ejes (Capeco): floor(ancho/0.40) + 1.
+  const nViguetas = Math.max(1, Math.floor(p.ancho / 0.40) + 1);
 
   // Acero de viguetas
   const aInf = aceroData(p.dInf);
@@ -676,21 +723,34 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
   const cemTarr = volTarr * dosMort.bolsas;
   const arenaTarr = volTarr * dosMort.arena;
 
-  // Contrapiso: concreto simple 1:8 + 25% piedra mediana (Capeco — misma dosificación
-  // del sobrecimiento: es el hormigón que se vacía en el contrapiso)
+  // Contrapiso: si es menor a 8 cm no cabe piedra mediana (3"-4"), se usa
+  // mortero 1:5. A partir de 8 cm se usa concreto simple 1:8 + 25% PM.
   let cemContra = 0, arenaContra = 0, piedraContra = 0, volContra = 0;
+  let contrapisoDelgado = false;
   if (p.contra === 'si') {
     volContra = p.aPiso * (p.eContra / 100) * 1.05;
-    const dosContra = TABLAS.cimientoCiclopeo['1:8+25%piedra'];
-    cemContra  = volContra * dosContra.bolsas;
-    arenaContra  = volContra * dosContra.hormigon;
-    piedraContra = volContra * dosContra.piedra;
+    contrapisoDelgado = p.eContra > 0 && p.eContra < 8;
+    if (contrapisoDelgado) {
+      const dosM = dosMortero(5);
+      cemContra  = volContra * dosM.bolsas;
+      arenaContra  = volContra * dosM.arena;
+      piedraContra = 0;
+    } else {
+      const dosContra = TABLAS.cimientoCiclopeo['1:8+25%piedra'];
+      cemContra  = volContra * dosContra.bolsas;
+      arenaContra  = volContra * dosContra.hormigon;
+      piedraContra = volContra * dosContra.piedra;
+    }
   }
 
   const arenaTotal = arenaTarr + arenaContra;
 
   // Cerámico con desperdicio por cortes
   const ceraCom = p.aPiso * (1 + p.perd / 100);
+
+  // Pegamento cerámico (≈4.5 kg/m², bolsa de 25 kg) y fragua (≈0.5 kg/m²)
+  const pegamentoBol = p.aPiso > 0 ? ceraCom * 4.5 / 25 : 0;
+  const fraguaKg = p.aPiso > 0 ? ceraCom * 0.5 : 0;
 
   // Pintura e Imprimante (galones comerciales)
   const galPint = p.aPint > 0 ? Math.ceil((p.aPint * p.manos) / p.rendP) : 0;
@@ -700,6 +760,8 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
     avisos.push({ n: 'warn', t: 'Espesor de tarrajeo menor a 1.0 cm: puede fisurarse por falta de recubrimiento adecuado.' });
   if (p.eTarr > 2.5)
     avisos.push({ n: 'warn', t: 'Espesor de tarrajeo mayor a 2.5 cm: aplicar en dos capas para evitar desprendimientos.' });
+  if (contrapisoDelgado)
+    avisos.push({ n: 'warn', t: `Contrapiso de ${p.eContra} cm: se calcula con mortero 1:5 sin piedra. La piedra mediana (3"-4") no cabe en menos de 8 cm.` });
 
   const cemTotal = cemTarr + cemContra;
 
@@ -709,10 +771,16 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
     `   • Cemento: ${volTarr.toFixed(3)} m³ × ${dosMort.bolsas} bol/m³ = ${cemTarr.toFixed(1)} bolsas.`,
     `   • Arena fina/lavada: ${volTarr.toFixed(3)} m³ × ${dosMort.arena} = ${arenaTarr.toFixed(2)} m³.`,
     p.contra === 'si'
-      ? `2. CONTRAPISO (Espesor ${p.eContra} cm — concreto simple 1:8 + 25% piedra mediana, Capeco):\n   • Volumen: ${volContra.toFixed(3)} m³ | Cemento: ${cemContra.toFixed(1)} bolsas | Arena: ${arenaContra.toFixed(2)} m³ | Piedra mediana: ${piedraContra.toFixed(2)} m³.`
+      ? `2. CONTRAPISO (Espesor ${p.eContra} cm${contrapisoDelgado ? ' — mortero 1:5 sin piedra' : ' — concreto simple 1:8 + 25% piedra mediana, Capeco'}):\n   • Volumen: ${volContra.toFixed(3)} m³ | Cemento: ${cemContra.toFixed(1)} bolsas | Arena: ${arenaContra.toFixed(2)} m³ | Piedra mediana: ${piedraContra.toFixed(2)} m³.`
       : `2. CONTRAPISO: No solicitado.`,
     `3. PISO CERÁMICO:`,
     `   • Área: ${p.aPiso} m² × (1 + ${p.perd}% desperdicio de cortes) = ${ceraCom.toFixed(2)} m² a comprar.`,
+    p.aPiso > 0
+      ? `   • Pegamento cerámico: ≈4.5 kg/m² → ${pegamentoBol.toFixed(1)} bolsa(s) de 25 kg.`
+      : '',
+    p.aPiso > 0
+      ? `   • Fragua para cerámico: ≈0.5 kg/m² → ${fraguaKg.toFixed(0)} kg.`
+      : '',
     `4. PINTURA LÁTEX E IMPRIMANTE:`,
     `   • Pintura (${p.manos} manos a ${p.rendP} m²/gal): ${galPint} galón(es).`,
     `   • Imprimante base: ${galImp} galón(es).`,
@@ -730,13 +798,18 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
       { nombre: 'Cemento total', valor: comprarEntero(cemTotal), unidad: 'bolsas' },
       { nombre: 'Arena', valor: ceil1(arenaTotal), unidad: 'm³' },
       { nombre: 'Cerámico a comprar', valor: Math.ceil(ceraCom), unidad: 'm²' },
+      { nombre: 'Pegamento cerámico', valor: pegamentoBol > 0 ? pegamentoBol.toFixed(1) : '-', unidad: 'bolsas 25 kg' },
+      { nombre: 'Fragua', valor: fraguaKg > 0 ? fraguaKg.toFixed(0) : '-', unidad: 'kg' },
       { nombre: 'Pintura látex', valor: galPint, unidad: 'gal' },
       { nombre: 'Imprimante', valor: galImp, unidad: 'gal' },
     ],
     mats: [
       { id: 'cemento',       cant: cemTotal,    comprar: comprarEntero(cemTotal), desglose: p.contra === 'si' ? `Tarrajeo: ${cemTarr.toFixed(1)} bol + Contrapiso: ${cemContra.toFixed(1)} bol = ${cemTotal.toFixed(1)} bol` : `Tarrajeo 1:5: ${cemTarr.toFixed(1)} bolsas` },
-      { id: 'arena_gruesa',  cant: arenaTotal,  comprar: ceil1(arenaTotal),       desglose: p.contra === 'si' ? `Tarrajeo: ${arenaTarr.toFixed(2)} m³ + Contrapiso: ${arenaContra.toFixed(2)} m³` : `${volTarr.toFixed(2)} m³ mortero 1:5 × ${dosMort.arena} m³/m³` },
-      ...(p.contra === 'si' ? [{ id: 'piedra_mediana', cant: piedraContra, comprar: ceil1(piedraContra), nota: 'Para contrapiso', desglose: `${volContra.toFixed(2)} m³ contrapiso 1:8+25% PM (Capeco)` }] : []),
+      { id: 'arena_fina',    cant: arenaTarr,   comprar: ceil1(arenaTarr),        desglose: `${volTarr.toFixed(2)} m³ mortero 1:5 × ${dosMort.arena} m³/m³ (tarrajeo)` },
+      { id: 'arena_gruesa',  cant: arenaContra, comprar: ceil1(arenaContra),       desglose: p.contra === 'si' ? `Contrapiso ${p.eContra} cm: ${arenaContra.toFixed(2)} m³` : '', nota: arenaContra > 0 ? 'Para contrapiso' : undefined },
+      ...(p.contra === 'si' && piedraContra > 0 ? [{ id: 'piedra_mediana', cant: piedraContra, comprar: ceil1(piedraContra), nota: 'Para contrapiso', desglose: `${volContra.toFixed(2)} m³ contrapiso 1:8+25% PM (Capeco)` }] : []),
+      ...(p.aPiso > 0 ? [{ id: 'pegamento_ceramico', cant: pegamentoBol, comprar: Math.ceil(pegamentoBol), desglose: `${ceraCom.toFixed(2)} m² × 4.5 kg/m² ÷ 25 kg/bolsa` }] : []),
+      ...(p.aPiso > 0 ? [{ id: 'fragua', cant: fraguaKg, comprar: Math.ceil(fraguaKg), desglose: `${ceraCom.toFixed(2)} m² × 0.5 kg/m²` }] : []),
       { id: 'ceramico',      cant: ceraCom,     comprar: Math.ceil(ceraCom),      desglose: `${p.aPiso} m² piso + ${p.perd}% desp. de cortes` },
       { id: 'pintura_latex', cant: galPint,     comprar: galPint,                 desglose: `${p.aPint} m² × ${p.manos} manos ÷ ${p.rendP} m²/gal` },
       { id: 'imprimante',    cant: galImp,      comprar: galImp,                  desglose: `${p.aPint} m² ÷ ${(p.rendP * 1.5).toFixed(0)} m²/gal` },
@@ -768,7 +841,7 @@ export function dimensionarZapata(
   else if (p.pa <= 0) return { error: 'Indique presión admisible (kg/cm²) o seleccione tipo de suelo.' };
 
   // Área requerida Areq = (Carga * 1000 kg) / pa (kg/cm²) -> convertir a m²: /10000
-  const cargaKg = p.carga * 1000;
+  const cargaKg = p.carga * 1000 * MAYORACION_ZAPATA;
   const areaReqM2 = cargaKg / (pa * 10000);
   let lado = Math.sqrt(areaReqM2);
   // Redondear al múltiplo comercial 5 cm hacia arriba
@@ -798,7 +871,8 @@ export function calcZapata(p: ParamsZapata): Resultado {
   const B = lado;
   const H = lado;
   const areaZap = B * H;
-  const cargaKg = p.carga * 1000;
+  // Carga mayorada 10% por peso propio de zapata y relleno encima (RNE E.050)
+  const cargaKg = p.carga * 1000 * MAYORACION_ZAPATA;
   const areaReqM2 = cargaKg / (pa * 10000);
   if (espesor < 0.4) avisos.push({ n: 'warn', t: 'Espesor < 0.40 m: usualmente se incrementa para zapatas aisladas en vivienda.' });
   if (p.fc < 175)
@@ -832,8 +906,8 @@ export function calcZapata(p: ParamsZapata): Resultado {
   const pasos = [
     `1. PRESIÓN ADMISIBLE DEL SUELO:`,
     `   • Tipo: ${p.suelo} | pa = ${pa.toFixed(2)} kg/cm².`,
-    `   • Carga axial: ${p.carga} tn = ${cargaKg} kg. Debe incluir el peso propio de la zapata y el relleno encima; si no lo incluiste, agrégale ~10%.`,
-    `   • Área requerida: ${cargaKg} kg ÷ (${pa} kg/cm² × 10000 cm²/m²) = ${areaReqM2.toFixed(3)} m².`,
+    `   • Carga axial: ${p.carga} tn → ${(p.carga * 1000 * MAYORACION_ZAPATA).toFixed(0)} kg (incluye 10% por peso propio y relleno encima, RNE E.050).`,
+    `   • Área requerida: ${cargaKg.toFixed(0)} kg ÷ (${pa} kg/cm² × 10000 cm²/m²) = ${areaReqM2.toFixed(3)} m².`,
     `2. DIMENSIONADO DE ZAPATA (cuadrada):`,
     `   • Lado adoptado B×H: ${B.toFixed(2)} m × ${H.toFixed(2)} m (área ${areaZap.toFixed(3)} m²).`,
     `   • Presión que transmite: ${cargaKg} ÷ ${areaZap.toFixed(3)} = ${(cargaKg / areaZap).toFixed(0)} kg/m² < ${pa*10000} kg/m².`,
@@ -898,17 +972,17 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
   else
     avisos.push({ n: 'warn', t: `Pendiente ${pend.toFixed(1)}°: lo cómodo para vivienda es 30° a 38°. Ajusta la altura o el ancho del tramo.` });
 
-  if (blondel >= 60 && blondel <= 65)
-    avisos.push({ n: 'ok', t: `Ergonomía: 2×${ch.toFixed(1)} + ${hu} = ${blondel.toFixed(1)} cm — fórmula de Blondel cumplida (60 a 65 cm).` });
+  if (blondel >= 60 && blondel <= 64)
+    avisos.push({ n: 'ok', t: `Ergonomía: 2×${ch.toFixed(1)} + ${hu} = ${blondel.toFixed(1)} cm — fórmula de Blondel cumplida (60 a 64 cm).` });
   else
-    avisos.push({ n: 'warn', t: `Ergonomía: 2×${ch.toFixed(1)} + ${hu} = ${blondel.toFixed(1)} cm — Blondel aconseja 60 a 65 cm; así se sube y baja incómodo.` });
+    avisos.push({ n: 'warn', t: `Ergonomía: 2×${ch.toFixed(1)} + ${hu} = ${blondel.toFixed(1)} cm — Blondel aconseja 60 a 64 cm; así se sube y baja incómodo.` });
 
-  if (ch > 19.5)
-    avisos.push({ n: 'warn', t: `Contrahuella ${ch.toFixed(1)} cm: es alta para vivienda; reparte la altura en un escalón más.` });
+  if (ch > 18)
+    avisos.push({ n: 'warn', t: `Contrahuella ${ch.toFixed(1)} cm: supera el máximo normativo de 0.18 m para vivienda (RNE A.010/A.020, Art. 29/15). Reparte la altura en un escalón más.` });
   if (ch < 15)
     avisos.push({ n: 'warn', t: `Contrahuella ${ch.toFixed(1)} cm: muy baja; la escalera queda larga y pesada.` });
-  if (p.ancho < 0.8)
-    avisos.push({ n: 'warn', t: `Ancho ${p.ancho} m: en vivienda el tramo debe tener mínimo 0.80 m de ancho libre (RNE A.010/A.020).` });
+  if (p.ancho < 0.90)
+    avisos.push({ n: 'warn', t: `Ancho ${p.ancho} m: entre muros el mínimo es 0.90 m (RNE A.020 Art. 15.1); 0.80 m solo si un lado está abierto.` });
   if (p.altura > 3.5)
     avisos.push({ n: 'warn', t: `Altura ${p.altura} m en un solo tramo: es mucha; lo usual es dividir en dos tramos con meseta intermedia.` });
   avisos.push({ n: 'ok', t: 'El fierro es orientativo: el armado real de la escalera lo define el plano estructural (RNE E.060).' });

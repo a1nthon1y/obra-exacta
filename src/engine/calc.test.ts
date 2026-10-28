@@ -189,8 +189,8 @@ describe('zapata y f\'c mínimo', () => {
     const r = resultado('zapata', CASOS[7].params);
     expect(r.pasos.join('\n')).toMatch(/recubrimiento 7\.5 cm/i);
     const acero = r.mats.find(m => m.id === 'fierro_1_2');
-    // B = 1.15 m → longitud de varilla 1.15 − 2×0.075 = 1.00 m
-    expect(acero!.desglose).toContain('1.00m');
+    // B = 1.20 m (con 10% de sobrecarga) → longitud de varilla 1.20 − 2×0.075 = 1.05 m
+    expect(acero!.desglose).toContain('1.05m');
   });
 
   it("avisa f'c bajo en vigas, losa, escalera y zapata", () => {
@@ -213,5 +213,166 @@ describe('zapata y f\'c mínimo', () => {
       espesor: 40, dVar: '1/2', fc: 140, cant: 4,
     });
     expect(zapata.avisos.some(a => /175 kg\/cm²/.test(a.t))).toBe(true);
+  });
+});
+
+describe('cimientos: cimiento separado de la excavación', () => {
+  it('con altoCimiento 0.50 usa menos cemento que llenar toda la zanja', () => {
+    const parcial = resultado('cimientos', {
+      largo: 30, ancho: 0.6, prof: 1.0, esp: 0.15, alto: 0.4, altoCimiento: 0.5,
+    });
+    const lleno = resultado('cimientos', {
+      largo: 30, ancho: 0.6, prof: 1.0, esp: 0.15, alto: 0.4, altoCimiento: 1.0,
+    });
+    const cemParcial = parcial.mats.find(m => m.id === 'cemento')!.cant;
+    const cemLleno = lleno.mats.find(m => m.id === 'cemento')!.cant;
+    expect(cemParcial).toBeLessThan(cemLleno);
+    expect(parcial.resumen.find(r => r.nombre === 'Cimiento')!.valor).toBe('9.00');
+  });
+
+  it('avisa cuando el cimiento es más alto que la zanja', () => {
+    const r = calcular('cimientos', { largo: 10, ancho: 0.5, prof: 0.6, esp: 0.15, alto: 0.4, altoCimiento: 0.8 });
+    expect('error' in r).toBe(true);
+    if ('error' in r) expect(r.error).toContain('altura del cimiento');
+  });
+});
+
+describe('contrapiso delgado sin piedra mediana', () => {
+  it('contrapiso de 4 cm usa mortero 1:5 y no piedra mediana', () => {
+    const r = resultado('acabados', {
+      aTarr: 40, eTarr: 1.5, aPint: 40, manos: 2, rendP: 30,
+      aPiso: 30, perd: 10, contra: 'si', eContra: 4,
+    });
+    expect(r.mats.find(m => m.id === 'piedra_mediana')).toBeUndefined();
+    expect(r.mats.find(m => m.id === 'arena_fina')).toBeDefined();
+    expect(r.pasos.join('\n')).toMatch(/mortero 1:5/);
+    expect(r.avisos.some(a => /no cabe en menos de 8 cm/.test(a.t))).toBe(true);
+  });
+
+  it('contrapiso de 10 cm sigue usando piedra mediana', () => {
+    const r = resultado('acabados', {
+      aTarr: 0, eTarr: 1.5, aPint: 0, manos: 2, rendP: 30,
+      aPiso: 30, perd: 10, contra: 'si', eContra: 10,
+    });
+    expect(r.mats.find(m => m.id === 'piedra_mediana')).toBeDefined();
+    expect(r.mats.find(m => m.id === 'pegamento_ceramico')).toBeDefined();
+    expect(r.mats.find(m => m.id === 'fragua')).toBeDefined();
+  });
+});
+
+describe('zapata con 10% de peso propio y relleno', () => {
+  it('sube el lado de la zapata respecto a la carga neta', () => {
+    const r = resultado('zapata', {
+      tipo: 'aislada', bCol: 30, hCol: 30, carga: 15, suelo: 'intermedio', pa: 1.2,
+      espesor: 40, dVar: '1/2', fc: 210, cant: 1,
+    });
+    expect(r.resumen.find(r => r.nombre === 'Lado zapata')!.valor).toBe('1.20');
+    expect(r.pasos.join('\n')).toMatch(/incluye 10%/);
+  });
+});
+
+describe('vigas con sistema y losa', () => {
+  it('descuenta la losa del hormigón y del encofrado', () => {
+    const conLosa = resultado('vigas', {
+      b: 25, h: 30, luz: 4.5, cant: 3, nSup: 2, dSup: '1/2', nInf: 3, dInf: '1/2',
+      dEst: '3/8', rec: 4, fc: 210, sis: 'confinada', espesorLosa: 20,
+    });
+    const sinLosa = resultado('vigas', {
+      b: 25, h: 30, luz: 4.5, cant: 3, nSup: 2, dSup: '1/2', nInf: 3, dInf: '1/2',
+      dEst: '3/8', rec: 4, fc: 210, sis: 'confinada',
+    });
+    const volCon = Number(conLosa.resumen.find(r => r.nombre === 'Concreto f\'c 210')!.valor);
+    const volSin = Number(sinLosa.resumen.find(r => r.nombre === 'Concreto f\'c 210')!.valor);
+    expect(volCon).toBeLessThan(volSin);
+    expect(conLosa.detalle).toContain('losa 20 cm');
+    expect(conLosa.pasos.join('\n')).toMatch(/se descuenta la losa de 20 cm/);
+    expect(conLosa.mats.find(m => m.id === 'madera_encofrado')!.desglose).toContain('0.45m');
+  });
+
+  it('pórticos rechazan viga menor a 25 cm de base', () => {
+    const r = resultado('vigas', {
+      b: 15, h: 40, luz: 4, cant: 1, nSup: 2, dSup: '1/2', nInf: 2, dInf: '1/2',
+      dEst: '3/8', rec: 4, fc: 210, sis: 'porticos',
+    });
+    expect(r.avisos.some(a => a.n === 'bad' && /25 cm/.test(a.t))).toBe(true);
+  });
+
+  it('confinada no exige base de 25 cm', () => {
+    const r = resultado('vigas', {
+      b: 13, h: 25, luz: 4, cant: 1, nSup: 2, dSup: '1/2', nInf: 2, dInf: '1/2',
+      dEst: '3/8', rec: 2, fc: 210, sis: 'confinada',
+    });
+    expect(r.avisos.some(a => a.n === 'bad' && /25 cm/.test(a.t))).toBe(false);
+  });
+
+  it('mejora d a h − rec − estribo − barra/2', () => {
+    const r = resultado('vigas', {
+      b: 25, h: 30, luz: 4, cant: 1, nSup: 2, dSup: '1/2', nInf: 2, dInf: '1/2',
+      dEst: '3/8', rec: 4, fc: 210,
+    });
+    expect(r.pasos.join('\n')).toMatch(/d = h − rec − estribo − barra\/2/);
+  });
+});
+
+describe('muros: fórmula de unidad siempre', () => {
+  it('KK18 cabeza usa la fórmula (~65.7 und/m²), no la tabla (62)', () => {
+    const r = resultado('muros', {
+      largo: 1, alto: 1, aberturas: 0, aparejo: 'cabeza', ladrillo: 'kk18',
+      lb: 24, ab: 13, hb: 9, junta: 1.5, desL: 0, desM: 0, mezcla: 5, uso: 'portante',
+    });
+    const lad = r.mats.find(m => m.id === 'ladrillo_kk18')!.cant;
+    expect(lad).toBeGreaterThan(64);
+    expect(lad).toBeLessThan(67);
+    expect(r.mats.find(m => m.id === 'ladrillo_kk18')!.desglose).toContain('fórmula según medidas');
+  });
+
+  it('pandereta advierte del consumo extra de mortero', () => {
+    const r = resultado('muros', {
+      largo: 4, alto: 2.5, aberturas: 0, aparejo: 'soga', ladrillo: 'pand',
+      lb: 24, ab: 12, hb: 9, junta: 1.5, desL: 5, desM: 10, mezcla: 5, uso: 'tabique',
+    });
+    expect(r.avisos.some(a => /pandereta/i.test(a.t))).toBe(true);
+    expect(r.avisos.some(a => /1\.5/.test(a.t))).toBe(true);
+  });
+});
+
+describe('losa: espesor automático y viguetas', () => {
+  it('luz 5.5 m sugiere 22 cm (L/25), no 20', () => {
+    const r = resultado('losa', {
+      largo: 5.5, ancho: 4, espesor: 'auto', fc: 210, nInf: 2, dInf: '1/2', nBast: 2, dBast: '3/8',
+    });
+    expect(r.resumen.find(r => r.nombre === 'Espesor losa')!.valor).toBe(22);
+    expect(r.pasos.join('\n')).toMatch(/Espesor de losa: 22 cm/);
+  });
+
+  it('ancho 4.0 m tiene 11 viguetas (una en cada borde)', () => {
+    const r = resultado('losa', {
+      largo: 4, ancho: 4, espesor: 'auto', fc: 210, nInf: 2, dInf: '1/2', nBast: 2, dBast: '3/8',
+    });
+    expect(r.pasos.join('\n')).toMatch(/= 11 viguetas/);
+  });
+
+  it('concreto de 22 cm usa el factor 0.0925', () => {
+    const r = resultado('losa', {
+      largo: 4, ancho: 4, espesor: 22 as any, fc: 210, nInf: 2, dInf: '1/2', nBast: 2, dBast: '3/8',
+    });
+    expect(r.pasos.join('\n')).toMatch(/0\.0925/);
+  });
+});
+
+describe('escalera: umbrales A.010/A.020', () => {
+  it('ancho menor a 0.90 m advierte el mínimo entre muros', () => {
+    const r = resultado('escalera', { altura: 2.8, ancho: 0.85, huella: 'auto', fc: 210 });
+    expect(r.avisos.some(a => /0\.90 m/.test(a.t))).toBe(true);
+  });
+
+  it('contrahuella sobre 0.18 m no cumple', () => {
+    const r = resultado('escalera', { altura: 3.3, ancho: 1.0, huella: 'auto', fc: 210 });
+    expect(r.avisos.some(a => /0\.18 m/.test(a.t))).toBe(true);
+  });
+
+  it('Blondel cumple en 60 a 64 cm', () => {
+    const r = resultado('escalera', { altura: 2.8, ancho: 1.0, huella: 'auto', fc: 210 });
+    expect(r.avisos.some(a => /60 a 64 cm/.test(a.t) && a.n === 'ok')).toBe(true);
   });
 });

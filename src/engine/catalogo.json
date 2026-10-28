@@ -20,6 +20,13 @@
     "grupo": "Áridos",
     "fuente": "OneEstimate agosto 2026"
   },
+  "arena_fina": {
+    "nombre": "Arena fina / lavada",
+    "unidad": "m³",
+    "precio": 70.00,
+    "grupo": "Áridos",
+    "fuente": "OneEstimate agosto 2026"
+  },
   "piedra_chancada": {
     "nombre": "Piedra chancada 1/2\"",
     "unidad": "m³",
@@ -150,6 +157,20 @@
     "nombre": "Imprimante",
     "unidad": "gal",
     "precio": 35.00,
+    "grupo": "Acabados",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "pegamento_ceramico": {
+    "nombre": "Pegamento cerámico (bolsa 25 kg)",
+    "unidad": "bolsa 25 kg",
+    "precio": 28.00,
+    "grupo": "Acabados",
+    "fuente": "Mercado Lima oct-2026"
+  },
+  "fragua": {
+    "nombre": "Fragua para cerámico",
+    "unidad": "kg",
+    "precio": 8.00,
     "grupo": "Acabados",
     "fuente": "Mercado Lima oct-2026"
   }
