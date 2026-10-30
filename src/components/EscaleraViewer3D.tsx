@@ -48,9 +48,10 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lan
   const realHu = huellaCm > 0 ? huellaCm : 27;
   const realLanza = lanzaCm && lanzaCm > 0 ? lanzaCm : 15;
   const n = nEscalones(realAltura);
+  const nHuellas = n - 1;
   const ch = (realAltura * 100) / n;               // contrahuella (cm)
-  const desH = (n * realHu) / 100;                 // desarrollo horizontal (m)
-  const pend = Math.atan2(realAltura, desH);       // radianes
+  const desH = (nHuellas * realHu) / 100;          // desarrollo horizontal (m)
+  const pend = Math.atan2(ch, realHu);             // radianes (línea de narices)
 
   // Escala visual proporcional al desarrollo
   const desVis = Math.min(Math.max(desH * 0.6, 2.2), 4.8);
@@ -88,7 +89,7 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lan
     const x0 = -desVis / 2; // inicio del tramo
 
     // Lanza inclinada (el tablero de concreto que sostiene los escalones)
-    const longLanza = Math.hypot(desVis, vAltura);
+    const longLanza = nHuellas * Math.hypot(vHu, vCh);
     const lanza = new THREE.Mesh(
       new THREE.BoxGeometry(longLanza, vEL, vAncho),
       new THREE.MeshStandardMaterial({
@@ -99,7 +100,7 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lan
       })
     );
     lanza.rotation.z = pend;
-    lanza.position.set(0, vAltura / 2 + (vEL / 2) * Math.cos(pend) - (vEL / 2), 0);
+    lanza.position.set(0, (vAltura - vCh) / 2 + (vEL / 2) * Math.cos(pend) - (vEL / 2), 0);
     scene.add(lanza);
     addHighlightEdges(lanza, false, VIEWER_COLORS.highlight, VIEWER_COLORS.concreteEdge);
 
@@ -110,9 +111,9 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lan
       opacity: 0.55,
       roughness: 0.85,
     });
-    const tanP = vAltura / desVis;
+    const tanP = vCh / vHu;
     let primerEscalon: THREE.Mesh | null = null;
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < n - 1; i++) {
       const xc = (i + 0.5) * vHu;                    // centro del escalón
       const yLanza = vEL + xc * tanP;                // superficie de la lanza ahí
       const esc = new THREE.Mesh(new THREE.BoxGeometry(vHu * 0.98, vCh / 2, vAncho), matEsc);
@@ -168,7 +169,7 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lan
       renderer.dispose();
       container.innerHTML = '';
     };
-  }, [tab, desVis, vAltura, vCh, vHu, vAncho, vEL, desH, pend, n, realAltura, realAncho, realHu, campoActivo, autoRotate]);
+  }, [tab, desVis, vAltura, vCh, vHu, vAncho, vEL, desH, pend, n, nHuellas, realAltura, realAncho, realHu, campoActivo, autoRotate]);
 
   // —— Datos del Plano 2D (alzado) ——
   const S = Math.min(420 / desH, 220 / realAltura); // px por metro
@@ -181,10 +182,12 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lan
 
   // Polilínea del perfil escalonado
   const pasosPts: string[] = [`${x0p},${y0p}`];
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n - 1; i++) {
     pasosPts.push(`${x0p + i * huPx},${y0p - (i + 1) * chPx}`);
     pasosPts.push(`${x0p + (i + 1) * huPx},${y0p - (i + 1) * chPx}`);
   }
+  // Última contrahuella: sube al piso superior (la última huella es el piso).
+  pasosPts.push(`${x0p + desPx},${y0p - altPx}`);
 
   const pendDeg = (pend * 180) / Math.PI;
 
@@ -206,7 +209,8 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lan
       badges={[
         { id: 'altura', icon: '⬆️', label: 'Alto', value: `${realAltura} m`, tone: campoActivo === 'altura' ? 'amber' : 'cyan' },
         { id: 'ancho', icon: '↔️', label: 'Ancho', value: `${realAncho} m`, tone: campoActivo === 'ancho' ? 'amber' : 'cyan' },
-        { id: 'esc', icon: '🪜', label: 'Escalones', value: `${n} und`, tone: 'cyan' },
+        { id: 'esc', icon: '🪜', label: 'Contrahuellas', value: `${n} und`, tone: 'cyan' },
+        { id: 'huellas', icon: '↔️', label: 'Huellas', value: `${nHuellas} und`, tone: 'cyan' },
         { id: 'ch', icon: '⬆️', label: 'Contrahuella', value: `${ch.toFixed(1)} cm`, tone: 'cyan' },
         { id: 'hu', icon: '↔️', label: 'Huella', value: `${realHu} cm`, tone: campoActivo === 'huella' ? 'amber' : 'cyan' },
         { id: 'lanza', icon: '📏', label: 'Lanza', value: `${realLanza} cm`, tone: campoActivo === 'lanza' ? 'amber' : 'cyan' },
@@ -234,13 +238,13 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lan
               </marker>
             </defs>
 
-            <text x={280} y={30} textAnchor="middle" fill="#cbd5e1" fontSize="12" fontFamily="monospace" letterSpacing="1">ALZADO — {n} ESCALONES</text>
+            <text x={280} y={30} textAnchor="middle" fill="#cbd5e1" fontSize="12" fontFamily="monospace" letterSpacing="1">ALZADO — {n} CONTRAHUELLAS · {nHuellas} HUELLAS</text>
 
             {/* Piso */}
             <line x1={30} y1={y0p} x2={530} y2={y0p} stroke="#64748b" strokeWidth="1.5" />
 
-            {/* Lanza (línea inclinada del sofito) */}
-            <line x1={x0p} y1={y0p - 2} x2={x0p + desPx} y2={y0p - altPx - 2} stroke="#475569" strokeWidth="7" strokeLinecap="round" />
+            {/* Lanza (línea inclinada del sofito, paralela a las narices) */}
+            <line x1={x0p} y1={y0p - 2} x2={x0p + desPx} y2={y0p - (altPx - chPx) - 2} stroke="#475569" strokeWidth="7" strokeLinecap="round" />
 
             {/* Perfil escalonado */}
             <polyline points={pasosPts.join(' ')} fill="none" stroke="#94a3b8" strokeWidth="2.2" strokeLinejoin="round" />

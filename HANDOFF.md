@@ -154,6 +154,22 @@ chunk por Three.js).
 
 Verificado: `npm test` (54/54), `npx oxlint src` (0), `npm run build` (OK).
 
+### Escalera n−1 y solado de zapata (30/10/2026)
+
+- **Escalera:** se separan contrahuellas y huellas. Con `n` contrahuellas el piso
+  superior hace de última huella, así que el desarrollo es `(n−1)·hu` y el cuerpo
+  escalonado tiene `n−1` triángulos. La lanza corre paralela a la línea de narices
+  (`L = (n−1)·√(hu²+ch²)`), no de piso a piso. Para 2.8 m: 16 contrahuellas,
+  15 huellas y 4.05 m (antes 4.32 m); el concreto baja ~6%. Visor 3D y plano 2D
+  actualizados (última contrahuella al piso superior).
+- **Solado de zapata:** 5 cm de concreto simple 1:10, 10 cm por lado, con cemento y
+  hormigón en el metrado. Para 4 zapatas de 1.20 m: 0.392 m³ (≈1.3 bolsas + 0.35 m³
+  de hormigón). Nueva dosificación `solado` en `tablas.json`.
+- **Pruebas:** 56. Nuevas: 16/15 huellas y 4.05 m; solado de 0.392 m³ y material
+  `hormigon`.
+
+Verificado: `npm test` (56/56), `npx oxlint src` (0), `npm run build` (OK).
+
 
 ## Estado actual
 

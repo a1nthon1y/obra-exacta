@@ -231,6 +231,14 @@ describe('zapata y f\'c mínimo', () => {
     expect(r.avisos.some(a => /punzonamiento/i.test(a.t))).toBe(true);
   });
 
+  it('incluye solado de 5 cm con 10 cm por lado', () => {
+    const r = resultado('zapata', CASOS[7].params);
+    // B = 1.20 m, 4 zapatas → (1.20 + 0.20)² × 0.05 × 4 = 0.392 m³
+    expect(r.resumen.find(x => x.nombre === 'Solado 1:10')!.valor).toBe('0.392');
+    expect(r.mats.find(m => m.id === 'hormigon')).toBeDefined();
+    expect(r.pasos.join('\n')).toMatch(/SOLADO \(concreto simple 1:10, e = 5 cm/i);
+  });
+
   it("marca como error f'c bajo en vigas, losa, escalera y zapata", () => {
     const viga = resultado('vigas', {
       b: 25, h: 30, luz: 4.5, cant: 3, nSup: 2, dSup: '1/2', nInf: 3, dInf: '5/8',
@@ -472,6 +480,15 @@ describe('escalera: espesor de la lanza', () => {
   it('avisa si la lanza sale del rango usual 12–20 cm', () => {
     const r = resultado('escalera', { altura: 2.8, ancho: 1.0, huella: 'auto', lanza: 25, fc: 210 });
     expect(r.avisos.some(a => /fuera del rango usual/.test(a.t))).toBe(true);
+  });
+});
+
+describe('escalera: n−1 huellas', () => {
+  it('2.8 m con huella 27 deja 16 contrahuellas, 15 huellas y 4.05 m de desarrollo', () => {
+    const r = resultado('escalera', { altura: 2.8, ancho: 1.0, huella: 'auto', fc: 210 });
+    expect(r.resumen.find(x => x.nombre === 'Contrahuellas')!.valor).toBe(16);
+    expect(r.resumen.find(x => x.nombre === 'Huellas')!.valor).toBe(15);
+    expect(r.resumen.find(x => x.nombre === 'Desarrollo')!.valor).toBe('4.05');
   });
 });
 

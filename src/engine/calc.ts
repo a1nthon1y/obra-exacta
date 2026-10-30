@@ -900,6 +900,15 @@ export function calcZapata(p: ParamsZapata): Resultado {
   const arena = volConcreto * dos.arena * 1.05;
   const piedra = volConcreto * dos.piedra * 1.05;
 
+  // Solado de 5 cm bajo la zapata, 10 cm por lado (práctica de obra peruana).
+  const eSolado = 0.05;
+  const bordeSolado = 0.10;
+  const areaSolado = (B + 2 * bordeSolado) ** 2;
+  const volSolado = areaSolado * eSolado * p.cant;
+  const dosSol = TABLAS.solado;
+  const cemSol = volSolado * dosSol.bolsas * 1.05;
+  const hormigonSol = volSolado * dosSol.hormigon;
+
   const aVar = aceroData(p.dVar);
   // Recubrimiento de 7.5 cm: concreto vaciado contra el terreno (RNE E.060).
   const rec = 0.075;
@@ -936,7 +945,10 @@ export function calcZapata(p: ParamsZapata): Resultado {
     `4. CONCRETO (f'c = ${p.fc} kg/cm²):`,
     `   • Volumen: ${p.cant} zap. × ${B.toFixed(2)}×${H.toFixed(2)}×${espesor.toFixed(2)} = ${volConcreto.toFixed(3)} m³.`,
     `   • Cemento: ${cem.toFixed(1)} bolsas | Arena: ${arena.toFixed(2)} m³ | Piedra: ${piedra.toFixed(2)} m³.`,
-    `5. ENCOFRADO: ${encofrado.toFixed(1)} m² de madera.`,
+    `5. SOLADO (concreto simple 1:10, e = 5 cm, +10 cm por lado):`,
+    `   • Área: (${B.toFixed(2)} + 2×0.10)² = ${areaSolado.toFixed(2)} m²/zapata × ${p.cant} = ${(areaSolado * p.cant).toFixed(2)} m².`,
+    `   • Volumen: ${volSolado.toFixed(3)} m³ | Cemento: ${cemSol.toFixed(1)} bolsas | Hormigón: ${hormigonSol.toFixed(2)} m³.`,
+    `6. ENCOFRADO: ${encofrado.toFixed(1)} m² de madera.`,
   ];
 
   return {
@@ -946,7 +958,9 @@ export function calcZapata(p: ParamsZapata): Resultado {
       { nombre: 'Lado zapata', valor: B.toFixed(2), unidad: 'm' },
       { nombre: 'Espesor', valor: espesor.toFixed(2), unidad: 'm' },
       { nombre: 'Concreto f\'c ' + p.fc, valor: volConcreto.toFixed(3), unidad: 'm³' },
-      { nombre: 'Cemento', valor: comprarEntero(cem), unidad: 'bolsas' },
+      { nombre: 'Solado 1:10', valor: volSolado.toFixed(3), unidad: 'm³' },
+      { nombre: 'Hormigón solado', valor: ceil1(hormigonSol), unidad: 'm³' },
+      { nombre: 'Cemento', valor: comprarEntero(cem) + comprarEntero(cemSol), unidad: 'bolsas' },
       { nombre: 'Fierro (orient.)', valor: kgFierro.toFixed(1), unidad: 'kg' },
       { nombre: 'Encofrado', valor: encofrado.toFixed(1), unidad: 'm²' },
     ],
@@ -954,6 +968,8 @@ export function calcZapata(p: ParamsZapata): Resultado {
       { id: 'cemento',         cant: cem,      comprar: comprarEntero(cem),   desglose: `${volConcreto.toFixed(2)} m³ × ${dos.bolsas} bol/m³ (+5% desp.)` },
       { id: 'arena_gruesa',    cant: arena,    comprar: ceil1(arena),         desglose: `${volConcreto.toFixed(2)} m³ concreto × ${dos.arena} m³/m³` },
       { id: 'piedra_chancada', cant: piedra,   comprar: ceil1(piedra),        desglose: `${volConcreto.toFixed(2)} m³ concreto × ${dos.piedra} m³/m³` },
+      { id: 'cemento',         cant: cemSol,   comprar: comprarEntero(cemSol), nota: 'Solado 1:10 (5 cm)', desglose: `${volSolado.toFixed(3)} m³ solado × ${dosSol.bolsas} bol/m³ (+5% desp.)` },
+      { id: 'hormigon',        cant: hormigonSol, comprar: ceil1(hormigonSol), nota: 'Solado 1:10 (5 cm)', desglose: `${volSolado.toFixed(3)} m³ solado × ${dosSol.hormigon} m³/m³` },
       { id: aVar.id_cat,       cant: varillasExactas(longTotal * 1.05, aVar), comprar: varillas, nota: `Malla inferior Ø ${p.dVar}" X/Y (~${kgFierro.toFixed(0)} kg)`, desglose: `${numVarXM + numVarYM} var/zapata × ${(B-rec*2).toFixed(2)}m × ${p.cant} zap. ÷ 9m` },
       { id: 'alambre_8',       cant: Math.max(kgFierro * 0.02, 0.5), comprar: ceil1(Math.max(kgFierro * 0.02, 0.5)), nota: 'Alambre N°16 de amarre', desglose: `~2% del acero` },
       { id: 'madera_encofrado', cant: encofrado, comprar: ceil1(encofrado),   desglose: `Perímetro ${B.toFixed(2)}×4 × ${p.cant} zap. × h=${espesor.toFixed(2)}m` },
@@ -975,13 +991,17 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
   if (p.fc < 210)
     avisos.push({ n: 'bad', t: `f'c ${p.fc} kg/cm²: no cumple el mínimo de 210 kg/cm² para un elemento estructural como la escalera (RNE E.060).` });
 
-  // Geometría: número de escalones por ergonomía (contrahuella ≈ 18 cm)
+  // Geometría: número de contrahuellas por ergonomía (≈ 18 cm). Con n
+  // contrahuellas el último escalón llega al piso superior, así que quedan
+  // n − 1 huellas: el piso hace de última huella.
   const n = Math.max(3, Math.round((p.altura * 100) / 18));
   const ch = (p.altura * 100) / n;              // contrahuella exacta (cm)
   const hu = p.huella === 'auto' ? 27 : Number(p.huella); // huella (cm)
-  const desH = (n * hu) / 100;                  // desarrollo horizontal (m)
-  const L = Math.hypot(p.altura, desH);         // longitud de la lanza (m)
-  const pend = (Math.atan2(p.altura, desH) * 180) / Math.PI; // pendiente (°)
+  const nHuellas = n - 1;
+  const desH = (nHuellas * hu) / 100;           // desarrollo horizontal (m)
+  // Lanza: corre paralela a la línea de narices (n−1 huellas), no de piso a piso.
+  const L = nHuellas * Math.hypot(hu / 100, ch / 100); // longitud inclinada (m)
+  const pend = (Math.atan2(ch, hu) * 180) / Math.PI;   // pendiente de la escalera (°)
   const blondel = 2 * ch + hu;                   // fórmula de Blondel (cm)
 
   if (pend >= 30 && pend <= 38)
@@ -1011,7 +1031,7 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
   if (lanzaCm < 12 || lanzaCm > 20)
     avisos.push({ n: 'warn', t: `Lanza de ${lanzaCm} cm: fuera del rango usual de 12 a 20 cm en vivienda. El espesor real lo define el plano estructural.` });
   const eLanza = lanzaCm / 100;                      // m
-  const aPasos = (n * (hu / 100) * (ch / 100)) / 2; // m² (mitad sobre la línea de la lanza)
+  const aPasos = (nHuellas * (hu / 100) * (ch / 100)) / 2; // m² (triángulos sobre la línea de narices)
   const aLanza = L * eLanza;                        // m²
   const volEsc = (aPasos + aLanza) * p.ancho;       // m³
   const volTotal = volEsc * 1.05;                   // +5% desperdicio
@@ -1045,12 +1065,12 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
   const clavosEsc = encofrado * 0.8;
 
   const pasos = [
-    `1. GEOMETRÍA (${n} escalones):`,
+    `1. GEOMETRÍA (${n} contrahuellas y ${nHuellas} huellas):`,
     `   • Contrahuella: ${p.altura} m ÷ ${n} = ${ch.toFixed(1)} cm · Huella: ${hu} cm.`,
-    `   • Desarrollo horizontal: ${n} × ${hu} cm = ${desH.toFixed(2)} m · Pendiente: ${pend.toFixed(1)}°.`,
+    `   • Desarrollo horizontal: ${nHuellas} × ${hu} cm = ${desH.toFixed(2)} m (la última huella es el piso superior) · Pendiente: ${pend.toFixed(1)}°.`,
     `   • Ergonomía Blondel: 2 × ${ch.toFixed(1)} + ${hu} = ${blondel.toFixed(1)} cm (ideal 60 a 64).`,
     `2. CONCRETO ESTRUCTURAL (f'c = ${p.fc} kg/cm²):`,
-    `   • Cuerpo escalonado: ${n} × (${hu} × ${ch.toFixed(1)} cm) ÷ 2 = ${aPasos.toFixed(2)} m².`,
+    `   • Cuerpo escalonado: ${nHuellas} × (${hu} × ${ch.toFixed(1)} cm) ÷ 2 = ${aPasos.toFixed(2)} m².`,
     `   • Lanza inclinada (${lanzaCm} cm): ${L.toFixed(2)} m × ${eLanza.toFixed(2)} m = ${aLanza.toFixed(2)} m².`,
     `   • Volumen: (${aPasos.toFixed(2)} + ${aLanza.toFixed(2)}) m² × ${p.ancho} m × 1.05 = ${volTotal.toFixed(3)} m³.`,
     `   • Cemento: ${volTotal.toFixed(3)} m³ × ${dos.bolsas} bol/m³ = ${cemEsc.toFixed(1)} bolsas.`,
@@ -1065,9 +1085,10 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
 
   return {
     titulo: 'Escalera',
-    detalle: `Escalera recta de ${n} escalones, ${p.ancho} m de ancho, ${p.altura} m de altura`,
+    detalle: `Escalera recta de ${n} contrahuellas y ${nHuellas} huellas, ${p.ancho} m de ancho, ${p.altura} m de altura`,
     resumen: [
-      { nombre: 'Escalones', valor: n, unidad: 'und' },
+      { nombre: 'Contrahuellas', valor: n, unidad: 'und' },
+      { nombre: 'Huellas', valor: nHuellas, unidad: 'und' },
       { nombre: 'Contrahuella', valor: ch.toFixed(1), unidad: 'cm' },
       { nombre: 'Huella', valor: hu, unidad: 'cm' },
       { nombre: 'Pendiente', valor: pend.toFixed(1), unidad: '°' },
