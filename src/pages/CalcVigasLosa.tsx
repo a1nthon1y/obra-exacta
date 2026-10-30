@@ -196,7 +196,7 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 export const CalcLosa: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [largo, setLargo]   = useState('');
   const [ancho, setAncho]   = useState('');
-  const [espesor, setEspesor] = useState<'auto'|17|20|25|30>('auto');
+  const [espesor, setEspesor] = useState<'auto'|17|20|22|25|30>('auto');
   const [fc, setFc]         = useState<140|175|210|245|280>(210);
   const [nInf, setNInf]     = useState('2');
   const [dInf, setDInf]     = useState<string>('1/2');
@@ -276,7 +276,7 @@ export const CalcLosa: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="campo">
           <label>Espesor de la losa</label>
           <div className="aparejo-grid">
-            {(['auto',17,20,25,30] as const).map(v => (
+            {(['auto',17,20,22,25,30] as const).map(v => (
               <button key={v} className={`aparejo-btn ${espesor === v ? 'active' : ''}`} onClick={() => { setEspesor(v); reset(); }}>
                 <span className="ap-label">{v === 'auto' ? 'Automático' : `${v} cm`}</span>
               </button>

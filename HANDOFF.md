@@ -85,7 +85,7 @@ la expectativa de `sugerir-edificio`.
 
 **Losa aligerada (`src/engine/tablas.json`, `src/engine/calc.ts`, `src/engine/calc.test.ts`)**
 - Espesor automático: 5.5 m → 22 cm (L/25), tabla `volumenConcretoLosa` agrega `"22": 0.0925`.
-- Viguetas: `floor(ancho / 0.40) + 1` (una en cada borde; antes `ceil`, que en 4.0 m daba 10 y ahora da 11).
+- Viguetas: `floor(ancho / 0.40) + 1` (una en cada borde; antes `ceil`, que en 4.0 m daba 10 y ahora da 11). → Corregido el 30/10: ver sección siguiente (con 4.20 m el `floor` dejaba 0.42 m entre ejes).
 
 **Muros (`src/engine/calc.ts`)**
 - Se usa siempre la fórmula geométrica `1 ÷ [(cara + junta) × (alto + junta)]` para `und/m²` (se elimina el salto tabla/fórmula); la tabla de Capeco queda solo como referencia de mortero.
@@ -109,6 +109,50 @@ npm run build    → OK (vite build, mismo aviso de chunk >500 kB por Three.js)
 
 Pendiente de validación con ingeniero: fórmula de As,mín de vigas (se dejó 0.7√f'c/fy y
 hay que confirmarla contra la edición impresa de E.060).
+→ Cerrado el 30/10: `As,mín = 0.7·√f'c/fy · b · d` coincide con E.060 2009, num. 11.1.2.
+
+
+## Cambios 30/10/2026 — P0 de la revisión civil
+
+- **Viguetas:** `nViguetas = ceil(ancho/0.40 − ε) + 1` (antes `floor`). Con 4.20 m daba
+  11 viguetas @ 0.42 m, fuera del máximo de 0.40 m; ahora da 12 @ 0.38 m. El paso muestra
+  la separación real.
+- **Escalera:** nuevo input `lanza` (cm, default 15, rango usual 12–20). Antes la losa se
+  fijaba en 25 cm y sobreestimaba el concreto ~31% (2.8 m × 1.0 m: 1.75 → 1.21 m³). El
+  visor 3D y el plano 2D usan el espesor ingresado.
+- **Columnas de confinamiento:** se agrega el peralte mínimo de 15 cm (E.070 Art. 20.5; la
+  propuesta 2019 pide 25 cm). Una 13×13 ya no pasa.
+- **Cita de acero:** E.070 exige 4 barras como mínimo y deja el diámetro al diseño. Se dejó
+  de afirmar que el Ø 3/8" es obligatorio; 4 Ø 1/2" se menciona como propuesta 2019.
+- **Sugeridor de zapata:** `suelo='blando'` y `sis='porticos'` ahora devuelven
+  `requiereIngeniero: true`, coherente con su lista `noAplica`.
+- **Vigas:** el aviso de acero inferior insuficiente ya no se duplica.
+- **Zapata:** el 10% de mayoración se documenta como criterio práctico, no como exigencia
+  de E.050.
+- **Pruebas:** 51 en total. Nuevas: losa 4.20 m y separación ≤ 0.40 m, columna 13×13 /
+  13×25, cita de 4 barras, lanza 12 vs 20 cm, aviso fuera de rango, aviso único en vigas,
+  zapata blando/pórticos y 10% sin E.050.
+
+Verificado: `npm test` (51/51), `npx oxlint src` (0), `npm run build` (OK, mismo aviso de
+chunk por Three.js).
+
+### P1 — acero, f'c, losa y zapata (30/10/2026)
+
+- **Plan de corte de acero:** nuevo `varillasDe9m(cantidad, largo)`, que compra por piezas
+  (`floor(8.7/largo)` por varilla) en vez de por longitud total. En vigas de 4.5 m el
+  desperdicio real es ~45% y antes se compraba ~42% menos. Aplicado a vigas, columnas,
+  viguetas/bastones de losa y longitudinales de escalera.
+- **Estribos de viga:** zona de confinamiento `2·h` (E.060), antes `2·d`.
+- **f'c bajo mínimo:** ahora es `bad` (pide confirmación al guardar) en vigas, losa y
+  escalera (<210) y zapata (<175); antes era solo advertencia.
+- **Losa:** el selector manual incluye 22 cm (la tabla automática ya lo usaba).
+- **Zapata:** barras con separación ≤ 0.20 m (`ceil(L/0.20)+1`; antes daba ~21 cm) y el
+  aviso aclara que es predimensionado de área (no verifica punzonamiento, corte ni flexión).
+- **Blondel:** textos unificados en 60–64 cm (el paso decía 60–65).
+- **Pruebas:** 54. Nuevas: plan de corte en viga de 4.5 m, f'c como error, 7+7 barras en
+  zapata de 1.20 m y aviso de punzonamiento.
+
+Verificado: `npm test` (54/54), `npx oxlint src` (0), `npm run build` (OK).
 
 
 ## Estado actual

@@ -24,18 +24,18 @@ describe('totalizarObra con acero', () => {
     const acero = lineas.find(l => l.id === 'fierro_5_8');
     expect(acero).toBeDefined();
     expect(acero!.unidad).toBe('varilla 9 m');
-    expect(acero!.cantidad).toBe(7);
-    // 7 varillas × S/ 67 del catálogo, no 88 kg × S/ 67
-    expect(acero!.subtotal).toBe(469);
-    expect(totalSoles).toBeGreaterThanOrEqual(469);
+    expect(acero!.cantidad).toBe(9);
+    // 9 varillas × S/ 67 del catálogo, no 88 kg × S/ 67
+    expect(acero!.subtotal).toBe(603);
+    expect(totalSoles).toBeGreaterThanOrEqual(603);
     expect(totalSoles).toBeLessThan(2000);
   });
 
-  it('suma antes de redondear: dos partidas iguales compran 13, no 14', () => {
+  it('suma antes de redondear: dos partidas iguales compran 17, no 18', () => {
     const r = columnasResultado();
     const { lineas } = totalizarObra([etapa('Columnas', r, 1), etapa('Columnas', r, 2)], {});
     const acero = lineas.find(l => l.id === 'fierro_5_8');
-    expect(acero!.cantidad).toBe(13);
+    expect(acero!.cantidad).toBe(17);
   });
 
   it('usa la cantidad comercial en partidas guardadas con el acero en kg', () => {

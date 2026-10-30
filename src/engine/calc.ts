@@ -19,12 +19,25 @@ const ceil1 = (n: number) => Math.ceil(n * 10) / 10;
 
 function comprarEntero(n: number): number { return Math.ceil(n); }
 
-const MAYORACION_ZAPATA = 1.10; // 10% peso propio y relleno (regla de obra, RNE E.050)
+const MAYORACION_ZAPATA = 1.10; // 10% peso propio y relleno (criterio práctico de obra; no es exigencia de E.050)
 
 function aceroData(diam: string) {
   const a = (TABLAS.acero as Record<string, { kg_ml: number; varilla_m: number; id_cat: string }>)[diam];
   if (!a) throw new Error(`Diámetro desconocido: ${diam}`);
   return a;
+}
+
+/**
+ * Varillas de 9 m necesarias para `cantidad` piezas de `largo` metros.
+ * Plan de corte simple: caben floor(8.7 / largo) piezas por varilla (los 0.3 m
+ * restantes cubren el corte). Evita el subconteo de comprar por longitud total:
+ * con vigas de 4.5 m cada barra de 9 m rinde una sola pieza y el desperdicio
+ * real es ~45%, no el 5% que suponía la fórmula anterior.
+ */
+function varillasDe9m(cantidad: number, largo: number): number {
+  if (cantidad <= 0 || largo <= 0) return 0;
+  const porVarilla = Math.max(1, Math.floor(8.7 / largo));
+  return Math.ceil(cantidad / porVarilla);
 }
 
 function dosConcreto(fc: number) {
@@ -282,11 +295,14 @@ export function calcColumnas(p: ParamsColumnas): Resultado {
 
   // Mínimos por sistema estructural.
   // Albañilería confinada (E.070): la columna debe tener el espesor del muro
-  // (13 cm en soga) y al menos 4 varillas de 3/8".
+  // (13 cm en soga) y un peralte mínimo de 15 cm (Art. 20.5). La propuesta
+  // E.070 2019 eleva ese peralte a 25 cm.
   // Pórticos sismorresistentes (E.060): dimensión mínima 25 cm.
   if (p.sis === 'confinada') {
     if (Math.min(p.b, p.h) < 13)
       avisos.push({ n: 'bad', t: 'Dimensión mínima: en albañilería confinada la columna debe tener al menos el espesor del muro (13 cm en aparejo de soga). Una columna más angosta que el muro no lo confina.' });
+    if (Math.max(p.b, p.h) < 15)
+      avisos.push({ n: 'bad', t: `Peralte mínimo: E.070 (Art. 20.5) exige 15 cm de peralte en columnas de confinamiento; la propuesta E.070 2019 pide 25 cm. Tienes ${Math.max(p.b, p.h)} cm.` });
   } else if (Math.min(p.b, p.h) < 25) {
     avisos.push({ n: 'bad', t: 'Dimensión mínima: en pórticos sismorresistentes la menor dimensión de la columna es 25 cm (RNE E.060).' });
   }
@@ -314,8 +330,7 @@ export function calcColumnas(p: ParamsColumnas): Resultado {
   // Varilla comercial mide 9.00 m. Se consideran 50 cm de anclaje/traslape por varilla.
   const longVarPorVarilla = p.alto + 0.50;
   const longVarTotal = longVarPorVarilla * p.nVar * p.cant;
-  const despVar = (TABLAS.desperdicios.fierro as Record<string, number>)[p.dVar] ?? 0.05;
-  const varillasVar = Math.ceil((longVarTotal * (1 + despVar)) / aVar.varilla_m);
+  const varillasVar = varillasDe9m(p.nVar * p.cant, longVarPorVarilla);
   const kgVar = varillasVar * aVar.varilla_m * aVar.kg_ml;
 
   // Cuantía de acero longitudinal (mínimo 1%, máximo 4% de la sección)
@@ -355,12 +370,17 @@ export function calcColumnas(p: ParamsColumnas): Resultado {
   const acMaxCm2 = aSeccionCm2 * 0.06;       // 6% máximo normativo (E.060)
   const acPracticoCm2 = aSeccionCm2 * 0.04;  // 4%: límite de constructibilidad
   if (p.sis === 'confinada') {
-    // E.070 pide como mínimo 4 varillas de 3/8" en las columnas de confinamiento.
+    // E.070 exige como mínimo 4 barras longitudinales; el diámetro lo define el
+    // diseño. En vivienda se usa Ø 3/8" como mínimo práctico y la propuesta
+    // E.070 2019 pide 4 Ø 1/2" en columnas extremas del primer piso.
     // La cuantía mínima de 1% de E.060 es para columnas de pórtico, no para confinamiento.
-    const cumpleMinimo = p.nVar >= 4 && diametroMm(p.dVar) >= 9.5;
-    avisos.push(cumpleMinimo
-      ? { n: 'ok', t: `Columna de confinamiento: ${p.nVar} varillas de ${p.dVar}" cumplen el mínimo de 4 Ø 3/8" (E.070). La cuantía de 1% de E.060 no se aplica a confinamiento.` }
-      : { n: 'bad', t: `Columna de confinamiento: se requieren como mínimo 4 varillas de 3/8". Tienes ${p.nVar} de ${p.dVar}".` });
+    if (p.nVar < 4) {
+      avisos.push({ n: 'bad', t: `Columna de confinamiento: E.070 exige como mínimo 4 barras longitudinales. Tienes ${p.nVar}.` });
+    } else if (diametroMm(p.dVar) < 9.5) {
+      avisos.push({ n: 'warn', t: `Columna de confinamiento: ${p.nVar} varillas de ${p.dVar}". El mínimo práctico en vivienda es Ø 3/8"; el diámetro definitivo lo define el diseño estructural.` });
+    } else {
+      avisos.push({ n: 'ok', t: `Columna de confinamiento: ${p.nVar} varillas de ${p.dVar}" cumplen el mínimo de 4 barras de E.070 (el diámetro lo define el diseño). En vivienda se usa Ø 3/8" o mayor.` });
+    }
   } else if (aAceroCm2 < acMinCm2) {
     avisos.push({ n: 'bad', t: `Cuantía insuficiente: ${aAceroCm2.toFixed(2)} cm² < ${acMinCm2.toFixed(2)} cm² (mínimo 1% de la sección, RNE E.060). Aumentar número/diámetro de varillas longitudinales.` });
   } else if (aAceroCm2 > acMaxCm2) {
@@ -388,10 +408,10 @@ export function calcColumnas(p: ParamsColumnas): Resultado {
     `   • Longitud por varilla con anclajes: ${p.alto} m + 0.50 m = ${longVarPorVarilla.toFixed(2)} m.`,
     `   • Longitud total: ${longVarTotal.toFixed(1)} m lineales.`,
     p.sis === 'confinada'
-      ? `   • Cuantía: ${aAceroCm2.toFixed(2)} cm² ÷ ${aSeccionCm2} cm² = ${cuantia.toFixed(2)}% (referencial; en confinamiento rige el mínimo de 4 varillas de 3/8" de E.070).`
+      ? `   • Cuantía: ${aAceroCm2.toFixed(2)} cm² ÷ ${aSeccionCm2} cm² = ${cuantia.toFixed(2)}% (referencial; en confinamiento rige el mínimo de 4 barras de E.070, con diámetro según diseño).`
       : `   • Cuantía: ${aAceroCm2.toFixed(2)} cm² de acero ÷ ${aSeccionCm2} cm² sección = ${cuantia.toFixed(2)}% (E.060: 1% a 6%; en obra conviene no pasar de 4%).`,
     p.sis === 'confinada'
-      ? '   • Mínimo aplicable: 4 varillas de 3/8" (E.070).'
+      ? '   • Mínimo aplicable: 4 barras longitudinales (E.070); en vivienda, Ø 3/8" o mayor.'
       : `   • Mínimo: ${acMinCm2.toFixed(2)} cm² | Máximo normativo: ${acMaxCm2.toFixed(2)} cm² | Práctico: ${acPracticoCm2.toFixed(2)} cm².`,
     `   • Varillas teóricas (9 m): ${varillasVar} und (${kgVar.toFixed(1)} kg) | Con traslapes/empalmes (+${((traslapeFactor-1)*100).toFixed(0)}%): Comprar ${varillasVarComp} varillas de ${p.dVar}" (~${kgVarComp.toFixed(1)} kg).`,
     `3. ESTRIBOS SÍSMICOS (Ø ${p.dEst}"):`,
@@ -449,7 +469,7 @@ export function calcVigas(p: ParamsVigas): Resultado {
   const hUtil = Math.max(p.h - espesorLosa, 10); // cm — peralte efectivo bajo losa
 
   if (p.fc < 210)
-    avisos.push({ n: 'warn', t: `f'c ${p.fc} kg/cm²: para vigas de vivienda se usa 210 kg/cm² como mínimo (RNE E.060).` });
+    avisos.push({ n: 'bad', t: `f'c ${p.fc} kg/cm²: no cumple el mínimo de 210 kg/cm² para vigas de vivienda (RNE E.060).` });
 
   // Pórticos sismorresistentes (E.060): menor dimensión 25 cm y b/h ≥ 0.3.
   // Albañilería confinada: el ancho suele ser el del muro (13 cm); no se exige 25 cm.
@@ -490,19 +510,16 @@ export function calcVigas(p: ParamsVigas): Resultado {
   if (AcProvCm2 < AcMinCm2)
     avisos.push({ n: 'bad', t: `Acero inferior (${AcProvCm2.toFixed(2)} cm²): menor al mínimo reglamentario (${AcMinCm2.toFixed(2)} cm²) según RNE E.060. Incrementar diámetro o varillas inferiores.` });
 
-  // Longitud de varillas longitudinales (luz + 0.50 m anclajes)
-  const longSupTotal = (p.luz + 0.50) * p.nSup * p.cant;
-  const longInfTotal = (p.luz + 0.50) * p.nInf * p.cant;
-  const despSup = (TABLAS.desperdicios.fierro as Record<string, number>)[p.dSup] ?? 0.05;
-  const despInf = (TABLAS.desperdicios.fierro as Record<string, number>)[p.dInf] ?? 0.05;
-
-  const varSup = Math.ceil((longSupTotal * (1 + despSup)) / aSup.varilla_m);
-  const varInf = Math.ceil((longInfTotal * (1 + despInf)) / aInf.varilla_m);
+  // Varillas longitudinales (luz + 0.50 m de anclajes), compradas con plan de
+  // corte: una varilla de 9 m rinde floor(8.7 / largo) piezas.
+  const largoBarra = p.luz + 0.50;
+  const varSup = varillasDe9m(p.nSup * p.cant, largoBarra);
+  const varInf = varillasDe9m(p.nInf * p.cant, largoBarra);
   const kgSup = varSup * aSup.varilla_m * aSup.kg_ml;
   const kgInf = varInf * aInf.varilla_m * aInf.kg_ml;
 
-  // Estribos de viga (confinamiento en 2*d en cada apoyo)
-  const zonaConf = 2 * dEfectivo; // cm
+  // Estribos de viga (confinamiento en 2*h en cada apoyo, RNE E.060)
+  const zonaConf = 2 * p.h; // cm
   const espZC = Math.min(dEfectivo / 4, 8 * (diametroMm(p.dInf) / 10), 20); // cm
   const espResto = dEfectivo / 2; // cm
   const nEstZC = Math.ceil((zonaConf - 5) / espZC) + 1;
@@ -522,9 +539,7 @@ export function calcVigas(p: ParamsVigas): Resultado {
   const encofrado = ((p.b + 2 * hUtil) / 100) * p.luz * p.cant;
   const clavos = encofrado * 0.8;
 
-  if (AcProvCm2 < AcMinCm2) {
-    avisos.push({ n: 'bad', t: `Acero inferior provisto ${AcProvCm2.toFixed(2)} cm² < ${AcMinCm2.toFixed(2)} cm² (mínimo RNE E.060). Aumentar varillas/diámetro.` });
-  } else {
+  if (AcProvCm2 >= AcMinCm2) {
     avisos.push({ n: 'ok', t: `Acero inferior provisto ${AcProvCm2.toFixed(2)} cm² >= mínimo ${AcMinCm2.toFixed(2)} cm².` });
   }
 
@@ -598,7 +613,7 @@ export function calcLosa(p: ParamsLosa): Resultado {
   const avisos: Aviso[] = [];
 
   if (p.fc < 210)
-    avisos.push({ n: 'warn', t: `f'c ${p.fc} kg/cm²: para losa aligerada de vivienda se usa 210 kg/cm² como mínimo (RNE E.060).` });
+    avisos.push({ n: 'bad', t: `f'c ${p.fc} kg/cm²: no cumple el mínimo de 210 kg/cm² para losa aligerada de vivienda (RNE E.060).` });
 
   // El espesor se rige por la luz que salva la vigueta. En esta calculadora las
   // viguetas corren a lo largo de `largo` y se reparten en `ancho`, así que la
@@ -628,18 +643,18 @@ export function calcLosa(p: ParamsLosa): Resultado {
   // Ladrillos huecos de techo 30×30 cm (8.33 und/m² + 5% desperdicio = 8.75 und/m²)
   const ladTecho = area * TABLAS.losaTecho.und_m2 * (1 + TABLAS.desperdicios.ladrillo_techo);
 
-  // Viguetas: número de varillas incluyendo una en cada borde. Espaciado máximo
-  // 40 cm entre ejes (Capeco): floor(ancho/0.40) + 1.
-  const nViguetas = Math.max(1, Math.floor(p.ancho / 0.40) + 1);
+  // Viguetas: una en cada borde. Separación máxima 40 cm entre ejes (Capeco):
+  // ceil(ancho/0.40) + 1. Con floor, un ancho de 4.20 m daba 11 viguetas
+  // separadas 0.42 m (fuera de norma); con ceil da 12 @ 0.38 m.
+  const nViguetas = Math.max(2, Math.ceil(p.ancho / 0.40 - 1e-9) + 1);
+  const sepViguetas = p.ancho / (nViguetas - 1);
 
-  // Acero de viguetas
+  // Acero de viguetas (compra con plan de corte sobre varillas de 9 m)
   const aInf = aceroData(p.dInf);
   const aBast = aceroData(p.dBast);
 
-  const longInf = (p.largo + 0.30) * nViguetas * p.nInf;
-  const longBast = (p.largo * 0.30 + 0.30) * nViguetas * 2 * p.nBast; // bastones en ambos extremos (L/3)
-  const varInf = Math.ceil((longInf * 1.05) / aInf.varilla_m);
-  const varBast = Math.ceil((longBast * 1.05) / aBast.varilla_m);
+  const varInf = varillasDe9m(nViguetas * p.nInf, p.largo + 0.30);
+  const varBast = varillasDe9m(nViguetas * 2 * p.nBast, p.largo * 0.30 + 0.30); // bastones en ambos extremos (L/3)
   const kgInf = varInf * aInf.varilla_m * aInf.kg_ml;
   const kgBast = varBast * aBast.varilla_m * aBast.kg_ml;
 
@@ -669,7 +684,7 @@ export function calcLosa(p: ParamsLosa): Resultado {
     `   • Cemento Portland: ${volConcreto.toFixed(3)} m³ × ${dos.bolsas} bol/m³ = ${cemLosa.toFixed(1)} bolsas → Comprar ${comprarEntero(cemLosa)} bolsas.`,
     `   • Arena gruesa: ${volConcreto.toFixed(3)} m³ × ${dos.arena} = ${ceil1(arenaLosa)} m³.`,
     `   • Piedra chancada 1/2": ${volConcreto.toFixed(3)} m³ × ${dos.piedra} = ${ceil1(piedraLosa)} m³.`,
-    `4. ACERO PARA VIGUETAS (Cada 40 cm = ${nViguetas} viguetas):`,
+    `4. ACERO PARA VIGUETAS (${nViguetas} viguetas @ ${sepViguetas.toFixed(2)} m, máximo 0.40 m):`,
     `   • Fierro inferior corrido (${p.nInf} varilla(s) Ø ${p.dInf}"): Comprar ${varInf} varillas de 9 m (${kgInf.toFixed(1)} kg).`,
     `   • Bastones negativos (${p.nBast} varilla(s) Ø ${p.dBast}"): Comprar ${varBast} varillas de 9 m (${kgBast.toFixed(1)} kg).`,
     `   • Fierro total: ${kgTotal.toFixed(1)} kg.`,
@@ -698,8 +713,8 @@ export function calcLosa(p: ParamsLosa): Resultado {
       { id: 'arena_gruesa',    cant: arenaLosa,  comprar: ceil1(arenaLosa),       desglose: `${volConcreto.toFixed(2)} m³ concreto × ${dos.arena} m³/m³` },
       { id: 'piedra_chancada', cant: piedraLosa, comprar: ceil1(piedraLosa),     desglose: `${volConcreto.toFixed(2)} m³ concreto × ${dos.piedra} m³/m³` },
       { id: 'ladrillo_techo',  cant: ladTecho,   comprar: comprarEntero(ladTecho), desglose: `${area.toFixed(1)} m² × 8.33 und/m² (+5% rotura)` },
-      { id: aInf.id_cat,       cant: varillasExactas(longInf * 1.05, aInf), comprar: varInf,  nota: `${p.nInf} varilla(s) Ø ${p.dInf}" inferior (~${kgInf.toFixed(0)} kg)`, desglose: `${nViguetas} viguetas × ${p.nInf} var. × ${(p.largo + 0.3).toFixed(1)}m ÷ 9m` },
-      { id: aBast.id_cat,      cant: varillasExactas(longBast * 1.05, aBast), comprar: varBast, nota: `Bastones Ø ${p.dBast}" (~${kgBast.toFixed(0)} kg)`,                     desglose: `${nViguetas} viguetas × 2 extremos × ${p.nBast} bast. ÷ 9m` },
+      { id: aInf.id_cat,       cant: varInf,     comprar: varInf,  nota: `${p.nInf} varilla(s) Ø ${p.dInf}" inferior (~${kgInf.toFixed(0)} kg)`, desglose: `${nViguetas} viguetas × ${p.nInf} var. × ${(p.largo + 0.3).toFixed(1)}m, plan de corte ÷ 9m` },
+      { id: aBast.id_cat,      cant: varBast,    comprar: varBast, nota: `Bastones Ø ${p.dBast}" (~${kgBast.toFixed(0)} kg)`,                     desglose: `${nViguetas} viguetas × 2 extremos × ${p.nBast} bast. × ${(p.largo * 0.3 + 0.3).toFixed(1)}m, plan de corte ÷ 9m` },
       { id: aMalla.id_cat,     cant: varillasExactas(longMalla, aMalla), comprar: varMalla, nota: `Malla de temperatura Ø 1/4" @ 25 cm (~${kgMalla.toFixed(0)} kg)`, desglose: `${area.toFixed(1)} m² × 8 m/m² (2 direcciones @ 25 cm) +5%` },
       { id: 'alambre_8',       cant: alambre,    comprar: ceil1(alambre), nota: 'Alambre N°16 de amarre',             desglose: `3% del peso total de fierro (${kgTotal.toFixed(0)} kg)` },
       { id: 'clavos_encofrado', cant: clavos,    comprar: ceil1(clavos),  nota: 'Clavos 2 1/2"',                       desglose: `${encofrado.toFixed(1)} m² encofrado × 0.8 kg/m²` },
@@ -871,12 +886,13 @@ export function calcZapata(p: ParamsZapata): Resultado {
   const B = lado;
   const H = lado;
   const areaZap = B * H;
-  // Carga mayorada 10% por peso propio de zapata y relleno encima (RNE E.050)
+  // Carga mayorada 10% por peso propio de zapata y relleno encima
+  // (criterio práctico de obra; no es una exigencia de E.050).
   const cargaKg = p.carga * 1000 * MAYORACION_ZAPATA;
   const areaReqM2 = cargaKg / (pa * 10000);
   if (espesor < 0.4) avisos.push({ n: 'warn', t: 'Espesor < 0.40 m: usualmente se incrementa para zapatas aisladas en vivienda.' });
   if (p.fc < 175)
-    avisos.push({ n: 'warn', t: `f'c ${p.fc} kg/cm²: para cimentación armada se usa 175 kg/cm² como mínimo (RNE E.060 / E.050).` });
+    avisos.push({ n: 'bad', t: `f'c ${p.fc} kg/cm²: no cumple el mínimo de 175 kg/cm² para cimentación armada (RNE E.060).` });
 
   const volConcreto = areaZap * espesor * p.cant;
   const dos = dosConcreto(p.fc);
@@ -888,7 +904,8 @@ export function calcZapata(p: ParamsZapata): Resultado {
   // Recubrimiento de 7.5 cm: concreto vaciado contra el terreno (RNE E.060).
   const rec = 0.075;
   const longVar = B - 2 * rec;
-  const numVarXM = Math.max(4, Math.ceil((B - 2 * rec) / 0.20));
+  // Barras para separación ≤ 0.20 m: n espacios = ceil(L/0.20) y n+1 barras.
+  const numVarXM = Math.max(4, Math.ceil((B - 2 * rec) / 0.20) + 1);
   const numVarYM = numVarXM;
   const longTotalXM = numVarXM * longVar * p.cant;
   const longTotalYM = numVarYM * longVar * p.cant;
@@ -901,12 +918,12 @@ export function calcZapata(p: ParamsZapata): Resultado {
   const encofrado = perimEnc * alturaEnc;
 
   if (pa <= 1.0) avisos.push({ n: 'warn', t: `Presión admisible ${pa.toFixed(2)} kg/cm² (suelo blando). Verificar estudio de mecánica de suelos si es portante.` });
-  avisos.push({ n: 'warn', t: 'Cálculo ORIENTATIVO para metrado/presupuesto. NO sustituye cálculo estructural, cimentación según estudio de suelos o plano aprobado (RNE E.050).' });
+  avisos.push({ n: 'warn', t: 'Predimensionado de área para metrado: no verifica punzonamiento, corte ni flexión. NO sustituye el cálculo estructural ni la cimentación del estudio de suelos (RNE E.050).' });
 
   const pasos = [
     `1. PRESIÓN ADMISIBLE DEL SUELO:`,
     `   • Tipo: ${p.suelo} | pa = ${pa.toFixed(2)} kg/cm².`,
-    `   • Carga axial: ${p.carga} tn → ${(p.carga * 1000 * MAYORACION_ZAPATA).toFixed(0)} kg (incluye 10% por peso propio y relleno encima, RNE E.050).`,
+    `   • Carga axial: ${p.carga} tn → ${(p.carga * 1000 * MAYORACION_ZAPATA).toFixed(0)} kg (incluye 10% por peso propio y relleno encima; criterio práctico de obra).`,
     `   • Área requerida: ${cargaKg.toFixed(0)} kg ÷ (${pa} kg/cm² × 10000 cm²/m²) = ${areaReqM2.toFixed(3)} m².`,
     `2. DIMENSIONADO DE ZAPATA (cuadrada):`,
     `   • Lado adoptado B×H: ${B.toFixed(2)} m × ${H.toFixed(2)} m (área ${areaZap.toFixed(3)} m²).`,
@@ -956,7 +973,7 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
   const dos = dosConcreto(p.fc);
 
   if (p.fc < 210)
-    avisos.push({ n: 'warn', t: `f'c ${p.fc} kg/cm²: la escalera es un elemento estructural; para vivienda se usa 210 kg/cm² como mínimo (RNE E.060).` });
+    avisos.push({ n: 'bad', t: `f'c ${p.fc} kg/cm²: no cumple el mínimo de 210 kg/cm² para un elemento estructural como la escalera (RNE E.060).` });
 
   // Geometría: número de escalones por ergonomía (contrahuella ≈ 18 cm)
   const n = Math.max(3, Math.round((p.altura * 100) / 18));
@@ -987,8 +1004,13 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
     avisos.push({ n: 'warn', t: `Altura ${p.altura} m en un solo tramo: es mucha; lo usual es dividir en dos tramos con meseta intermedia.` });
   avisos.push({ n: 'ok', t: 'El fierro es orientativo: el armado real de la escalera lo define el plano estructural (RNE E.060).' });
 
-  // Concreto: cuerpo escalonado (promedio sobre la lanza) + lanza inclinada
-  const eLanza = 0.25;                              // m — espesor usual de la lanza
+  // Concreto: cuerpo escalonado (promedio sobre la lanza) + lanza inclinada.
+  // Espesor de la losa: en vivienda va de 12 a 15 cm; 25 cm solo para cargas
+  // altas. Se ajusta con el input `lanza` (cm).
+  const lanzaCm = p.lanza ?? 15;
+  if (lanzaCm < 12 || lanzaCm > 20)
+    avisos.push({ n: 'warn', t: `Lanza de ${lanzaCm} cm: fuera del rango usual de 12 a 20 cm en vivienda. El espesor real lo define el plano estructural.` });
+  const eLanza = lanzaCm / 100;                      // m
   const aPasos = (n * (hu / 100) * (ch / 100)) / 2; // m² (mitad sobre la línea de la lanza)
   const aLanza = L * eLanza;                        // m²
   const volEsc = (aPasos + aLanza) * p.ancho;       // m³
@@ -1006,7 +1028,7 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
 
   const varLong = Math.max(4, Math.round(p.ancho * 4)); // 4 varillas por cada 1 m de ancho
   const longL = varLong * L * (1 + despL);              // m a lo largo de la lanza
-  const varillasL = Math.ceil(longL / aL.varilla_m);
+  const varillasL = varillasDe9m(varLong, L);
   const kgL = varillasL * aL.varilla_m * aL.kg_ml;
 
   const nTrans = 2 * n;                                          // 2 transversales por escalón
@@ -1026,10 +1048,10 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
     `1. GEOMETRÍA (${n} escalones):`,
     `   • Contrahuella: ${p.altura} m ÷ ${n} = ${ch.toFixed(1)} cm · Huella: ${hu} cm.`,
     `   • Desarrollo horizontal: ${n} × ${hu} cm = ${desH.toFixed(2)} m · Pendiente: ${pend.toFixed(1)}°.`,
-    `   • Ergonomía Blondel: 2 × ${ch.toFixed(1)} + ${hu} = ${blondel.toFixed(1)} cm (ideal 60 a 65).`,
+    `   • Ergonomía Blondel: 2 × ${ch.toFixed(1)} + ${hu} = ${blondel.toFixed(1)} cm (ideal 60 a 64).`,
     `2. CONCRETO ESTRUCTURAL (f'c = ${p.fc} kg/cm²):`,
     `   • Cuerpo escalonado: ${n} × (${hu} × ${ch.toFixed(1)} cm) ÷ 2 = ${aPasos.toFixed(2)} m².`,
-    `   • Lanza inclinada (25 cm): ${L.toFixed(2)} m × 0.25 m = ${aLanza.toFixed(2)} m².`,
+    `   • Lanza inclinada (${lanzaCm} cm): ${L.toFixed(2)} m × ${eLanza.toFixed(2)} m = ${aLanza.toFixed(2)} m².`,
     `   • Volumen: (${aPasos.toFixed(2)} + ${aLanza.toFixed(2)}) m² × ${p.ancho} m × 1.05 = ${volTotal.toFixed(3)} m³.`,
     `   • Cemento: ${volTotal.toFixed(3)} m³ × ${dos.bolsas} bol/m³ = ${cemEsc.toFixed(1)} bolsas.`,
     `3. FIERRO ORIENTATIVO (confirmar con plano estructural):`,

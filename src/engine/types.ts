@@ -103,7 +103,7 @@ export interface ParamsVigas {
 export interface ParamsLosa {
   largo: number;     // m
   ancho: number;     // m
-  espesor: 'auto' | 17 | 20 | 25 | 30;
+  espesor: 'auto' | 17 | 20 | 22 | 25 | 30;
   fc: 140 | 175 | 210 | 245 | 280;
   nInf: number;
   dInf: string;
@@ -127,6 +127,7 @@ export interface ParamsEscalera {
   altura: number;          // m — altura entre pisos (nivel a nivel)
   ancho: number;           // m — ancho libre del tramo
   huella: 'auto' | number; // cm — 'auto' = 27 (típico vivienda)
+  lanza?: number;          // cm — espesor de la losa (lanza). Usual 12–20, default 15
   fc: 140 | 175 | 210 | 245 | 280;
 }
 

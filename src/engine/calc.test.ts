@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calcular } from './calc';
+import { sugerirZapata } from './sugerir';
 import type { ParamsCalculo, ResultadoCalculo } from './types';
 import { CATALOGO } from '../store/catalogo';
 
@@ -87,13 +88,13 @@ describe('unidad de compra de los materiales', () => {
     }
   });
 
-  it('columnas 25×25 con 4Ø5/8" compran 7 varillas y no 88', () => {
+  it('columnas 25×25 con 4Ø5/8" compran 9 varillas y no 88', () => {
     const r = resultado('columnas', CASOS[2].params);
     const acero = r.mats.find(m => m.id === 'fierro_5_8');
     expect(acero).toBeDefined();
-    expect(acero!.comprar).toBe(7);
-    expect(acero!.cant).toBeGreaterThan(6);
-    expect(acero!.cant).toBeLessThan(7);
+    expect(acero!.comprar).toBe(9);
+    expect(acero!.cant).toBeGreaterThan(8);
+    expect(acero!.cant).toBeLessThan(9);
   });
 });
 
@@ -125,7 +126,7 @@ describe('albañilería confinada vs pórticos', () => {
     });
     expect(r.avisos.some(a => a.n === 'bad' && /cuantía/i.test(a.t))).toBe(false);
     expect(r.avisos.some(a => a.n === 'ok' && /E\.070/.test(a.t))).toBe(true);
-    expect(r.pasos.join('\n')).toMatch(/4 varillas de 3\/8" \(E\.070\)/);
+    expect(r.pasos.join('\n')).toMatch(/4 barras de E\.070/);
   });
 
   it('la columna de confinamiento más angosta que el muro se rechaza', () => {
@@ -134,6 +135,33 @@ describe('albañilería confinada vs pórticos', () => {
       rec: 4, fc: 210, sis: 'confinada',
     });
     expect(r.avisos.some(a => a.n === 'bad' && /espesor del muro/i.test(a.t))).toBe(true);
+  });
+
+  it('la columna 13×13 se rechaza por peralte (E.070 Art. 20.5)', () => {
+    const r = resultado('columnas', {
+      b: 13, h: 13, alto: 2.5, cant: 4, nVar: 4, dVar: '3/8', dEst: '1/4',
+      rec: 4, fc: 210, sis: 'confinada',
+    });
+    expect(r.avisos.some(a => a.n === 'bad' && /peralte/i.test(a.t))).toBe(true);
+  });
+
+  it('la columna 13×25 cumple espesor y peralte', () => {
+    const r = resultado('columnas', {
+      b: 13, h: 25, alto: 2.5, cant: 4, nVar: 4, dVar: '3/8', dEst: '1/4',
+      rec: 4, fc: 210, sis: 'confinada',
+    });
+    expect(r.avisos.some(a => a.n === 'bad' && /peralte|espesor del muro/i.test(a.t))).toBe(false);
+  });
+
+  it('no presenta el Ø 3/8" como exigencia de E.070', () => {
+    const r = resultado('columnas', {
+      b: 13, h: 25, alto: 2.5, cant: 4, nVar: 4, dVar: '3/8', dEst: '1/4',
+      rec: 4, fc: 210, sis: 'confinada',
+    });
+    const ok = r.avisos.find(a => a.n === 'ok' && /E\.070/.test(a.t));
+    expect(ok).toBeDefined();
+    expect(ok!.t).not.toMatch(/mínimo de 4 Ø 3\/8"/);
+    expect(ok!.t).toMatch(/4 barras/);
   });
 
   it('la columna de pórtico de 20×20 se rechaza por dimensión mínima', () => {
@@ -193,26 +221,36 @@ describe('zapata y f\'c mínimo', () => {
     expect(acero!.desglose).toContain('1.05m');
   });
 
-  it("avisa f'c bajo en vigas, losa, escalera y zapata", () => {
+  it('arma con separación ≤ 0.20 m: 7 + 7 barras en 1.20 m', () => {
+    const r = resultado('zapata', CASOS[7].params);
+    expect(r.pasos.join('\n')).toMatch(/7 \+ 7 varillas por zapata/);
+  });
+
+  it('se declara predimensionado y no verifica punzonamiento', () => {
+    const r = resultado('zapata', CASOS[7].params);
+    expect(r.avisos.some(a => /punzonamiento/i.test(a.t))).toBe(true);
+  });
+
+  it("marca como error f'c bajo en vigas, losa, escalera y zapata", () => {
     const viga = resultado('vigas', {
       b: 25, h: 30, luz: 4.5, cant: 3, nSup: 2, dSup: '1/2', nInf: 3, dInf: '5/8',
       dEst: '3/8', rec: 4, fc: 175,
     });
-    expect(viga.avisos.some(a => /210 kg\/cm²/.test(a.t))).toBe(true);
+    expect(viga.avisos.some(a => a.n === 'bad' && /210 kg\/cm²/.test(a.t))).toBe(true);
 
     const losa = resultado('losa', {
       largo: 4, ancho: 3.5, espesor: 'auto', fc: 175, nInf: 2, dInf: '1/2', nBast: 2, dBast: '3/8',
     });
-    expect(losa.avisos.some(a => /210 kg\/cm²/.test(a.t))).toBe(true);
+    expect(losa.avisos.some(a => a.n === 'bad' && /210 kg\/cm²/.test(a.t))).toBe(true);
 
     const escalera = resultado('escalera', { altura: 2.8, ancho: 1.0, huella: 'auto', fc: 175 });
-    expect(escalera.avisos.some(a => /210 kg\/cm²/.test(a.t))).toBe(true);
+    expect(escalera.avisos.some(a => a.n === 'bad' && /210 kg\/cm²/.test(a.t))).toBe(true);
 
     const zapata = resultado('zapata', {
       tipo: 'aislada', bCol: 30, hCol: 30, carga: 15, suelo: 'intermedio', pa: 1.2,
       espesor: 40, dVar: '1/2', fc: 140, cant: 4,
     });
-    expect(zapata.avisos.some(a => /175 kg\/cm²/.test(a.t))).toBe(true);
+    expect(zapata.avisos.some(a => a.n === 'bad' && /175 kg\/cm²/.test(a.t))).toBe(true);
   });
 });
 
@@ -269,6 +307,16 @@ describe('zapata con 10% de peso propio y relleno', () => {
     expect(r.resumen.find(r => r.nombre === 'Lado zapata')!.valor).toBe('1.20');
     expect(r.pasos.join('\n')).toMatch(/incluye 10%/);
   });
+
+  it('no atribuye el 10% a E.050', () => {
+    const r = resultado('zapata', {
+      tipo: 'aislada', bCol: 30, hCol: 30, carga: 15, suelo: 'intermedio', pa: 1.2,
+      espesor: 40, dVar: '1/2', fc: 210, cant: 1,
+    });
+    const paso = r.pasos.find(l => /incluye 10%/.test(l));
+    expect(paso).toBeDefined();
+    expect(paso!).not.toMatch(/E\.050/);
+  });
 });
 
 describe('vigas con sistema y losa', () => {
@@ -314,6 +362,18 @@ describe('vigas con sistema y losa', () => {
   });
 });
 
+describe('acero con plan de corte', () => {
+  it('una viga de 4.5 m rinde una pieza por varilla de 9 m', () => {
+    const r = resultado('vigas', {
+      b: 25, h: 30, luz: 4.5, cant: 3, nSup: 2, dSup: '1/2', nInf: 3, dInf: '5/8',
+      dEst: '3/8', rec: 4, fc: 210,
+    });
+    const sup = r.mats.find(m => m.id === 'fierro_1_2')!;
+    // 6 piezas de 5.0 m: no caben 2 por varilla → 6 varillas (+5% traslape = 7).
+    expect(sup.comprar).toBe(7);
+  });
+});
+
 describe('muros: fórmula de unidad siempre', () => {
   it('KK18 cabeza usa la fórmula (~65.7 und/m²), no la tabla (62)', () => {
     const r = resultado('muros', {
@@ -345,11 +405,29 @@ describe('losa: espesor automático y viguetas', () => {
     expect(r.pasos.join('\n')).toMatch(/Espesor de losa: 22 cm/);
   });
 
-  it('ancho 4.0 m tiene 11 viguetas (una en cada borde)', () => {
+  it('ancho 4.0 m tiene 11 viguetas @ 0.40 m (una en cada borde)', () => {
     const r = resultado('losa', {
       largo: 4, ancho: 4, espesor: 'auto', fc: 210, nInf: 2, dInf: '1/2', nBast: 2, dBast: '3/8',
     });
-    expect(r.pasos.join('\n')).toMatch(/= 11 viguetas/);
+    expect(r.pasos.join('\n')).toMatch(/11 viguetas @ 0\.40 m/);
+  });
+
+  it('ancho 4.20 m usa 12 viguetas @ 0.38 m y no 11 @ 0.42 m', () => {
+    const r = resultado('losa', {
+      largo: 4, ancho: 4.2, espesor: 'auto', fc: 210, nInf: 2, dInf: '1/2', nBast: 2, dBast: '3/8',
+    });
+    expect(r.pasos.join('\n')).toMatch(/12 viguetas @ 0\.38 m/);
+  });
+
+  it('ninguna separación entre viguetas supera 0.40 m', () => {
+    for (const ancho of [3.1, 4.1, 4.2, 4.6, 5.3]) {
+      const r = resultado('losa', {
+        largo: 4, ancho, espesor: 'auto', fc: 210, nInf: 2, dInf: '1/2', nBast: 2, dBast: '3/8',
+      });
+      const m = r.pasos.join('\n').match(/(\d+) viguetas @ ([\d.]+) m/);
+      expect(m, `ancho ${ancho}`).toBeTruthy();
+      expect(Number(m![2]), `ancho ${ancho}`).toBeLessThanOrEqual(0.4001);
+    }
   });
 
   it('concreto de 22 cm usa el factor 0.0925', () => {
@@ -374,5 +452,55 @@ describe('escalera: umbrales A.010/A.020', () => {
   it('Blondel cumple en 60 a 64 cm', () => {
     const r = resultado('escalera', { altura: 2.8, ancho: 1.0, huella: 'auto', fc: 210 });
     expect(r.avisos.some(a => /60 a 64 cm/.test(a.t) && a.n === 'ok')).toBe(true);
+  });
+});
+
+describe('escalera: espesor de la lanza', () => {
+  it('usa 15 cm por defecto, no 25 cm', () => {
+    const r = resultado('escalera', { altura: 2.8, ancho: 1.0, huella: 'auto', fc: 210 });
+    expect(r.pasos.join('\n')).toMatch(/Lanza inclinada \(15 cm\)/);
+  });
+
+  it('12 cm da menos concreto que 20 cm', () => {
+    const vol = (lanza: number) => {
+      const r = resultado('escalera', { altura: 2.8, ancho: 1.0, huella: 'auto', lanza, fc: 210 });
+      return Number(r.resumen.find(x => x.nombre.startsWith('Concreto'))!.valor);
+    };
+    expect(vol(12)).toBeLessThan(vol(20));
+  });
+
+  it('avisa si la lanza sale del rango usual 12–20 cm', () => {
+    const r = resultado('escalera', { altura: 2.8, ancho: 1.0, huella: 'auto', lanza: 25, fc: 210 });
+    expect(r.avisos.some(a => /fuera del rango usual/.test(a.t))).toBe(true);
+  });
+});
+
+describe('vigas: avisos sin duplicados', () => {
+  it('el acero inferior insuficiente se avisa una sola vez', () => {
+    const r = resultado('vigas', {
+      b: 25, h: 30, luz: 4.5, cant: 1, nSup: 2, dSup: '1/2', nInf: 1, dInf: '1/2',
+      dEst: '3/8', rec: 4, fc: 210,
+    });
+    const bad = r.avisos.filter(a => a.n === 'bad' && /Acero inferior/i.test(a.t));
+    expect(bad).toHaveLength(1);
+  });
+});
+
+describe('sugerirZapata respeta su propia envolvente', () => {
+  it('suelo blando exige revisión de ingeniero', () => {
+    const s = sugerirZapata({ pisos: 1, luz: 4, suelo: 'blando', sis: 'confinada', pos: 'esquina' });
+    expect(s.requiereIngeniero).toBe(true);
+    expect(s.motivo).toMatch(/suelo/i);
+  });
+
+  it('pórticos exige revisión de ingeniero', () => {
+    const s = sugerirZapata({ pisos: 1, luz: 4, suelo: 'intermedio', sis: 'porticos', pos: 'centro' });
+    expect(s.requiereIngeniero).toBe(true);
+  });
+
+  it('el caso usual (confinada, suelo intermedio) sí devuelve medida', () => {
+    const s = sugerirZapata({ pisos: 1, luz: 4, suelo: 'intermedio', sis: 'confinada', pos: 'esquina' });
+    expect(s.requiereIngeniero).toBe(false);
+    expect(s.lado).toBeGreaterThan(0);
   });
 });

@@ -23,6 +23,7 @@ interface Props {
   altura: number;    // m — altura entre pisos
   ancho: number;     // m — ancho del tramo
   huellaCm: number;  // cm — huella resuelta (27 si es automática)
+  lanzaCm?: number;  // cm — espesor de la losa (lanza), default 15
   campoActivo?: string | null;
 }
 
@@ -30,12 +31,13 @@ const HUD: Record<string, string> = {
   altura: 'ALTURA ENTRE PISOS',
   ancho: 'ANCHO DE LA ESCALERA',
   huella: 'HUELLA (PASO)',
+  lanza: 'ESPESOR DE LA LOSA (LANZA)',
 };
 
 // Mismo criterio del motor: contrahuella ≈ 18 cm
 const nEscalones = (altura: number) => Math.max(3, Math.round((altura * 100) / 18));
 
-export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, campoActivo }) => {
+export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lanzaCm, campoActivo }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<'3d' | 'plano2d' | 'referencia'>('3d');
   const [autoRotate, setAutoRotate] = useState(false);
@@ -44,6 +46,7 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, cam
   const realAltura = altura > 0 ? altura : 2.8;
   const realAncho = ancho > 0 ? ancho : 0.9;
   const realHu = huellaCm > 0 ? huellaCm : 27;
+  const realLanza = lanzaCm && lanzaCm > 0 ? lanzaCm : 15;
   const n = nEscalones(realAltura);
   const ch = (realAltura * 100) / n;               // contrahuella (cm)
   const desH = (n * realHu) / 100;                 // desarrollo horizontal (m)
@@ -56,7 +59,7 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, cam
   const vCh = (ch / 100) * escala;
   const vHu = (realHu / 100) * escala;
   const vAncho = Math.min(Math.max(realAncho * escala, 0.45), 2.0);
-  const vEL = 0.25 * escala; // espesor de la lanza
+  const vEL = (realLanza / 100) * escala; // espesor de la lanza
 
   useEffect(() => {
   const container = containerRef.current;
@@ -206,6 +209,7 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, cam
         { id: 'esc', icon: '🪜', label: 'Escalones', value: `${n} und`, tone: 'cyan' },
         { id: 'ch', icon: '⬆️', label: 'Contrahuella', value: `${ch.toFixed(1)} cm`, tone: 'cyan' },
         { id: 'hu', icon: '↔️', label: 'Huella', value: `${realHu} cm`, tone: campoActivo === 'huella' ? 'amber' : 'cyan' },
+        { id: 'lanza', icon: '📏', label: 'Lanza', value: `${realLanza} cm`, tone: campoActivo === 'lanza' ? 'amber' : 'cyan' },
         { id: 'pend', icon: '📐', label: 'Pendiente', value: `${pendDeg.toFixed(1)}°`, tone: 'cyan' },
       ]}
     >
@@ -272,7 +276,7 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, cam
 
             {/* Leyenda */}
             <text x={280} y={330} textAnchor="middle" fill="#94a3b8" fontSize="10.5" fontFamily="monospace">
-              {`Contrahuella: ${ch.toFixed(1)} cm  ·  Huella: ${realHu} cm  ·  Ancho: ${realAncho} m  ·  Lanza: 25 cm`}
+              {`Contrahuella: ${ch.toFixed(1)} cm  ·  Huella: ${realHu} cm  ·  Ancho: ${realAncho} m  ·  Lanza: ${realLanza} cm`}
             </text>
           </svg>
         </div>
@@ -284,7 +288,7 @@ export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, cam
             </div>
             <div style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.55 }}>
               Una escalera se mide con la fórmula de Blondel: 2 contrahuellas + huella
-              debe quedar entre 60 y 65 cm. Con eso se sube y baja sin cansarse.
+              debe quedar entre 60 y 64 cm. Con eso se sube y baja sin cansarse.
               La pendiente cómoda está entre 30° y 38°; la contrahuella habitual
               en casa es de 17 a 19 cm y la huella de 26 a 28 cm.
             </div>

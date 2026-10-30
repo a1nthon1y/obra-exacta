@@ -16,6 +16,7 @@ export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [altura, setAltura] = useState('');
   const [ancho, setAncho]   = useState('');
   const [huella, setHuella] = useState<'auto' | 26 | 27 | 28>('auto');
+  const [lanza, setLanza]   = useState('15');
   const [fc, setFc]         = useState<140|175|210|245|280>(210);
   const [avanzado, setAvanzado] = useState(false);
   const [resultado, setResultado] = useState<ResultadoCalculo | null>(null);
@@ -26,7 +27,7 @@ export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const huellaCm = huella === 'auto' ? 27 : huella;
 
   function cargarEjemplo() {
-    setAltura('2.8'); setAncho('0.9'); setHuella('auto'); setFc(210);
+    setAltura('2.8'); setAncho('0.9'); setHuella('auto'); setLanza('15'); setFc(210);
     setEsEjemplo(true); setResultado(null); setError('');
   }
 
@@ -34,7 +35,7 @@ export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setError(''); setResultado(null);
     const r = calcular('escalera', {
       altura: Number(altura), ancho: Number(ancho),
-      huella, fc,
+      huella, lanza: Number(lanza) || 15, fc,
     });
     if ('error' in r) { setError(r.error); return; }
     setResultado(r);
@@ -58,6 +59,7 @@ export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           altura={Number(altura) || 0}
           ancho={Number(ancho) || 0}
           huellaCm={huellaCm}
+          lanzaCm={Number(lanza) || 15}
           campoActivo={campoActivo}
         />
       ) : (
@@ -102,7 +104,14 @@ export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </button>
         {avanzado && (
           <div className="form-grid-2" style={{ marginTop: 8 }}>
-            <div className="campo" style={{ gridColumn: 'span 2' }}>
+            <div className="campo">
+              <label>Espesor de la losa (lanza) <span className="unidad">(cm)</span></label>
+              <input type="number" inputMode="decimal" placeholder="Usual: 15" value={lanza}
+                onFocus={() => setCampoActivo('lanza')} onBlur={() => setCampoActivo(null)}
+                onChange={e => { setLanza(e.target.value); reset(); }} />
+              <div className="form-hint">En vivienda va de 12 a 15 cm. Más espesor significa más concreto.</div>
+            </div>
+            <div className="campo">
               <label>Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
               <select value={fc} onChange={e => { setFc(Number(e.target.value) as 140|175|210|245|280); reset(); }}>
                 {FC_OPCIONES.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}

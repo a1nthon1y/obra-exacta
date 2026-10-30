@@ -49,7 +49,7 @@ export function sugerirColumna(p: {
     `Luz entre columnas: ${p.luz.toFixed(1)} m`,
     'Suelo con capacidad media',
     p.sis === 'confinada'
-      ? 'Refuerzo mínimo de confinamiento: 4 varillas de 3/8" (RNE E.070)'
+      ? 'Refuerzo mínimo de confinamiento: 4 varillas (Ø 3/8" o mayor según diseño, E.070)'
       : 'Cuantía entre 1% y 4% de la sección (RNE E.060)',
   ];
 
@@ -260,6 +260,46 @@ export function sugerirZapata(p: {
       noAplica,
       requiereIngeniero: true,
       motivo: 'Falta la presión admisible del suelo para poder estimar la zapata.',
+    };
+  }
+
+  // Suelo blando y pórticos figuran en `noAplica`: no se devuelve una medida
+  // como si fuera segura, aunque el usuario haya completado todos los campos.
+  if (p.suelo === 'blando') {
+    return {
+      bCol: 30,
+      hCol: 30,
+      carga,
+      lado: 0,
+      espesor: 0,
+      pos: p.pos,
+      areaTrib,
+      suelo: p.suelo,
+      pa: 0,
+      cant: 4,
+      supuestos,
+      noAplica,
+      requiereIngeniero: true,
+      motivo: 'Suelo blando, relleno o ladera: la presión admisible y el tipo de cimentación los define el estudio de suelos. Revisa con un ingeniero.',
+    };
+  }
+
+  if (p.sis === 'porticos') {
+    return {
+      bCol: 30,
+      hCol: 30,
+      carga,
+      lado: 0,
+      espesor: 0,
+      pos: p.pos,
+      areaTrib,
+      suelo: p.suelo,
+      pa: 0,
+      cant: 4,
+      supuestos,
+      noAplica,
+      requiereIngeniero: true,
+      motivo: 'En pórticos el tamaño de la zapata depende del análisis estructural (carga y momento de la columna). Revisa con un ingeniero.',
     };
   }
 
