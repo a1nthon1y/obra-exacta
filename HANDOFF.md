@@ -1,7 +1,7 @@
 # Obra Exacta — estado para continuar
 
 Fecha de corte: 23/10/2026
-Última actualización: 02/11/2026 — P1 de metrado + respaldo completo en JSON
+Última actualización: 02/11/2026 — P1 de metrado + respaldo JSON + organización por piso
 
 ## Cambios 26/10/2026 — P0 de revisión técnica
 
@@ -222,6 +222,24 @@ Verificado: `npm test` (62/62), `npx oxlint src` (0), `npm run build` (OK,
 Verificado: `npm test` (71/71), `npx oxlint src` (0), `npm run build` (OK,
 1,051.57 kB, mismo aviso de chunk por Three.js).
 
+## Cambios 02/11/2026 — Mover y copiar partidas por piso
+
+- **Nuevo `src/store/organizar.ts`:** funciones puras `moverEtapa` y
+  `copiarEtapaAPisos`. Mover ajusta el piso al rango del proyecto (1..pisos) y
+  Casa limpia `proyectoId`/`piso`. Copiar crea una partida por piso, conserva la
+  original, elimina duplicados y no vuelve a crear el piso donde ya estaba.
+- **Store:** nuevas acciones `moverEtapa` y `copiarEtapaAPisos`; el respaldo JSON
+  conserva estas ubicaciones sin cambios.
+- **Mi Obra:** tarjeta “Organizar partidas por piso” con selector de partida,
+  proyecto destino y piso; botones “Mover” y “Copiar a todos los pisos”. Al
+  terminar, el filtro salta al destino para ver el resultado.
+- **Pruebas:** 78 en total (5 archivos). `organizar.test.ts` cubre mover a
+  proyecto, mover a Casa, índices/proyectos inexistentes, copia por piso, no
+  duplicar el piso de origen, listas con duplicados/fuera de rango y errores.
+
+Verificado: `npm test` (78/78), `npx oxlint src` (0), `npm run build` (OK,
+1,055.36 kB, mismo aviso de chunk por Three.js).
+
 
 ## Estado actual
 
@@ -234,6 +252,7 @@ La app está estable y compila. El flujo principal ya cubre:
 - Cada partida guarda `proyectoId`, `proyectoNombre` y `piso`.
 - **Mi Obra** filtra por obra, casa, proyecto o piso; totales, PDF y WhatsApp respetan el filtro.
 - **Respaldo completo:** Mi Obra descarga/importa un JSON con partidas, precios y proyectos; la importación también está disponible cuando aún no hay partidas.
+- **Organizar partidas:** desde Mi Obra se puede mover una partida a otro proyecto/piso o copiarla a todos los pisos de un proyecto.
 - Los proyectos solo se eliminan cuando están vacíos.
 - **Bloqueo de “Sugiéreme” en edificios:** con un proyecto de 3–5 pisos activo, Columnas y
   Zapata abren directamente en “Ya tengo la medida”, muestran un aviso rojo y no permiten
@@ -253,12 +272,12 @@ La app está estable y compila. El flujo principal ya cubre:
 Ejecutado y aprobado:
 
 ```bash
-npm test        # 71/71
+npm test        # 78/78
 npx oxlint src  # 0
 npm run build   # OK
 ```
 
-- Build correcto: JS `1,051.57 kB` (277.80 kB gzip), CSS `21.65 kB`.
+- Build correcto: JS `1,055.36 kB` (278.68 kB gzip), CSS `21.65 kB`.
 - La advertencia de chunk mayor a 500 kB es por Three.js y ya existía.
 - No se volvieron a correr las pruebas Playwright de sesiones anteriores.
 - Persistencia: `localStorage`, clave `obra-exacta-v1`.
@@ -272,7 +291,9 @@ npm run build   # OK
    y marcar claramente lo que es orientativo.
 2. **Respaldo:** implementado el JSON completo. Falta probarlo en un teléfono real y
    decidir si hace falta un modo “combinar” además del reemplazo actual.
-3. **Edición por piso:** mover una partida a otro piso/proyecto y copiarla a varios pisos.
+3. **Edición por piso:** ya se puede mover/copiar desde Mi Obra; falta evaluar un
+   acceso directo desde cada partida y si conviene evitar duplicados al copiar
+   varias veces.
 4. **Lenguaje y accesibilidad:** pasar términos técnicos a lenguaje claro en la UI, mover
    códigos de norma a ficha técnica/PDF y asociar `label`/`input` con `htmlFor`/`id`.
 5. **Rendimiento y offline:** evaluar PWA, carga diferida de Three.js y pruebas unitarias

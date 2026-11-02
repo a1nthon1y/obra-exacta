@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ResultadoCalculo } from '../engine/types';
 import type { PreciosUsuario } from './totalizar';
+import {
+  copiarEtapaAPisos as copiarEtapaDatos,
+  moverEtapa as moverEtapaDatos,
+} from './organizar';
+import type { DestinoPartida } from './organizar';
 
 export type { CatItem, Catalogo } from '../engine/types';
 export { CATALOGO } from './catalogo';
@@ -51,6 +56,8 @@ interface ObraState {
   limpiarPrecios: () => void;
   limpiarObra: () => void;
   cargarRespaldo: (datos: ObraDatos) => void;
+  moverEtapa: (idx: number, destino: DestinoPartida) => void;
+  copiarEtapaAPisos: (idx: number, proyectoId: string, pisos?: number[]) => void;
 }
 
 export const useObraStore = create<ObraState>()(
@@ -134,6 +141,16 @@ export const useObraStore = create<ObraState>()(
         proyectos: datos.proyectos,
         proyectoActivoId: datos.proyectoActivoId,
         pisoActivo: datos.pisoActivo,
+      }),
+      moverEtapa: (idx, destino) => set((s) => {
+        const etapas = moverEtapaDatos(s.etapas, idx, destino, s.proyectos);
+        return etapas === s.etapas ? s : { etapas };
+      }),
+      copiarEtapaAPisos: (idx, proyectoId, pisos) => set((s) => {
+        const proyecto = s.proyectos.find(p => p.id === proyectoId);
+        if (!proyecto) return s;
+        const etapas = copiarEtapaDatos(s.etapas, idx, proyecto, pisos);
+        return etapas === s.etapas ? s : { etapas };
       }),
     }),
     { name: 'obra-exacta-v1' }

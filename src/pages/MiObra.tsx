@@ -47,9 +47,15 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
   const quitarPrecio = useObraStore(s => s.quitarPrecio);
   const limpiarPrecios = useObraStore(s => s.limpiarPrecios);
   const cargarRespaldo = useObraStore(s => s.cargarRespaldo);
+  const moverEtapa = useObraStore(s => s.moverEtapa);
+  const copiarEtapaAPisos = useObraStore(s => s.copiarEtapaAPisos);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [respaldoMsg, setRespaldoMsg] = useState<{ tipo: 'ok' | 'bad'; texto: string } | null>(null);
+  const [partidaSel, setPartidaSel] = useState('');
+  const [destinoProyecto, setDestinoProyecto] = useState('casa');
+  const [destinoPiso, setDestinoPiso] = useState('1');
+  const [organizarMsg, setOrganizarMsg] = useState<{ tipo: 'ok' | 'bad'; texto: string } | null>(null);
 
   const [filtro, setFiltro] = useState<string>(() => {
     if (!proyectoActivoId) return 'todo';
@@ -81,6 +87,11 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
       : `${proyectoSeleccionado?.nombre ?? 'Proyecto'}${pisoFiltro === 'todos' ? ' · Todos los pisos' : ` · Piso ${pisoFiltro}`}`;
 
   const hayPreciosEditados = Object.keys(precios).length > 0;
+  const proyectoDestino = proyectos.find(p => p.id === destinoProyecto) ?? null;
+  const pisosDestino = proyectoDestino
+    ? Array.from({ length: proyectoDestino.pisos }, (_, i) => i + 1)
+    : [];
+  const etapaSeleccionada = partidaSel === '' ? null : etapas[Number(partidaSel)] ?? null;
 
   const filtrosUI = (
     <div style={{ marginBottom: 14 }}>
@@ -255,6 +266,33 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
     }
   }
 
+  function moverPartida() {
+    if (partidaSel === '') return;
+    const idx = Number(partidaSel);
+    if (!Number.isInteger(idx) || !etapas[idx]) return;
+    const piso = proyectoDestino ? Number(destinoPiso) : undefined;
+    moverEtapa(idx, { proyectoId: proyectoDestino?.id, piso });
+    const destino = proyectoDestino
+      ? `${proyectoDestino.nombre} · Piso ${piso ?? 1}`
+      : 'Casa / obra general';
+    setOrganizarMsg({ tipo: 'ok', texto: `Partida movida a ${destino}.` });
+    setFiltro(proyectoDestino?.id ?? 'casa');
+    setPisoFiltro('todos');
+  }
+
+  function copiarPartida() {
+    if (partidaSel === '') return;
+    const idx = Number(partidaSel);
+    if (!proyectoDestino || !Number.isInteger(idx) || !etapas[idx]) return;
+    copiarEtapaAPisos(idx, proyectoDestino.id);
+    setOrganizarMsg({
+      tipo: 'ok',
+      texto: `Copias creadas en los pisos de ${proyectoDestino.nombre}.`,
+    });
+    setFiltro(proyectoDestino.id);
+    setPisoFiltro('todos');
+  }
+
   const inputRespaldo = (
     <input
       ref={fileRef}
@@ -268,9 +306,16 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
   );
 
   const mensajeRespaldo = respaldoMsg ? (
-    <div className={`aviso ${respaldoMsg.tipo}`} style={{ marginTop: 10 }}>
+    <div className={`aviso ${respaldoMsg.tipo}`} style={{ marginTop: 10 }} role="status">
       <span className="aviso-icon">{respaldoMsg.tipo === 'ok' ? '✅' : '🔴'}</span>
       {respaldoMsg.texto}
+    </div>
+  ) : null;
+
+  const mensajeOrganizar = organizarMsg ? (
+    <div className={`aviso ${organizarMsg.tipo}`} style={{ marginTop: 10 }} role="status">
+      <span className="aviso-icon">{organizarMsg.tipo === 'ok' ? '✅' : '🔴'}</span>
+      {organizarMsg.texto}
     </div>
   ) : null;
 
@@ -345,6 +390,75 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
           );
         })}
       </div>
+
+      {hayProyectos && (
+        <div className="form-card" style={{ marginTop: 0, marginBottom: 14 }}>
+          <div className="form-section-title">Organizar partidas por piso</div>
+          <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: 'var(--c-muted)', lineHeight: 1.5 }}>
+            Mueve una partida a otro proyecto o piso, o cópiala a todos los pisos del proyecto.
+          </p>
+
+          <div className="campo">
+            <label htmlFor="org-partida">Partida <span className="unidad">(elige una)</span></label>
+            <select
+              id="org-partida"
+              value={partidaSel}
+              onChange={e => { setPartidaSel(e.target.value); setOrganizarMsg(null); }}
+            >
+              <option value="">Selecciona una partida</option>
+              {etapas.map((e, idx) => {
+                const pn = e.proyectoNombre
+                  ?? (e.proyectoId ? proyectos.find(p => p.id === e.proyectoId)?.nombre : undefined);
+                return (
+                  <option key={`${e.timestamp}-${idx}`} value={idx}>
+                    {e.titulo}{e.piso ? ` · Piso ${e.piso}` : ''}{pn ? ` · ${pn}` : ''} — {e.detalle}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          <div className="campo">
+            <label htmlFor="org-proyecto">Proyecto destino</label>
+            <select
+              id="org-proyecto"
+              value={destinoProyecto}
+              onChange={e => { setDestinoProyecto(e.target.value); setDestinoPiso('1'); setOrganizarMsg(null); }}
+            >
+              <option value="casa">Casa / obra general</option>
+              {proyectos.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+            </select>
+          </div>
+
+          {proyectoDestino && (
+            <div className="campo">
+              <label htmlFor="org-piso">Piso destino</label>
+              <select
+                id="org-piso"
+                value={destinoPiso}
+                onChange={e => { setDestinoPiso(e.target.value); setOrganizarMsg(null); }}
+              >
+                {pisosDestino.map(n => <option key={n} value={n}>Piso {n}</option>)}
+              </select>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <button type="button" className="btn-secondary" disabled={!etapaSeleccionada} onClick={moverPartida}>
+              Mover
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={!etapaSeleccionada || !proyectoDestino}
+              onClick={copiarPartida}
+            >
+              Copiar a todos los pisos
+            </button>
+          </div>
+          {mensajeOrganizar}
+        </div>
+      )}
 
       {/* Lista de materiales agrupada */}
       <div className="mats-card" style={{ marginBottom: 14 }}>
