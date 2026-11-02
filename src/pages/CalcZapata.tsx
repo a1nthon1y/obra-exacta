@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { Suspense, useRef, useState } from 'react';
 import { calcular, dimensionarZapata } from '../engine/calc';
 import { sugerirZapata } from '../engine/sugerir';
 import type { SugerenciaZapata } from '../engine/sugerir';
@@ -6,13 +6,17 @@ import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
 import { AvisoEdificio } from '../components/AvisoEdificio';
 import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerCargando } from '../components/ViewerCargando';
 import { ViewerEspera } from '../components/ViewerEspera';
-import { ZapataViewer3D } from '../components/ZapataViewer3D';
 import { FC_OPCIONES, FC_AYUDA } from '../utils/fcOpciones';
 import { getEtapa } from '../config/etapas';
 import { useObraStore } from '../store/obraStore';
 
 const etapa = getEtapa('zapata');
+
+const ZapataViewer3D = React.lazy(() =>
+  import('../components/ZapataViewer3D').then(m => ({ default: m.ZapataViewer3D }))
+);
 
 const EJEMPLO: any = {
   zapata: { bCol: 30, hCol: 30, carga: 15, suelo: 'intermedio', pa: 1.2, espesor: 40, dVar: '5/8', fc: 210, cant: 4 }
@@ -423,19 +427,21 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             : 'Ingresa las medidas de la zapata o usa “No sé la medida”. El visor se activa con tus datos, no con valores de ejemplo.'}
         />
       ) : (
-        <ZapataViewer3D
-          bCol={nBCol}
-          hCol={nHCol}
-          bZap={ladoZap}
-          hZap={ladoZap}
-          espesor={espesorM}
-          carga={nCarga}
-          cant={nCant}
-          campoActivo={campoActivo}
-          onNoSe={esEdificio ? undefined : irASugerir}
-          onEditar={irAMedida}
-          guia={modoActual === 'sugerir'}
-        />
+        <Suspense fallback={<ViewerCargando icon={etapa.icon} titulo={etapa.tituloVisor} />}>
+          <ZapataViewer3D
+            bCol={nBCol}
+            hCol={nHCol}
+            bZap={ladoZap}
+            hZap={ladoZap}
+            espesor={espesorM}
+            carga={nCarga}
+            cant={nCant}
+            campoActivo={campoActivo}
+            onNoSe={esEdificio ? undefined : irASugerir}
+            onEditar={irAMedida}
+            guia={modoActual === 'sugerir'}
+          />
+        </Suspense>
       )}
 
       {modoActual === 'medida' && (

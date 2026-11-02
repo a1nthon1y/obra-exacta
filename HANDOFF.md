@@ -1,7 +1,7 @@
 # Obra Exacta — estado para continuar
 
 Fecha de corte: 23/10/2026
-Última actualización: 02/11/2026 — P1 de metrado + respaldo JSON + organización por piso
+Última actualización: 02/11/2026 — P1 de metrado + respaldo JSON + organización por piso + visores 3D diferidos
 
 ## Cambios 26/10/2026 — P0 de revisión técnica
 
@@ -240,6 +240,23 @@ Verificado: `npm test` (71/71), `npx oxlint src` (0), `npm run build` (OK,
 Verificado: `npm test` (78/78), `npx oxlint src` (0), `npm run build` (OK,
 1,055.36 kB, mismo aviso de chunk por Three.js).
 
+## Cambios 02/11/2026 — Carga diferida de los visores 3D
+
+- **Nuevo `src/components/ViewerCargando.tsx`:** fallback con el mismo marco del
+  visor mientras se descarga su código; no bloquea el formulario ni el cálculo.
+- **Visores bajo demanda:** Cimientos, Muros, Escalera, Columnas, Vigas, Losa y
+  Zapata pasan a `React.lazy` + `Suspense`. Three.js y `viewerUtils` ya no se
+  descargan al abrir la app, solo al entrar a una calculadora con visor.
+- **Resultado del build:** el JS inicial baja de `1,055.36 kB` a `405.05 kB`
+  (`114.50 kB` gzip). Three.js queda en un chunk compartido de `571.27 kB` que
+  se carga aparte; los visores individuales pesan entre `7.59` y `18.68 kB`.
+- **Pruebas:** 78/78 sin cambios; la carga diferida se validó con `tsc`,
+  `oxlint` y el build de producción.
+
+Verificado: `npm test` (78/78), `npx oxlint src` (0), `npm run build` (OK,
+JS inicial `405.05 kB`; el aviso de chunk >500 kB ahora corresponde al chunk
+diferido de Three.js).
+
 
 ## Estado actual
 
@@ -253,6 +270,7 @@ La app está estable y compila. El flujo principal ya cubre:
 - **Mi Obra** filtra por obra, casa, proyecto o piso; totales, PDF y WhatsApp respetan el filtro.
 - **Respaldo completo:** Mi Obra descarga/importa un JSON con partidas, precios y proyectos; la importación también está disponible cuando aún no hay partidas.
 - **Organizar partidas:** desde Mi Obra se puede mover una partida a otro proyecto/piso o copiarla a todos los pisos de un proyecto.
+- **Visores 3D diferidos:** el código de Three.js se descarga solo al abrir una calculadora con visor; el resto de la app arranca más liviano.
 - Los proyectos solo se eliminan cuando están vacíos.
 - **Bloqueo de “Sugiéreme” en edificios:** con un proyecto de 3–5 pisos activo, Columnas y
   Zapata abren directamente en “Ya tengo la medida”, muestran un aviso rojo y no permiten
@@ -277,12 +295,14 @@ npx oxlint src  # 0
 npm run build   # OK
 ```
 
-- Build correcto: JS `1,055.36 kB` (278.68 kB gzip), CSS `21.65 kB`.
-- La advertencia de chunk mayor a 500 kB es por Three.js y ya existía.
+- Build correcto: JS inicial `405.05 kB` (114.50 kB gzip), CSS `21.65 kB`.
+- Three.js queda en un chunk diferido de `571.27 kB` (142.40 kB gzip); la
+  advertencia de chunk >500 kB ahora aplica solo a ese chunk bajo demanda.
 - No se volvieron a correr las pruebas Playwright de sesiones anteriores.
 - Persistencia: `localStorage`, clave `obra-exacta-v1`.
-- Checkpoint anterior: `6f34b6f`. Los cambios de esta sesión (P1 de metrado y
-  respaldo JSON) quedaron en el commit de checkpoint del 02/11/2026.
+- Checkpoint anterior: `6f34b6f`. Los cambios de esta sesión (P1 de metrado,
+  respaldo JSON, organización por piso y visores diferidos) quedaron en los
+  commits de checkpoint del 02/11/2026.
 
 ## Prioridad al retomar
 
@@ -296,8 +316,8 @@ npm run build   # OK
    varias veces.
 4. **Lenguaje y accesibilidad:** pasar términos técnicos a lenguaje claro en la UI, mover
    códigos de norma a ficha técnica/PDF y asociar `label`/`input` con `htmlFor`/`id`.
-5. **Rendimiento y offline:** evaluar PWA, carga diferida de Three.js y pruebas unitarias
-   del motor dentro del proyecto.
+5. **Rendimiento y offline:** carga diferida de Three.js ya implementada; falta
+   evaluar PWA/offline y completar pruebas unitarias del motor dentro del proyecto.
 6. **Cierre documental:** actualizar el MD de especificación después de la validación técnica
    y de flujo.
 7. **Git:** checkpoint del 02/11/2026 hecho; revisar el diff de los 5 arreglos de

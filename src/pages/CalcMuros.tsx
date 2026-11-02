@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { calcular } from '../engine/calc';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
-import { MuroViewer3D } from '../components/MuroViewer3D';
 import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerCargando } from '../components/ViewerCargando';
 import { ViewerEspera } from '../components/ViewerEspera';
 import { getEtapa } from '../config/etapas';
 
 const etapa = getEtapa('muros');
+
+const MuroViewer3D = React.lazy(() =>
+  import('../components/MuroViewer3D').then(m => ({ default: m.MuroViewer3D }))
+);
 
 export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [largo, setLargo]       = useState('');
@@ -82,23 +86,25 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       {/* Visualizador 3D y Técnico */}
       {Number(largo) > 0 && Number(alto) > 0 ? (
-        <MuroViewer3D
-          largo={Number(largo) || 0}
-          alto={Number(alto) || 0}
-          aparejo={aparejo}
-          ladrillo={ladrillo}
-          uso={uso}
-          puertas={numPuertasEfectivo}
-          altoP={Number(altoP) || 2.10}
-          anchoP={Number(anchoP) || 0.90}
-          ventanas={numVentanasEfectivo}
-          altoV={Number(altoV) || 1.20}
-          anchoV={Number(anchoV) || 1.20}
-          lb={Number(lb) || 24}
-          ab={Number(ab) || 13}
-          hb={Number(hb) || 9}
-          campoActivo={campoActivo}
-        />
+        <Suspense fallback={<ViewerCargando icon={etapa.icon} titulo={etapa.tituloVisor} />}>
+          <MuroViewer3D
+            largo={Number(largo) || 0}
+            alto={Number(alto) || 0}
+            aparejo={aparejo}
+            ladrillo={ladrillo}
+            uso={uso}
+            puertas={numPuertasEfectivo}
+            altoP={Number(altoP) || 2.10}
+            anchoP={Number(anchoP) || 0.90}
+            ventanas={numVentanasEfectivo}
+            altoV={Number(altoV) || 1.20}
+            anchoV={Number(anchoV) || 1.20}
+            lb={Number(lb) || 24}
+            ab={Number(ab) || 13}
+            hb={Number(hb) || 9}
+            campoActivo={campoActivo}
+          />
+        </Suspense>
       ) : (
         <ViewerEspera
           icon={etapa.icon}

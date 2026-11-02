@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { calcular } from '../engine/calc';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
-import { CimientoViewer3D } from '../components/CimientoViewer3D';
 import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerCargando } from '../components/ViewerCargando';
 import { ViewerEspera } from '../components/ViewerEspera';
 import { getEtapa } from '../config/etapas';
 
 const etapa = getEtapa('cimientos');
+
+const CimientoViewer3D = React.lazy(() =>
+  import('../components/CimientoViewer3D').then(m => ({ default: m.CimientoViewer3D }))
+);
 
 const EJEMPLO: Record<string, object> = {
   cimientos: { largo: 30, ancho: 0.6, prof: 1.0, esp: 0.15, alto: 0.4, altoCimiento: 0.5 },
@@ -58,15 +62,17 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
       {Number(largo) > 0 && Number(ancho) > 0 && Number(prof) > 0 && Number(alto) > 0 ? (
-        <CimientoViewer3D
-          largo={Number(largo) || 0}
-          ancho={Number(ancho) || 0}
-          prof={Number(prof) || 0}
-          esp={Number(esp) || 0}
-          alto={Number(alto) || 0}
-          altoCimiento={Number(altoCimiento) || Math.min(0.5, Number(prof) || 0.5)}
-          campoActivo={campoActivo}
-        />
+        <Suspense fallback={<ViewerCargando icon={etapa.icon} titulo={etapa.tituloVisor} />}>
+          <CimientoViewer3D
+            largo={Number(largo) || 0}
+            ancho={Number(ancho) || 0}
+            prof={Number(prof) || 0}
+            esp={Number(esp) || 0}
+            alto={Number(alto) || 0}
+            altoCimiento={Number(altoCimiento) || Math.min(0.5, Number(prof) || 0.5)}
+            campoActivo={campoActivo}
+          />
+        </Suspense>
       ) : (
         <ViewerEspera
           icon={etapa.icon}

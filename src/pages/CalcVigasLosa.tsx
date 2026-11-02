@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { calcular } from '../engine/calc';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
-import { VigaViewer3D } from '../components/VigaViewer3D';
-import { LosaViewer3D } from '../components/LosaViewer3D';
 import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerCargando } from '../components/ViewerCargando';
 import { ViewerEspera } from '../components/ViewerEspera';
 import { FC_OPCIONES, FC_AYUDA } from '../utils/fcOpciones';
 import { getEtapa } from '../config/etapas';
 
 const etapaVigas = getEtapa('vigas');
 const etapaLosa = getEtapa('losa');
+
+const VigaViewer3D = React.lazy(() =>
+  import('../components/VigaViewer3D').then(m => ({ default: m.VigaViewer3D }))
+);
+const LosaViewer3D = React.lazy(() =>
+  import('../components/LosaViewer3D').then(m => ({ default: m.LosaViewer3D }))
+);
 
 const DIAMETROS = ['3/8', '1/2', '5/8', '3/4', '1/4'] as const;
 
@@ -66,20 +72,22 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
       {Number(b) > 0 && Number(h) > 0 && Number(luz) > 0 ? (
-        <VigaViewer3D
-          b={Number(b) || 0}
-          h={Number(h) || 0}
-          luz={Number(luz) || 0}
-          nSup={Number(nSup) || 0}
-          dSup={dSup}
-          nInf={Number(nInf) || 0}
-          dInf={dInf}
-          dEst={dEst}
-          rec={Number(rec) || 0}
-          sis={sis}
-          espesorLosa={Number(espesorLosa) || 0}
-          campoActivo={campoActivo}
-        />
+        <Suspense fallback={<ViewerCargando icon={etapaVigas.icon} titulo={etapaVigas.tituloVisor} />}>
+          <VigaViewer3D
+            b={Number(b) || 0}
+            h={Number(h) || 0}
+            luz={Number(luz) || 0}
+            nSup={Number(nSup) || 0}
+            dSup={dSup}
+            nInf={Number(nInf) || 0}
+            dInf={dInf}
+            dEst={dEst}
+            rec={Number(rec) || 0}
+            sis={sis}
+            espesorLosa={Number(espesorLosa) || 0}
+            campoActivo={campoActivo}
+          />
+        </Suspense>
       ) : (
         <ViewerEspera
           icon={etapaVigas.icon}
@@ -239,12 +247,14 @@ export const CalcLosa: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
       {Number(largo) > 0 && Number(ancho) > 0 ? (
-        <LosaViewer3D
-          largo={Number(largo) || 0}
-          ancho={Number(ancho) || 0}
-          espesor={espesor === 'auto' ? 0 : Number(espesor)}
-          campoActivo={campoActivo}
-        />
+        <Suspense fallback={<ViewerCargando icon={etapaLosa.icon} titulo={etapaLosa.tituloVisor} />}>
+          <LosaViewer3D
+            largo={Number(largo) || 0}
+            ancho={Number(ancho) || 0}
+            espesor={espesor === 'auto' ? 0 : Number(espesor)}
+            campoActivo={campoActivo}
+          />
+        </Suspense>
       ) : (
         <ViewerEspera
           icon={etapaLosa.icon}

@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { calcular } from '../engine/calc';
 import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
-import { EscaleraViewer3D } from '../components/EscaleraViewer3D';
 import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerCargando } from '../components/ViewerCargando';
 import { ViewerEspera } from '../components/ViewerEspera';
 import { FC_OPCIONES, FC_AYUDA } from '../utils/fcOpciones';
 import { getEtapa } from '../config/etapas';
 
 const etapa = getEtapa('escalera');
+
+const EscaleraViewer3D = React.lazy(() =>
+  import('../components/EscaleraViewer3D').then(m => ({ default: m.EscaleraViewer3D }))
+);
 
 const HUELLAS = ['auto', 26, 27, 28] as const;
 
@@ -55,13 +59,15 @@ export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <button className="btn-ejemplo" onClick={cargarEjemplo}>📐 Ver un ejemplo</button>
 
       {Number(altura) > 0 && Number(ancho) > 0 ? (
-        <EscaleraViewer3D
-          altura={Number(altura) || 0}
-          ancho={Number(ancho) || 0}
-          huellaCm={huellaCm}
-          lanzaCm={Number(lanza) || 15}
-          campoActivo={campoActivo}
-        />
+        <Suspense fallback={<ViewerCargando icon={etapa.icon} titulo={etapa.tituloVisor} />}>
+          <EscaleraViewer3D
+            altura={Number(altura) || 0}
+            ancho={Number(ancho) || 0}
+            huellaCm={huellaCm}
+            lanzaCm={Number(lanza) || 15}
+            campoActivo={campoActivo}
+          />
+        </Suspense>
       ) : (
         <ViewerEspera
           icon={etapa.icon}

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { Suspense, useRef, useState } from 'react';
 import { calcular } from '../engine/calc';
 import { sugerirColumna } from '../engine/sugerir';
 import type { SugerenciaColumna } from '../engine/sugerir';
@@ -6,13 +6,17 @@ import type { ResultadoCalculo } from '../engine/types';
 import { Resultado } from '../components/Resultado';
 import { AvisoEdificio } from '../components/AvisoEdificio';
 import { ProyectoActivoBar } from '../components/ProyectoActivoBar';
+import { ViewerCargando } from '../components/ViewerCargando';
 import { ViewerEspera } from '../components/ViewerEspera';
-import { ColumnaViewer3D } from '../components/ColumnaViewer3D';
 import { FC_OPCIONES, FC_AYUDA } from '../utils/fcOpciones';
 import { getEtapa } from '../config/etapas';
 import { useObraStore } from '../store/obraStore';
 
 const etapa = getEtapa('columnas');
+
+const ColumnaViewer3D = React.lazy(() =>
+  import('../components/ColumnaViewer3D').then(m => ({ default: m.ColumnaViewer3D }))
+);
 
 const DIAMETROS = ['3/8', '1/2', '5/8', '3/4', '1/4'] as const;
 
@@ -298,19 +302,21 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             : 'Ingresa las medidas de la columna o usa “No sé la medida”. El visor se activa con tus datos, no con valores de ejemplo.'}
         />
       ) : (
-        <ColumnaViewer3D
-          b={Number(b) || 0}
-          h={Number(h) || 0}
-          alto={Number(alto) || 0}
-          nVar={Number(nVar) || 0}
-          dVar={dVar}
-          dEst={dEst}
-          rec={Number(rec) || 0}
-          campoActivo={campoActivo}
-          onNoSe={esEdificio ? undefined : irASugerir}
-          onEditar={irAMedida}
-          guia={modoActual === 'sugerir'}
-        />
+        <Suspense fallback={<ViewerCargando icon={etapa.icon} titulo={etapa.tituloVisor} />}>
+          <ColumnaViewer3D
+            b={Number(b) || 0}
+            h={Number(h) || 0}
+            alto={Number(alto) || 0}
+            nVar={Number(nVar) || 0}
+            dVar={dVar}
+            dEst={dEst}
+            rec={Number(rec) || 0}
+            campoActivo={campoActivo}
+            onNoSe={esEdificio ? undefined : irASugerir}
+            onEditar={irAMedida}
+            guia={modoActual === 'sugerir'}
+          />
+        </Suspense>
       )}
 
       {modoActual === 'medida' && (
