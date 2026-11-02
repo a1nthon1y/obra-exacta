@@ -25,6 +25,15 @@ export interface ProyectoEdificio {
   creado: number;
 }
 
+/** Datos que viajan en un respaldo JSON. No incluye las acciones del store. */
+export interface ObraDatos {
+  etapas: EtapaGuardada[];
+  precios: PreciosUsuario;
+  proyectos: ProyectoEdificio[];
+  proyectoActivoId: string | null;
+  pisoActivo: number;
+}
+
 interface ObraState {
   etapas: EtapaGuardada[];
   precios: PreciosUsuario;
@@ -41,6 +50,7 @@ interface ObraState {
   quitarPrecio: (id: string) => void;
   limpiarPrecios: () => void;
   limpiarObra: () => void;
+  cargarRespaldo: (datos: ObraDatos) => void;
 }
 
 export const useObraStore = create<ObraState>()(
@@ -118,6 +128,13 @@ export const useObraStore = create<ObraState>()(
       }),
       limpiarPrecios: () => set({ precios: {} }),
       limpiarObra: () => set({ etapas: [] }),
+      cargarRespaldo: (datos) => set({
+        etapas: datos.etapas,
+        precios: datos.precios,
+        proyectos: datos.proyectos,
+        proyectoActivoId: datos.proyectoActivoId,
+        pisoActivo: datos.pisoActivo,
+      }),
     }),
     { name: 'obra-exacta-v1' }
   )

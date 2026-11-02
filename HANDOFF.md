@@ -1,7 +1,7 @@
 # Obra Exacta — estado para continuar
 
 Fecha de corte: 23/10/2026
-Última actualización: 02/11/2026 — P1 de metrado (estribos de solera, contrapiso, escalera, corte y cimientos)
+Última actualización: 02/11/2026 — P1 de metrado + respaldo completo en JSON
 
 ## Cambios 26/10/2026 — P0 de revisión técnica
 
@@ -201,6 +201,27 @@ Verificado: `npm test` (56/56), `npx oxlint src` (0), `npm run build` (OK).
 Verificado: `npm test` (62/62), `npx oxlint src` (0), `npm run build` (OK,
 1,046.31 kB, mismo aviso de chunk por Three.js).
 
+## Cambios 02/11/2026 — Respaldo completo en JSON
+
+- **Nuevo `src/store/respaldo.ts`:** arma un respaldo con marca (`app:
+  "obra-exacta"`), versión (`schema: 1`), fecha y todos los datos: etapas,
+  precios propios, proyectos, proyecto activo y piso activo.
+- **Importación validada:** revisa JSON, marca/versión, partidas, materiales,
+  precios y proyectos antes de tocar el store. Acepta una obra vacía (0
+  partidas), que es el caso de restaurar en un teléfono nuevo. También acepta
+  archivos con BOM, típicos de WhatsApp/Windows.
+- **Store:** `ObraDatos` y la acción `cargarRespaldo` reemplazan la obra actual.
+  La importación pide confirmación si ya hay partidas, proyectos o precios.
+- **Mi Obra:** botones “Descargar respaldo” e “Importar respaldo” en la vista
+  normal; el botón de importar también aparece en el estado vacío. El archivo
+  se descarga como `obra-exacta-AAAA-MM-DD.json`.
+- **Pruebas:** 71 en total (4 archivos). Nuevas en `respaldo.test.ts`: round-trip
+  completo, obra vacía, BOM, JSON inválido, app/versión incorrectas, partida
+  dañada, precio no numérico, proyecto activo inexistente y nombre de archivo.
+
+Verificado: `npm test` (71/71), `npx oxlint src` (0), `npm run build` (OK,
+1,051.57 kB, mismo aviso de chunk por Three.js).
+
 
 ## Estado actual
 
@@ -212,6 +233,7 @@ La app está estable y compila. El flujo principal ya cubre:
 - Sección **Edificio 3–5 pisos** con proyectos, piso activo, checklists y derivación a ingeniero.
 - Cada partida guarda `proyectoId`, `proyectoNombre` y `piso`.
 - **Mi Obra** filtra por obra, casa, proyecto o piso; totales, PDF y WhatsApp respetan el filtro.
+- **Respaldo completo:** Mi Obra descarga/importa un JSON con partidas, precios y proyectos; la importación también está disponible cuando aún no hay partidas.
 - Los proyectos solo se eliminan cuando están vacíos.
 - **Bloqueo de “Sugiéreme” en edificios:** con un proyecto de 3–5 pisos activo, Columnas y
   Zapata abren directamente en “Ya tengo la medida”, muestran un aviso rojo y no permiten
@@ -231,25 +253,25 @@ La app está estable y compila. El flujo principal ya cubre:
 Ejecutado y aprobado:
 
 ```bash
-npm test        # 62/62
+npm test        # 71/71
 npx oxlint src  # 0
 npm run build   # OK
 ```
 
-- Build correcto: JS `1,046.31 kB` (276.13 kB gzip), CSS `21.65 kB`.
+- Build correcto: JS `1,051.57 kB` (277.80 kB gzip), CSS `21.65 kB`.
 - La advertencia de chunk mayor a 500 kB es por Three.js y ya existía.
 - No se volvieron a correr las pruebas Playwright de sesiones anteriores.
 - Persistencia: `localStorage`, clave `obra-exacta-v1`.
-- Checkpoint anterior: `6f34b6f`. Los cambios de esta sesión (P1 de metrado)
-  quedaron en el commit de checkpoint del 02/11/2026.
+- Checkpoint anterior: `6f34b6f`. Los cambios de esta sesión (P1 de metrado y
+  respaldo JSON) quedaron en el commit de checkpoint del 02/11/2026.
 
 ## Prioridad al retomar
 
 1. **Validar con ingeniero colegiado:** rangos de columnas y zapatas, carga asumida de
    `1.0 t/m²` y mínimo de 5 t, fórmula de As,mín de vigas y recubrimientos. Ajustar textos
    y marcar claramente lo que es orientativo.
-2. **Respaldo:** exportar/importar la obra completa en JSON. Debe funcionar también cuando
-   Mi Obra está vacía, para restaurar en un teléfono nuevo.
+2. **Respaldo:** implementado el JSON completo. Falta probarlo en un teléfono real y
+   decidir si hace falta un modo “combinar” además del reemplazo actual.
 3. **Edición por piso:** mover una partida a otro piso/proyecto y copiarla a varios pisos.
 4. **Lenguaje y accesibilidad:** pasar términos técnicos a lenguaje claro en la UI, mover
    códigos de norma a ficha técnica/PDF y asociar `label`/`input` con `htmlFor`/`id`.

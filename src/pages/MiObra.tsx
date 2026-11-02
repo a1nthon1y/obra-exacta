@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useObraStore, CATALOGO, totalizarObra } from '../store/obraStore';
 import { exportarReportePdf } from '../utils/exportarPdf';
+import {
+  nombreArchivoRespaldo,
+  parsearRespaldo,
+  serializarRespaldo,
+} from '../store/respaldo';
 
 const FECHA_PRECIOS = 'Octubre 2026, Lima';
 
@@ -36,10 +41,15 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
   const precios   = useObraStore(s => s.precios);
   const proyectos = useObraStore(s => s.proyectos);
   const proyectoActivoId = useObraStore(s => s.proyectoActivoId);
+  const pisoActivo = useObraStore(s => s.pisoActivo);
   const quitarEtapa = useObraStore(s => s.quitarEtapa);
   const setPrecio = useObraStore(s => s.setPrecio);
   const quitarPrecio = useObraStore(s => s.quitarPrecio);
   const limpiarPrecios = useObraStore(s => s.limpiarPrecios);
+  const cargarRespaldo = useObraStore(s => s.cargarRespaldo);
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [respaldoMsg, setRespaldoMsg] = useState<{ tipo: 'ok' | 'bad'; texto: string } | null>(null);
 
   const [filtro, setFiltro] = useState<string>(() => {
     if (!proyectoActivoId) return 'todo';
@@ -198,6 +208,72 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
     });
   }
 
+  function exportarRespaldo() {
+    const json = serializarRespaldo({ etapas, precios, proyectos, proyectoActivoId, pisoActivo });
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivoRespaldo();
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setRespaldoMsg({
+      tipo: 'ok',
+      texto: `Respaldo descargado con ${etapas.length} partida(s) y ${proyectos.length} proyecto(s).`,
+    });
+  }
+
+  async function importarRespaldo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setRespaldoMsg(null);
+    try {
+      const parsed = parsearRespaldo(await file.text());
+      if (!parsed.ok) {
+        setRespaldoMsg({ tipo: 'bad', texto: parsed.error });
+        return;
+      }
+
+      const hayDatos = etapas.length > 0 || proyectos.length > 0 || Object.keys(precios).length > 0;
+      if (hayDatos && !window.confirm(
+        `Este respaldo reemplazará tu obra actual (${etapas.length} partida(s), ${proyectos.length} proyecto(s)). ¿Continuar?`
+      )) return;
+
+      cargarRespaldo(parsed.data);
+      setFiltro('todo');
+      setPisoFiltro('todos');
+      setRespaldoMsg({
+        tipo: 'ok',
+        texto: `Respaldo importado: ${parsed.data.etapas.length} partida(s), ${parsed.data.proyectos.length} proyecto(s) y ${Object.keys(parsed.data.precios).length} precio(s) propios.`,
+      });
+    } catch {
+      setRespaldoMsg({ tipo: 'bad', texto: 'No se pudo leer el archivo. Intenta descargarlo de nuevo.' });
+    }
+  }
+
+  const inputRespaldo = (
+    <input
+      ref={fileRef}
+      type="file"
+      accept=".json,application/json"
+      style={{ display: 'none' }}
+      onChange={importarRespaldo}
+      tabIndex={-1}
+      aria-hidden="true"
+    />
+  );
+
+  const mensajeRespaldo = respaldoMsg ? (
+    <div className={`aviso ${respaldoMsg.tipo}`} style={{ marginTop: 10 }}>
+      <span className="aviso-icon">{respaldoMsg.tipo === 'ok' ? '✅' : '🔴'}</span>
+      {respaldoMsg.texto}
+    </div>
+  ) : null;
+
   if (etapas.length === 0) {
     return (
       <div className="page">
@@ -207,6 +283,16 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
           <button className="btn-primary" style={{ marginTop: 18, maxWidth: 280 }} onClick={onIrCalculadoras}>
             📐 Ir a las calculadoras
           </button>
+          <button
+            className="btn-secondary"
+            type="button"
+            style={{ marginTop: 8, maxWidth: 280 }}
+            onClick={() => fileRef.current?.click()}
+          >
+            ⬆ Importar respaldo (.json)
+          </button>
+          {inputRespaldo}
+          {mensajeRespaldo}
         </div>
       </div>
     );
@@ -338,6 +424,24 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
         <button className="btn-pdf" type="button" onClick={exportarPdf}>
           <span>📄</span> Descargar / Imprimir Presupuesto en PDF
         </button>
+      </div>
+
+      <div className="form-card" style={{ marginTop: 16 }}>
+        <div className="form-section-title">Respaldo de la obra</div>
+        <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: 'var(--c-muted)', lineHeight: 1.5 }}>
+          Descarga un archivo JSON con todas las partidas, precios y proyectos. Sirve para
+          guardar una copia o restaurar la obra en otro teléfono.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <button className="btn-secondary" type="button" onClick={exportarRespaldo}>
+            ⬇ Descargar respaldo
+          </button>
+          <button className="btn-secondary" type="button" onClick={() => fileRef.current?.click()}>
+            ⬆ Importar respaldo
+          </button>
+        </div>
+        {inputRespaldo}
+        {mensajeRespaldo}
       </div>
 
       <p className="aviso-legal" style={{ marginTop: 16 }}>
