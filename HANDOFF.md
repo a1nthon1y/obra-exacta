@@ -1,7 +1,7 @@
 # Obra Exacta — estado para continuar
 
 Fecha de corte: 23/10/2026
-Última actualización: 26/10/2026 — P0 (acero y citas) y P1 (normas por elemento)
+Última actualización: 02/11/2026 — P1 de metrado (estribos de solera, contrapiso, escalera, corte y cimientos)
 
 ## Cambios 26/10/2026 — P0 de revisión técnica
 
@@ -170,6 +170,37 @@ Verificado: `npm test` (54/54), `npx oxlint src` (0), `npm run build` (OK).
 
 Verificado: `npm test` (56/56), `npx oxlint src` (0), `npm run build` (OK).
 
+## Cambios 02/11/2026 — P1 de metrado (5 arreglos)
+
+- **Estribos de viga confinada:** la viga de una solera ya no usa el `d/4` de
+  pórtico. En `sis='confinada'` va el detalle usual 1@5, @10 en los extremos y
+  @20 al centro; en `sis='porticos'` se mantiene E.060 (`d/4`, 8db, 20 cm y
+  `d/2` en el resto). Para una solera 13×25 de 4.5 m los estribos bajan de 6 a 4
+  varillas de 3/8".
+- **Contrapiso ≥ 8 cm:** el agregado del concreto 1:8 + 25% piedra mediana se
+  compra como `hormigon` (arena + grava), no como `arena_gruesa`. Se agrega
+  `piedra_mediana` y el resumen/pasos muestran “Hormigón”. El contrapiso delgado
+  (< 8 cm) sigue con mortero 1:5 y `arena_gruesa`.
+- **Escalera:** `n = ceil(altura/0.18)` para que la contrahuella nunca supere
+  18 cm. Antes con 3.30 m daba 18 contrahuellas de 18.3 cm; ahora da 19 de
+  17.4 cm. El visor 3D usa el mismo criterio.
+- **Plan de corte en zapata y escalera:** la zapata compra varillas por piezas
+  (`varillasDe9m`) en vez de por longitud total; una zapata de 2.50 m pasa de 8
+  a 10 varillas de 1/2" (3 piezas por barra). Los longitudinales de escalera
+  suman 0.50 m de anclaje antes de aplicar el plan de corte.
+- **Cimientos:** la UI ya no envía `altoCimiento=0.5` por defecto; si el campo
+  queda vacío, el motor usa `min(0.50, prof)` y el visor muestra ese valor. Se
+  aclara que la altura del sobrecimiento es la parte visible sobre el terreno y
+  se rechaza `esp <= 0`. También se corrigió el `onFocus` del campo.
+- **Pruebas:** 62 en total (54 en `calc.test.ts`). Nuevas: estribos de solera
+  contra pórtico, contrapiso 10 cm con `hormigon` y sin `arena_gruesa`,
+  contrahuella ≤ 18 cm en 2.4/2.6/2.8/2.9/3.3 m, plan de corte de zapata de
+  2.50 m, anclaje y plan de corte en escalera, default de cimiento con
+  `prof=0.4` y rechazo de `esp=0`.
+
+Verificado: `npm test` (62/62), `npx oxlint src` (0), `npm run build` (OK,
+1,046.31 kB, mismo aviso de chunk por Three.js).
+
 
 ## Estado actual
 
@@ -200,19 +231,17 @@ La app está estable y compila. El flujo principal ya cubre:
 Ejecutado y aprobado:
 
 ```bash
-npm run build
-npx oxlint src
+npm test        # 62/62
+npx oxlint src  # 0
+npm run build   # OK
 ```
 
-- Build correcto: JS `1,031.15 kB` (271.79 kB gzip), CSS `21.65 kB`.
+- Build correcto: JS `1,046.31 kB` (276.13 kB gzip), CSS `21.65 kB`.
 - La advertencia de chunk mayor a 500 kB es por Three.js y ya existía.
-- Playwright: 4 pruebas nuevas de P0, 2 del bloqueo de “Sugiéreme” y 2 del flujo por
-  pisos pasaron.
-- Capturas revisadas: contexto de proyecto, visor en espera, esbeltez ausente con campos
-  vacíos y ejemplo bloqueado.
+- No se volvieron a correr las pruebas Playwright de sesiones anteriores.
 - Persistencia: `localStorage`, clave `obra-exacta-v1`.
-- Checkpoint anterior: `a84afc4`. Los cambios de esta sesión (sesión previa + P0 + P1)
-  quedaron en el commit `6f34b6f`.
+- Checkpoint anterior: `6f34b6f`. Los cambios de esta sesión (P1 de metrado)
+  quedaron en el commit de checkpoint del 02/11/2026.
 
 ## Prioridad al retomar
 
@@ -228,7 +257,8 @@ npx oxlint src
    del motor dentro del proyecto.
 6. **Cierre documental:** actualizar el MD de especificación después de la validación técnica
    y de flujo.
-7. **Git:** hacer un commit de checkpoint con los cambios P0 + P1 verificados.
+7. **Git:** checkpoint del 02/11/2026 hecho; revisar el diff de los 5 arreglos de
+   metrado antes de la próxima sesión.
 
 ## Reglas de producto vigentes
 

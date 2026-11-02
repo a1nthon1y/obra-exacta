@@ -218,12 +218,22 @@ describe('zapata y f\'c mínimo', () => {
     expect(r.pasos.join('\n')).toMatch(/recubrimiento 7\.5 cm/i);
     const acero = r.mats.find(m => m.id === 'fierro_1_2');
     // B = 1.20 m (con 10% de sobrecarga) → longitud de varilla 1.20 − 2×0.075 = 1.05 m
-    expect(acero!.desglose).toContain('1.05m');
+    expect(acero!.desglose).toContain('1.05 m');
   });
 
   it('arma con separación ≤ 0.20 m: 7 + 7 barras en 1.20 m', () => {
     const r = resultado('zapata', CASOS[7].params);
     expect(r.pasos.join('\n')).toMatch(/7 \+ 7 varillas por zapata/);
+  });
+
+  it('usa plan de corte en zapata grande: 2.50 m compra 10 varillas de 1/2"', () => {
+    const r = resultado('zapata', {
+      tipo: 'aislada', bCol: 30, hCol: 30, carga: 45, suelo: 'manual', pa: 0.8,
+      espesor: 40, dVar: '1/2', fc: 210, cant: 1,
+    });
+    expect(r.resumen.find(x => x.nombre === 'Lado zapata')!.valor).toBe('2.50');
+    expect(r.mats.find(m => m.id === 'fierro_1_2')!.comprar).toBe(10);
+    expect(r.pasos.join('\n')).toMatch(/plan de corte: 3 pieza/);
   });
 
   it('se declara predimensionado y no verifica punzonamiento', () => {
@@ -276,6 +286,21 @@ describe('cimientos: cimiento separado de la excavación', () => {
     expect(parcial.resumen.find(r => r.nombre === 'Cimiento')!.valor).toBe('9.00');
   });
 
+  it('sin altoCimiento usa min(0.50, prof) y no fuerza 0.50', () => {
+    const r = resultado('cimientos', {
+      largo: 10, ancho: 0.5, prof: 0.4, esp: 0.15, alto: 0.3,
+    });
+    expect(r.detalle).toContain('0.5×0.40');
+  });
+
+  it('rechaza espesor de sobrecimiento cero', () => {
+    const r = calcular('cimientos', {
+      largo: 10, ancho: 0.5, prof: 0.8, esp: 0, alto: 0.4,
+    });
+    expect('error' in r).toBe(true);
+    if ('error' in r) expect(r.error).toMatch(/espesor/i);
+  });
+
   it('avisa cuando el cimiento es más alto que la zanja', () => {
     const r = calcular('cimientos', { largo: 10, ancho: 0.5, prof: 0.6, esp: 0.15, alto: 0.4, altoCimiento: 0.8 });
     expect('error' in r).toBe(true);
@@ -284,23 +309,27 @@ describe('cimientos: cimiento separado de la excavación', () => {
 });
 
 describe('contrapiso delgado sin piedra mediana', () => {
-  it('contrapiso de 4 cm usa mortero 1:5 y no piedra mediana', () => {
+  it('contrapiso de 4 cm usa mortero 1:5, arena gruesa y no hormigón', () => {
     const r = resultado('acabados', {
       aTarr: 40, eTarr: 1.5, aPint: 40, manos: 2, rendP: 30,
       aPiso: 30, perd: 10, contra: 'si', eContra: 4,
     });
     expect(r.mats.find(m => m.id === 'piedra_mediana')).toBeUndefined();
+    expect(r.mats.find(m => m.id === 'hormigon')).toBeUndefined();
+    expect(r.mats.find(m => m.id === 'arena_gruesa')).toBeDefined();
     expect(r.mats.find(m => m.id === 'arena_fina')).toBeDefined();
     expect(r.pasos.join('\n')).toMatch(/mortero 1:5/);
     expect(r.avisos.some(a => /no cabe en menos de 8 cm/.test(a.t))).toBe(true);
   });
 
-  it('contrapiso de 10 cm sigue usando piedra mediana', () => {
+  it('contrapiso de 10 cm compra hormigón y piedra, no arena gruesa', () => {
     const r = resultado('acabados', {
       aTarr: 0, eTarr: 1.5, aPint: 0, manos: 2, rendP: 30,
       aPiso: 30, perd: 10, contra: 'si', eContra: 10,
     });
     expect(r.mats.find(m => m.id === 'piedra_mediana')).toBeDefined();
+    expect(r.mats.find(m => m.id === 'hormigon')).toBeDefined();
+    expect(r.mats.find(m => m.id === 'arena_gruesa')).toBeUndefined();
     expect(r.mats.find(m => m.id === 'pegamento_ceramico')).toBeDefined();
     expect(r.mats.find(m => m.id === 'fragua')).toBeDefined();
   });
@@ -361,6 +390,18 @@ describe('vigas con sistema y losa', () => {
     expect(r.avisos.some(a => a.n === 'bad' && /25 cm/.test(a.t))).toBe(false);
   });
 
+  it('confinada usa estribos de solera 10/20 y no el d/4 de pórtico', () => {
+    const r = resultado('vigas', {
+      b: 13, h: 25, luz: 4.5, cant: 1, nSup: 2, dSup: '1/2', nInf: 2, dInf: '1/2',
+      dEst: '3/8', rec: 2, fc: 210, sis: 'confinada',
+    });
+    const est = r.mats.find(m => m.id === 'fierro_3_8')!;
+    // 30 estribos de 0.75 m: 3 varillas teóricas (+5% = 4). Con d/4 serían 6.
+    expect(est.comprar).toBeLessThan(5);
+    expect(r.pasos.join('\n')).toMatch(/detalle usual de solera/i);
+    expect(r.pasos.join('\n')).toMatch(/@10 cm en los extremos/);
+  });
+
   it('mejora d a h − rec − estribo − barra/2', () => {
     const r = resultado('vigas', {
       b: 25, h: 30, luz: 4, cant: 1, nSup: 2, dSup: '1/2', nInf: 2, dInf: '1/2',
@@ -379,6 +420,14 @@ describe('acero con plan de corte', () => {
     const sup = r.mats.find(m => m.id === 'fierro_1_2')!;
     // 6 piezas de 5.0 m: no caben 2 por varilla → 6 varillas (+5% traslape = 7).
     expect(sup.comprar).toBe(7);
+  });
+
+  it('la escalera ancla 0.50 m y compra por plan de corte', () => {
+    const r = resultado('escalera', { altura: 3.3, ancho: 1.0, huella: 'auto', fc: 210 });
+    expect(r.pasos.join('\n')).toMatch(/0\.50 m de anclaje/);
+    const acero = r.mats.find(m => m.id === 'fierro_1_2')!;
+    expect(acero.comprar).toBeGreaterThanOrEqual(acero.cant);
+    expect(acero.desglose).toMatch(/lanza con anclaje/);
   });
 });
 
@@ -452,9 +501,18 @@ describe('escalera: umbrales A.010/A.020', () => {
     expect(r.avisos.some(a => /0\.90 m/.test(a.t))).toBe(true);
   });
 
-  it('contrahuella sobre 0.18 m no cumple', () => {
+  it('la contrahuella automática nunca supera 0.18 m', () => {
+    for (const altura of [2.4, 2.6, 2.8, 2.9, 3.3]) {
+      const r = resultado('escalera', { altura, ancho: 1.0, huella: 'auto', fc: 210 });
+      const ch = Number(r.resumen.find(x => x.nombre === 'Contrahuella')!.valor);
+      expect(ch, `altura ${altura}`).toBeLessThanOrEqual(18.0001);
+    }
+  });
+
+  it('3.30 m se reparte en 19 contrahuellas y no avisa exceso', () => {
     const r = resultado('escalera', { altura: 3.3, ancho: 1.0, huella: 'auto', fc: 210 });
-    expect(r.avisos.some(a => /0\.18 m/.test(a.t))).toBe(true);
+    expect(r.resumen.find(x => x.nombre === 'Contrahuellas')!.valor).toBe(19);
+    expect(r.avisos.some(a => /supera el máximo normativo de 0\.18 m/.test(a.t))).toBe(false);
   });
 
   it('Blondel cumple en 60 a 64 cm', () => {

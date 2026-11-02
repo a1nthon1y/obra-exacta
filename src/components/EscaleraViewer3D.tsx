@@ -34,8 +34,8 @@ const HUD: Record<string, string> = {
   lanza: 'ESPESOR DE LA LOSA (LANZA)',
 };
 
-// Mismo criterio del motor: contrahuella ≈ 18 cm
-const nEscalones = (altura: number) => Math.max(3, Math.round((altura * 100) / 18));
+// Mismo criterio del motor: contrahuella ≤ 18 cm (ceil, nunca redondea abajo)
+const nEscalones = (altura: number) => Math.max(3, Math.ceil((altura * 100) / 18));
 
 export const EscaleraViewer3D: React.FC<Props> = ({ altura, ancho, huellaCm, lanzaCm, campoActivo }) => {
   const containerRef = useRef<HTMLDivElement>(null);

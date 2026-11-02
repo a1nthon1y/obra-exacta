@@ -19,7 +19,7 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [prof, setProf]     = useState('');
   const [esp, setEsp]       = useState('0.15');
   const [alto, setAlto]     = useState('0.4');
-  const [altoCimiento, setAltoCimiento] = useState('0.5');
+  const [altoCimiento, setAltoCimiento] = useState('');
   const [campoActivo, setCampoActivo] = useState<string | null>(null);
   const [avanzado, setAvanzado] = useState(false);
   const [resultado, setResultado] = useState<ResultadoCalculo | null>(null);
@@ -40,7 +40,7 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const r = calcular('cimientos', {
       largo: Number(largo), ancho: Number(ancho),
       prof: Number(prof), esp: Number(esp), alto: Number(alto),
-      altoCimiento: Number(altoCimiento) || 0.5,
+      altoCimiento: Number(altoCimiento) || undefined,
     });
     if ('error' in r) { setError(r.error); return; }
     setResultado(r);
@@ -64,7 +64,7 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           prof={Number(prof) || 0}
           esp={Number(esp) || 0}
           alto={Number(alto) || 0}
-          altoCimiento={Number(altoCimiento) || 0.5}
+          altoCimiento={Number(altoCimiento) || Math.min(0.5, Number(prof) || 0.5)}
           campoActivo={campoActivo}
         />
       ) : (
@@ -114,7 +114,7 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           />
         </div>
         <div className="campo">
-          <label>¿Qué tan alto va el sobrecimiento? <span className="unidad">(m)</span></label>
+          <label>¿Qué tan alto va el sobrecimiento? <span className="unidad">(m, visible sobre el terreno)</span></label>
           <input
             type="number"
             inputMode="decimal"
@@ -148,9 +148,9 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <input
                 type="number"
                 inputMode="decimal"
-                placeholder="Usual: 0.50"
+                placeholder="Usual: 0.50 (se ajusta a la zanja)"
                 value={altoCimiento}
-                onFocus={() => setCampoActivo('prof')}
+                onFocus={() => setCampoActivo('altoCimiento')}
                 onBlur={() => setCampoActivo(null)}
                 onChange={e => { setAltoCimiento(e.target.value); reset(); }}
               />

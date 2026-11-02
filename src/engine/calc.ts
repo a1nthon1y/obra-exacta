@@ -67,8 +67,8 @@ function varillasExactas(longitudM: number, a: { varilla_m: number }): number {
 
 // ─── 1. CIMIENTOS Y SOBRECIMIENTOS ─────────────────────────────────────────────
 export function calcCimientos(p: ParamsCimientos): Resultado {
-  if (p.largo <= 0 || p.ancho <= 0 || p.prof <= 0 || p.alto <= 0)
-    return { error: 'Todas las medidas deben ser mayores a cero.' };
+  if (p.largo <= 0 || p.ancho <= 0 || p.prof <= 0 || p.esp <= 0 || p.alto <= 0)
+    return { error: 'Todas las medidas deben ser mayores a cero (incluido el espesor del sobrecimiento).' };
 
   // `prof` es la profundidad de la zanja, no la altura del cimiento. El cimiento
   // ciclópeo ocupa solo la parte inferior; el sobrecimiento sube desde su
@@ -518,10 +518,16 @@ export function calcVigas(p: ParamsVigas): Resultado {
   const kgSup = varSup * aSup.varilla_m * aSup.kg_ml;
   const kgInf = varInf * aInf.varilla_m * aInf.kg_ml;
 
-  // Estribos de viga (confinamiento en 2*h en cada apoyo, RNE E.060)
+  // Estribos de viga. En pórticos rige E.060: zona de confinamiento 2h con
+  // s ≤ d/4, 8db y 20 cm, y s ≤ d/2 en el resto. En albañilería confinada la
+  // viga es una solera: se usa el detalle usual 1@5, @10 en los extremos y
+  // @20 al centro (el mismo criterio que las columnas de confinamiento).
+  // Aplicar el d/4 de pórtico a una solera de 13 cm duplicaba los estribos.
   const zonaConf = 2 * p.h; // cm
-  const espZC = Math.min(dEfectivo / 4, 8 * (diametroMm(p.dInf) / 10), 20); // cm
-  const espResto = dEfectivo / 2; // cm
+  const espZC = sis === 'confinada'
+    ? 10
+    : Math.min(dEfectivo / 4, 8 * (diametroMm(p.dInf) / 10), 20); // cm
+  const espResto = sis === 'confinada' ? 20 : dEfectivo / 2; // cm
   const nEstZC = Math.ceil((zonaConf - 5) / espZC) + 1;
   const nEstResto = Math.max(Math.ceil((p.luz * 100 - 2 * zonaConf) / espResto), 1);
   const nEstTotal = (nEstZC * 2 + nEstResto) * p.cant;
@@ -563,6 +569,9 @@ export function calcVigas(p: ParamsVigas): Resultado {
     `   • Inferior (${p.nInf} varillas Ø ${p.dInf}"): Teórico ${varInf} var. (${kgInf.toFixed(1)} kg) → Comprar ${varInfC} var. (+5% traslape/empalme).`,
     `3. ESTRIBOS (Ø ${p.dEst}"):`,
     `   • Dimensión: ${anchoEst}×${altoEst.toFixed(0)} cm + 15 cm ganchos 135° (orientativo) → ${longEst.toFixed(2)} m por estribo.`,
+    sis === 'confinada'
+      ? `   • Distribución (detalle usual de solera): 1@5 cm, ${nEstZC - 1}@10 cm en los extremos y cada 20 cm al centro.`
+      : `   • Distribución E.060: 1@5 cm, ${nEstZC - 1}@${espZC.toFixed(0)} cm en los extremos y cada ${espResto.toFixed(0)} cm al centro.`,
     `   • Total estribos: ${nEstTotal} und → Teórico ${varEst} var. (${kgEst.toFixed(1)} kg) → Comprar ${varEstC} var. (+5% traslape/empalme).`,
     `4. ALAMBRE, CLAVOS Y ENCOFRADO:`,
     `   • Alambre N° 16: ${alambre.toFixed(1)} kg.`,
@@ -740,7 +749,7 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
 
   // Contrapiso: si es menor a 8 cm no cabe piedra mediana (3"-4"), se usa
   // mortero 1:5. A partir de 8 cm se usa concreto simple 1:8 + 25% PM.
-  let cemContra = 0, arenaContra = 0, piedraContra = 0, volContra = 0;
+  let cemContra = 0, arenaContra = 0, hormigonContra = 0, piedraContra = 0, volContra = 0;
   let contrapisoDelgado = false;
   if (p.contra === 'si') {
     volContra = p.aPiso * (p.eContra / 100) * 1.05;
@@ -751,14 +760,18 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
       arenaContra  = volContra * dosM.arena;
       piedraContra = 0;
     } else {
+      // 1:8 + 25% piedra mediana: el campo `hormigon` de la tabla es el
+      // agregado (arena + grava), igual que en cimientos. Antes se guardaba
+      // como `arena_gruesa` y el usuario compraba arena pero no grava.
       const dosContra = TABLAS.cimientoCiclopeo['1:8+25%piedra'];
       cemContra  = volContra * dosContra.bolsas;
-      arenaContra  = volContra * dosContra.hormigon;
+      hormigonContra = volContra * dosContra.hormigon;
       piedraContra = volContra * dosContra.piedra;
     }
   }
 
   const arenaTotal = arenaTarr + arenaContra;
+  const hormigonTotal = hormigonContra;
 
   // Cerámico con desperdicio por cortes
   const ceraCom = p.aPiso * (1 + p.perd / 100);
@@ -786,7 +799,7 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
     `   • Cemento: ${volTarr.toFixed(3)} m³ × ${dosMort.bolsas} bol/m³ = ${cemTarr.toFixed(1)} bolsas.`,
     `   • Arena fina/lavada: ${volTarr.toFixed(3)} m³ × ${dosMort.arena} = ${arenaTarr.toFixed(2)} m³.`,
     p.contra === 'si'
-      ? `2. CONTRAPISO (Espesor ${p.eContra} cm${contrapisoDelgado ? ' — mortero 1:5 sin piedra' : ' — concreto simple 1:8 + 25% piedra mediana, Capeco'}):\n   • Volumen: ${volContra.toFixed(3)} m³ | Cemento: ${cemContra.toFixed(1)} bolsas | Arena: ${arenaContra.toFixed(2)} m³ | Piedra mediana: ${piedraContra.toFixed(2)} m³.`
+      ? `2. CONTRAPISO (Espesor ${p.eContra} cm${contrapisoDelgado ? ' — mortero 1:5 sin piedra' : ' — concreto simple 1:8 + 25% piedra mediana, Capeco'}):\n   • Volumen: ${volContra.toFixed(3)} m³ | Cemento: ${cemContra.toFixed(1)} bolsas | ${contrapisoDelgado ? `Arena: ${arenaContra.toFixed(2)} m³` : `Hormigón: ${hormigonContra.toFixed(2)} m³ | Piedra mediana: ${piedraContra.toFixed(2)} m³`}.`
       : `2. CONTRAPISO: No solicitado.`,
     `3. PISO CERÁMICO:`,
     `   • Área: ${p.aPiso} m² × (1 + ${p.perd}% desperdicio de cortes) = ${ceraCom.toFixed(2)} m² a comprar.`,
@@ -802,6 +815,9 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
     `5. QUÉ COMPRAR:`,
     `   • Cemento total: ${cemTotal.toFixed(1)} bolsas → Comprar ${comprarEntero(cemTotal)} bolsas.`,
     `   • Arena: ${arenaTotal.toFixed(2)} m³ → Comprar ${ceil1(arenaTotal)} m³.`,
+    hormigonTotal > 0
+      ? `   • Hormigón: ${hormigonTotal.toFixed(2)} m³ → Comprar ${ceil1(hormigonTotal)} m³.`
+      : '',
     `   • Cerámico: Comprar ${Math.ceil(ceraCom)} m² en cajas.`,
     `   • Pintura: Comprar ${galPint} galones | Imprimante: ${galImp} galones.`,
   ];
@@ -812,6 +828,7 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
     resumen: [
       { nombre: 'Cemento total', valor: comprarEntero(cemTotal), unidad: 'bolsas' },
       { nombre: 'Arena', valor: ceil1(arenaTotal), unidad: 'm³' },
+      ...(hormigonTotal > 0 ? [{ nombre: 'Hormigón contrapiso', valor: ceil1(hormigonTotal), unidad: 'm³' }] : []),
       { nombre: 'Cerámico a comprar', valor: Math.ceil(ceraCom), unidad: 'm²' },
       { nombre: 'Pegamento cerámico', valor: pegamentoBol > 0 ? pegamentoBol.toFixed(1) : '-', unidad: 'bolsas 25 kg' },
       { nombre: 'Fragua', valor: fraguaKg > 0 ? fraguaKg.toFixed(0) : '-', unidad: 'kg' },
@@ -821,7 +838,8 @@ export function calcAcabados(p: ParamsAcabados): Resultado {
     mats: [
       { id: 'cemento',       cant: cemTotal,    comprar: comprarEntero(cemTotal), desglose: p.contra === 'si' ? `Tarrajeo: ${cemTarr.toFixed(1)} bol + Contrapiso: ${cemContra.toFixed(1)} bol = ${cemTotal.toFixed(1)} bol` : `Tarrajeo 1:5: ${cemTarr.toFixed(1)} bolsas` },
       { id: 'arena_fina',    cant: arenaTarr,   comprar: ceil1(arenaTarr),        desglose: `${volTarr.toFixed(2)} m³ mortero 1:5 × ${dosMort.arena} m³/m³ (tarrajeo)` },
-      { id: 'arena_gruesa',  cant: arenaContra, comprar: ceil1(arenaContra),       desglose: p.contra === 'si' ? `Contrapiso ${p.eContra} cm: ${arenaContra.toFixed(2)} m³` : '', nota: arenaContra > 0 ? 'Para contrapiso' : undefined },
+      ...(arenaContra > 0 ? [{ id: 'arena_gruesa', cant: arenaContra, comprar: ceil1(arenaContra), nota: 'Para contrapiso (mortero 1:5)', desglose: `${volContra.toFixed(2)} m³ contrapiso ${p.eContra} cm (mortero 1:5)` }] : []),
+      ...(hormigonContra > 0 ? [{ id: 'hormigon', cant: hormigonContra, comprar: ceil1(hormigonContra), nota: 'Para contrapiso (1:8 + 25% PM)', desglose: `${volContra.toFixed(2)} m³ contrapiso ${p.eContra} cm (concreto 1:8 + 25% PM)` }] : []),
       ...(p.contra === 'si' && piedraContra > 0 ? [{ id: 'piedra_mediana', cant: piedraContra, comprar: ceil1(piedraContra), nota: 'Para contrapiso', desglose: `${volContra.toFixed(2)} m³ contrapiso 1:8+25% PM (Capeco)` }] : []),
       ...(p.aPiso > 0 ? [{ id: 'pegamento_ceramico', cant: pegamentoBol, comprar: Math.ceil(pegamentoBol), desglose: `${ceraCom.toFixed(2)} m² × 4.5 kg/m² ÷ 25 kg/bolsa` }] : []),
       ...(p.aPiso > 0 ? [{ id: 'fragua', cant: fraguaKg, comprar: Math.ceil(fraguaKg), desglose: `${ceraCom.toFixed(2)} m² × 0.5 kg/m²` }] : []),
@@ -916,10 +934,11 @@ export function calcZapata(p: ParamsZapata): Resultado {
   // Barras para separación ≤ 0.20 m: n espacios = ceil(L/0.20) y n+1 barras.
   const numVarXM = Math.max(4, Math.ceil((B - 2 * rec) / 0.20) + 1);
   const numVarYM = numVarXM;
-  const longTotalXM = numVarXM * longVar * p.cant;
-  const longTotalYM = numVarYM * longVar * p.cant;
-  const longTotal = longTotalXM + longTotalYM;
-  const varillas = Math.ceil((longTotal * 1.05) / aVar.varilla_m);
+  // Plan de corte: cada varilla de 9 m rinde floor(8.7 / largo) piezas; se
+  // reservan 0.30 m por barra para cortes y se suma 5% de desperdicio.
+  const piezas = (numVarXM + numVarYM) * p.cant;
+  const varillas = varillasDe9m(piezas * 1.05, longVar);
+  const porVarilla = Math.max(1, Math.floor(8.7 / longVar));
   const kgFierro = varillas * aVar.varilla_m * aVar.kg_ml;
 
   const perimEnc = 4 * B * p.cant;
@@ -941,7 +960,7 @@ export function calcZapata(p: ParamsZapata): Resultado {
     `3. ARMADO INFERIOR (orientativo en ambas direcciones):`,
     `   • Varillas Ø ${p.dVar}" @~20 cm en X e Y (recubrimiento 7.5 cm: concreto vaciado contra el suelo).`,
     `   • Longitud efectiva: ${(B-rec*2).toFixed(2)} m | Cantidad aprox: ${numVarXM} + ${numVarYM} varillas por zapata.`,
-    `   • Varillas a comprar (9 m c/u +5%): ${varillas} varillas Ø ${p.dVar}" (~${kgFierro.toFixed(1)} kg).`,
+    `   • Varillas a comprar (9 m c/u +5%, plan de corte: ${porVarilla} pieza(s) por varilla): ${varillas} varillas Ø ${p.dVar}" (~${kgFierro.toFixed(1)} kg).`,
     `4. CONCRETO (f'c = ${p.fc} kg/cm²):`,
     `   • Volumen: ${p.cant} zap. × ${B.toFixed(2)}×${H.toFixed(2)}×${espesor.toFixed(2)} = ${volConcreto.toFixed(3)} m³.`,
     `   • Cemento: ${cem.toFixed(1)} bolsas | Arena: ${arena.toFixed(2)} m³ | Piedra: ${piedra.toFixed(2)} m³.`,
@@ -970,7 +989,7 @@ export function calcZapata(p: ParamsZapata): Resultado {
       { id: 'piedra_chancada', cant: piedra,   comprar: ceil1(piedra),        desglose: `${volConcreto.toFixed(2)} m³ concreto × ${dos.piedra} m³/m³` },
       { id: 'cemento',         cant: cemSol,   comprar: comprarEntero(cemSol), nota: 'Solado 1:10 (5 cm)', desglose: `${volSolado.toFixed(3)} m³ solado × ${dosSol.bolsas} bol/m³ (+5% desp.)` },
       { id: 'hormigon',        cant: hormigonSol, comprar: ceil1(hormigonSol), nota: 'Solado 1:10 (5 cm)', desglose: `${volSolado.toFixed(3)} m³ solado × ${dosSol.hormigon} m³/m³` },
-      { id: aVar.id_cat,       cant: varillasExactas(longTotal * 1.05, aVar), comprar: varillas, nota: `Malla inferior Ø ${p.dVar}" X/Y (~${kgFierro.toFixed(0)} kg)`, desglose: `${numVarXM + numVarYM} var/zapata × ${(B-rec*2).toFixed(2)}m × ${p.cant} zap. ÷ 9m` },
+      { id: aVar.id_cat,       cant: varillas, comprar: varillas, nota: `Malla inferior Ø ${p.dVar}" X/Y (~${kgFierro.toFixed(0)} kg)`, desglose: `${numVarXM + numVarYM} var/zapata × ${(B-rec*2).toFixed(2)} m × ${p.cant} zap. — plan de corte (${porVarilla} por varilla de 9 m, +5%)` },
       { id: 'alambre_8',       cant: Math.max(kgFierro * 0.02, 0.5), comprar: ceil1(Math.max(kgFierro * 0.02, 0.5)), nota: 'Alambre N°16 de amarre', desglose: `~2% del acero` },
       { id: 'madera_encofrado', cant: encofrado, comprar: ceil1(encofrado),   desglose: `Perímetro ${B.toFixed(2)}×4 × ${p.cant} zap. × h=${espesor.toFixed(2)}m` },
     ],
@@ -993,8 +1012,9 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
 
   // Geometría: número de contrahuellas por ergonomía (≈ 18 cm). Con n
   // contrahuellas el último escalón llega al piso superior, así que quedan
-  // n − 1 huellas: el piso hace de última huella.
-  const n = Math.max(3, Math.round((p.altura * 100) / 18));
+  // n − 1 huellas: el piso hace de última huella. Se usa ceil para que la
+  // contrahuella NUNCA supere el máximo de 18 cm (con round, 3.30 m daba 18.3).
+  const n = Math.max(3, Math.ceil((p.altura * 100) / 18));
   const ch = (p.altura * 100) / n;              // contrahuella exacta (cm)
   const hu = p.huella === 'auto' ? 27 : Number(p.huella); // huella (cm)
   const nHuellas = n - 1;
@@ -1014,8 +1034,8 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
   else
     avisos.push({ n: 'warn', t: `Ergonomía: 2×${ch.toFixed(1)} + ${hu} = ${blondel.toFixed(1)} cm — Blondel aconseja 60 a 64 cm; así se sube y baja incómodo.` });
 
-  if (ch > 18)
-    avisos.push({ n: 'warn', t: `Contrahuella ${ch.toFixed(1)} cm: supera el máximo normativo de 0.18 m para vivienda (RNE A.010/A.020, Art. 29/15). Reparte la altura en un escalón más.` });
+  if (ch > 18 + 1e-9)
+    avisos.push({ n: 'bad', t: `Contrahuella ${ch.toFixed(1)} cm: supera el máximo normativo de 0.18 m para vivienda (RNE A.010/A.020, Art. 29/15). Revisa la altura entre pisos.` });
   if (ch < 15)
     avisos.push({ n: 'warn', t: `Contrahuella ${ch.toFixed(1)} cm: muy baja; la escalera queda larga y pesada.` });
   if (p.ancho < 0.90)
@@ -1047,8 +1067,9 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
   const despE = (TABLAS.desperdicios.fierro as Record<string, number>)['3/8'] ?? 0.03;
 
   const varLong = Math.max(4, Math.round(p.ancho * 4)); // 4 varillas por cada 1 m de ancho
-  const longL = varLong * L * (1 + despL);              // m a lo largo de la lanza
-  const varillasL = varillasDe9m(varLong, L);
+  const largoBarraL = L + 0.50;                         // anclaje en los apoyos
+  const longL = varLong * largoBarraL * (1 + despL);    // m a lo largo de la lanza
+  const varillasL = Math.ceil(varillasDe9m(varLong, largoBarraL) * (1 + despL));
   const kgL = varillasL * aL.varilla_m * aL.kg_ml;
 
   const nTrans = 2 * n;                                          // 2 transversales por escalón
@@ -1075,7 +1096,7 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
     `   • Volumen: (${aPasos.toFixed(2)} + ${aLanza.toFixed(2)}) m² × ${p.ancho} m × 1.05 = ${volTotal.toFixed(3)} m³.`,
     `   • Cemento: ${volTotal.toFixed(3)} m³ × ${dos.bolsas} bol/m³ = ${cemEsc.toFixed(1)} bolsas.`,
     `3. FIERRO ORIENTATIVO (confirmar con plano estructural):`,
-    `   • Longitudinales lanza: ${varLong} varillas Ø 1/2" × ${L.toFixed(2)} m (+${(despL * 100).toFixed(0)}%) → ${varillasL} varillas de 9 m (${kgL.toFixed(1)} kg).`,
+    `   • Longitudinales lanza: ${varLong} varillas Ø 1/2" × ${largoBarraL.toFixed(2)} m (incluye 0.50 m de anclaje, +${(despL * 100).toFixed(0)}%) → ${varillasL} varillas de 9 m (${kgL.toFixed(1)} kg).`,
     `   • Transversales y amarre: ${nTrans} barras transversales + ${nEst} estribos @25 cm Ø 3/8" → ${varillasE} varillas de 9 m (${kgE.toFixed(1)} kg).`,
     `4. ALAMBRE, CLAVOS Y ENCOFRADO:`,
     `   • Alambre N° 16 (3% del fierro): ${alambre.toFixed(1)} kg.`,
@@ -1102,7 +1123,7 @@ export function calcEscalera(p: ParamsEscalera): Resultado {
       { id: 'cemento',         cant: cemEsc,    comprar: comprarEntero(cemEsc), desglose: `${volTotal.toFixed(2)} m³ concreto f'c ${p.fc} × ${dos.bolsas} bol/m³ (+5% desp.)` },
       { id: 'arena_gruesa',    cant: arenaEsc,  comprar: ceil1(arenaEsc),       desglose: `${volTotal.toFixed(2)} m³ concreto × ${dos.arena} m³/m³` },
       { id: 'piedra_chancada', cant: piedraEsc, comprar: ceil1(piedraEsc),      desglose: `${volTotal.toFixed(2)} m³ concreto × ${dos.piedra} m³/m³` },
-      { id: aL.id_cat,         cant: varillasExactas(longL, aL), comprar: varillasL, nota: `${varLong} varillas Ø 1/2" longitudinales (~${kgL.toFixed(0)} kg)`, desglose: `${varLong} × ${L.toFixed(2)} m lanza (+${(despL * 100).toFixed(0)}% corte) ÷ ${aL.varilla_m}m` },
+      { id: aL.id_cat,         cant: varillasExactas(longL, aL), comprar: varillasL, nota: `${varLong} varillas Ø 1/2" longitudinales (~${kgL.toFixed(0)} kg)`, desglose: `${varLong} × ${largoBarraL.toFixed(2)} m lanza con anclaje (+${(despL * 100).toFixed(0)}% corte) ÷ ${aL.varilla_m}m` },
       { id: aE.id_cat,         cant: varillasExactas(longE, aE), comprar: varillasE, nota: `Transversales y amarre Ø 3/8" (~${kgE.toFixed(0)} kg)`,       desglose: `${nTrans} transversales + ${nEst} estribos @25 cm (+${(despE * 100).toFixed(0)}%) ÷ ${aE.varilla_m}m` },
       { id: 'alambre_8',       cant: alambre,    comprar: ceil1(alambre), nota: 'Alambre N°16 de amarre',       desglose: `3% del peso total de fierro (${kgTotal.toFixed(0)} kg)` },
       { id: 'clavos_encofrado', cant: clavosEsc,  comprar: ceil1(clavosEsc), nota: 'Clavos 2 1/2"',               desglose: `${encofrado.toFixed(1)} m² encofrado × 0.8 kg/m²` },
