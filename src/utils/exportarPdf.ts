@@ -45,7 +45,7 @@ export function exportarReportePdf(opt: OptionsPdf): void {
 <html lang="es-PE">
 <head>
   <meta charset="UTF-8">
-  <title>${escapeHtml(opt.titulo)} - Obra Exacta Perú</title>
+  <title>${escapeHtml(opt.titulo)} - Metra Perú</title>
   <style>
     @page {
       size: A4 portrait;
@@ -246,8 +246,8 @@ export function exportarReportePdf(opt: OptionsPdf): void {
 <body>
   <div class="header">
     <div>
-      <div class="brand-title">OBRA EXACTA</div>
-      <div class="brand-sub">Calculadora Técnica y Metrado de Materiales (Perú)</div>
+      <div class="brand-title">METRA PERÚ</div>
+      <div class="brand-sub">Metrado de materiales · De tu plano a la ferretería</div>
     </div>
     <div class="meta-box">
       <div><strong>Fecha:</strong> ${fechaStr}</div>
@@ -340,7 +340,7 @@ export function exportarReportePdf(opt: OptionsPdf): void {
   </div>
 
   <div class="footer">
-    Documento generado por <strong>Obra Exacta Perú</strong> — Herramienta de metrados y cotizaciones para construcción civil.
+    Documento generado por <strong>Metra Perú</strong> — Metrado y lista de compra para construcción civil.
   </div>
 
   <script>

@@ -30,6 +30,7 @@ function datos(): ObraDatos {
     proyectos: [{ id: 'proy-1', nombre: 'Edificio de prueba', pisos: 3, creado: 1_700_000_000_000 }],
     proyectoActivoId: 'proy-1',
     pisoActivo: 2,
+    comprados: { cemento: true },
   };
 }
 
@@ -46,18 +47,19 @@ describe('respaldo JSON de la obra', () => {
     expect(parsed.data.proyectos).toHaveLength(1);
     expect(parsed.data.proyectoActivoId).toBe('proy-1');
     expect(parsed.data.pisoActivo).toBe(2);
+    expect(parsed.data.comprados.cemento).toBe(true);
     expect(parsed.exportado).toBeTruthy();
   });
 
   it('incluye la marca y la versión del respaldo', () => {
     const respaldo = crearRespaldo(datos());
-    expect(respaldo.app).toBe('obra-exacta');
+    expect(respaldo.app).toBe('metra-peru');
     expect(respaldo.schema).toBe(RESPALDO_SCHEMA);
   });
 
   it('acepta una obra vacía (restaurar en un equipo nuevo)', () => {
     const vacia: ObraDatos = {
-      etapas: [], precios: {}, proyectos: [], proyectoActivoId: null, pisoActivo: 1,
+      etapas: [], precios: {}, proyectos: [], proyectoActivoId: null, pisoActivo: 1, comprados: {},
     };
     const parsed = parsearRespaldo(serializarRespaldo(vacia));
     expect(parsed.ok).toBe(true);
@@ -70,6 +72,21 @@ describe('respaldo JSON de la obra', () => {
     const parsed = parsearRespaldo('\uFEFF' + serializarRespaldo(datos()));
     expect(parsed.ok).toBe(true);
     if (parsed.ok) expect(parsed.data.etapas).toHaveLength(1);
+  });
+
+  it('acepta respaldos de la versión anterior y sin checklist', () => {
+    const raw: any = crearRespaldo(datos());
+    raw.app = 'obra-exacta';
+    delete raw.comprados;
+    const parsed = parsearRespaldo(JSON.stringify(raw));
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.data.comprados).toEqual({});
+  });
+
+  it('rechaza una lista de compras con valores que no son booleanos', () => {
+    const raw: any = crearRespaldo(datos());
+    raw.comprados = { cemento: 'sí' };
+    expect(parsearRespaldo(JSON.stringify(raw))).toMatchObject({ ok: false });
   });
 
   it('rechaza JSON inválido, otra app y otra versión', () => {
@@ -109,6 +126,6 @@ describe('respaldo JSON de la obra', () => {
   });
 
   it('genera un nombre de archivo estable por fecha', () => {
-    expect(nombreArchivoRespaldo(new Date(2026, 10, 2))).toBe('obra-exacta-2026-11-02.json');
+    expect(nombreArchivoRespaldo(new Date(2026, 10, 2))).toBe('metra-peru-2026-11-02.json');
   });
 });

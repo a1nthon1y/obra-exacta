@@ -13,86 +13,116 @@
       <stop offset="0%" stop-color="#38bdf8"/>
       <stop offset="100%" stop-color="#0284c7"/>
     </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
   </defs>
 
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bgGrad)"/>
 
-  <!-- Technical blueprint grid lines -->
+  <!-- Technical blueprint grid -->
   <g stroke="#1e293b" stroke-width="1.5" opacity="0.7">
     <path d="M0 70h1200 M0 140h1200 M0 210h1200 M0 280h1200 M0 350h1200 M0 420h1200 M0 490h1200 M0 560h1200"/>
     <path d="M80 0v630 M160 0v630 M240 0v630 M320 0v630 M400 0v630 M480 0v630 M560 0v630 M640 0v630 M720 0v630 M800 0v630 M880 0v630 M960 0v630 M1040 0v630 M1120 0v630"/>
   </g>
 
-  <!-- Ambient Glow -->
+  <!-- Ambient glow -->
   <circle cx="200" cy="180" r="260" fill="#0284c7" opacity="0.12"/>
   <circle cx="1020" cy="450" r="280" fill="#f59e0b" opacity="0.10"/>
 
-  <!-- Outer Border Frame -->
+  <!-- Frame -->
   <rect x="24" y="24" width="1152" height="582" rx="28" stroke="#334155" stroke-width="2"/>
 
-  <!-- Content Left -->
-  <g transform="translate(80, 110)">
-    <!-- Pill Badge -->
-    <rect x="0" y="0" width="310" height="42" rx="21" fill="rgba(56, 189, 248, 0.12)" stroke="#0284c7" stroke-width="1.5"/>
-    <text x="18" y="27" fill="#38bdf8" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="16" letter-spacing="1">🇵🇪 PERÚ · NORMA RNE Y CAPECO</text>
+  <!-- Left content -->
+  <g transform="translate(80, 96)">
+    <!-- Peru badge -->
+    <rect x="0" y="0" width="420" height="42" rx="21" fill="rgba(56, 189, 248, 0.12)" stroke="#0284c7" stroke-width="1.5"/>
+    <rect x="18" y="12" width="28" height="18" rx="2" fill="#d91023"/>
+    <rect x="27" y="12" width="10" height="18" fill="#ffffff"/>
+    <text x="58" y="27" fill="#38bdf8" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="15" letter-spacing="1">HECHO PARA PERÚ · RNE + CAPECO</text>
 
-    <!-- Main Title -->
-    <text x="0" y="115" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="64" letter-spacing="-1">
-      OBRA EXACTA
+    <!-- Brand -->
+    <text x="0" y="112" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="64" letter-spacing="-1">
+      METRA PERÚ
     </text>
 
-    <!-- Subtitle -->
-    <text x="0" y="175" fill="url(#amberGrad)" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="34">
-      Calculadora de Materiales de Construcción
+    <!-- Tagline -->
+    <text x="0" y="172" fill="url(#amberGrad)" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="34">
+      De tu plano a la ferretería
     </text>
 
     <!-- Description -->
-    <text x="0" y="235" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="400">
-      Cálculo exacto de cemento, arena, piedra, ladrillos KK18 y fierro
+    <text x="0" y="228" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="21" font-weight="400">
+      Metrado claro de cemento, arena, piedra, ladrillos y fierro
     </text>
-    <text x="0" y="270" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="400">
-      para zapatas, cimientos, muros, columnas, vigas, losas y acabados.
+    <text x="0" y="260" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="21" font-weight="400">
+      para tu casa o ampliación. Sin registro y funciona offline.
     </text>
 
-    <!-- Feature Pills -->
-    <g transform="translate(0, 320)">
-      <rect x="0" y="0" width="165" height="46" rx="12" fill="#1e293b" stroke="#334155"/>
-      <text x="20" y="29" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="16">🧱 Ladrillos KK18</text>
+    <!-- Differentiator pills -->
+    <g transform="translate(0, 306)">
+      <rect x="0" y="0" width="196" height="46" rx="12" fill="#1e293b" stroke="#334155"/>
+      <text x="20" y="29" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="16">🛒 Lista de compra</text>
 
-      <rect x="180" y="0" width="160" height="46" rx="12" fill="#1e293b" stroke="#334155"/>
-      <text x="200" y="29" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="16">🏗️ Concreto f'c</text>
+      <rect x="212" y="0" width="148" height="46" rx="12" fill="#1e293b" stroke="#334155"/>
+      <text x="232" y="29" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="16">📐 Visor 3D</text>
 
-      <rect x="355" y="0" width="145" height="46" rx="12" fill="#1e293b" stroke="#334155"/>
-      <text x="375" y="29" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="16">📐 Acero/Fierro</text>
+      <rect x="376" y="0" width="158" height="46" rx="12" fill="#1e293b" stroke="#334155"/>
+      <text x="396" y="29" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="16">📲 WhatsApp</text>
 
-      <rect x="515" y="0" width="155" height="46" rx="12" fill="#1e293b" stroke="#334155"/>
-      <text x="535" y="29" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="16">✨ Visor 3D Real</text>
+      <rect x="550" y="0" width="166" height="46" rx="12" fill="#1e293b" stroke="#334155"/>
+      <text x="570" y="29" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="16">🦺 Modo obra</text>
     </g>
 
-    <!-- Call to action badge -->
-    <g transform="translate(0, 395)">
-      <text x="0" y="22" fill="#10b981" font-family="system-ui, sans-serif" font-weight="700" font-size="18">
-        ✓ 100% Gratis · Sin Registro · Funciona en Celular y PC
-      </text>
-    </g>
+    <!-- CTA -->
+    <text x="0" y="414" fill="#10b981" font-family="system-ui, sans-serif" font-weight="700" font-size="18">
+      ✓ Gratis · Sin registro · Offline en tu celular
+    </text>
+    <text x="0" y="458" fill="#64748b" font-family="system-ui, sans-serif" font-weight="600" font-size="17">
+      metraperu.com
+    </text>
   </g>
 
-  <!-- Right Visual Graphics: 3D Element Silhouette -->
-  <g transform="translate(860, 160)">
-    <!-- Column/Zapata Isometric Graphic -->
-    <polygon points="120,40 220,95 220,320 120,265" fill="#1e293b" stroke="#38bdf8" stroke-width="3"/>
-    <polygon points="20,95 120,40 120,265 20,320" fill="#0f172a" stroke="#0284c7" stroke-width="3"/>
-    <polygon points="20,95 120,40 220,95 120,150" fill="#334155" stroke="#38bdf8" stroke-width="3"/>
+  <!-- Right: shopping list card -->
+  <g transform="translate(808, 92)">
+    <rect x="0" y="0" width="330" height="446" rx="28" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+    <rect x="0" y="0" width="330" height="76" rx="28" fill="#111827"/>
+    <rect x="0" y="48" width="330" height="28" fill="#111827"/>
 
-    <!-- Rebar lines -->
-    <line x1="120" y1="20" x2="120" y2="350" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
-    <line x1="70" y1="70" x2="70" y2="340" stroke="#f59e0b" stroke-width="5" stroke-linecap="round"/>
-    <line x1="170" y1="70" x2="170" y2="340" stroke="#f59e0b" stroke-width="5" stroke-linecap="round"/>
+    <text x="28" y="34" fill="#fbbf24" font-family="system-ui, sans-serif" font-weight="800" font-size="14" letter-spacing="1.5">METRA PERÚ</text>
+    <text x="28" y="60" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="700" font-size="18">LISTA DE COMPRA</text>
 
-    <!-- Stirrups (Estribos) -->
-    <path d="M50 140 L120 100 L190 140 L120 180 Z" stroke="#fbbf24" stroke-width="3" fill="none"/>
-    <path d="M50 210 L120 170 L190 210 L120 250 Z" stroke="#fbbf24" stroke-width="3" fill="none"/>
-    <path d="M50 280 L120 240 L190 280 L120 320 Z" stroke="#fbbf24" stroke-width="3" fill="none"/>
+    <!-- Item 1 -->
+    <circle cx="42" cy="118" r="14" fill="url(#greenGrad)"/>
+    <text x="42" y="124" text-anchor="middle" fill="#052e16" font-family="system-ui, sans-serif" font-weight="900" font-size="16">✓</text>
+    <text x="68" y="113" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="17">Cemento 42.5 kg</text>
+    <text x="68" y="134" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="14">18 bolsas</text>
+
+    <!-- Item 2 -->
+    <circle cx="42" cy="184" r="14" fill="url(#greenGrad)"/>
+    <text x="42" y="190" text-anchor="middle" fill="#052e16" font-family="system-ui, sans-serif" font-weight="900" font-size="16">✓</text>
+    <text x="68" y="179" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="17">Ladrillo KK18</text>
+    <text x="68" y="200" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="14">1,240 unidades</text>
+
+    <!-- Item 3 -->
+    <circle cx="42" cy="250" r="14" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+    <text x="68" y="245" fill="#f8fafc" font-family="system-ui, sans-serif" font-weight="600" font-size="17">Fierro 1/2"</text>
+    <text x="68" y="266" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="14">24 varillas</text>
+
+    <!-- Progress -->
+    <text x="28" y="326" fill="#94a3b8" font-family="system-ui, sans-serif" font-weight="600" font-size="14">AVANCE DE COMPRA</text>
+    <text x="302" y="326" text-anchor="end" fill="#34d399" font-family="system-ui, sans-serif" font-weight="800" font-size="15">72%</text>
+    <rect x="28" y="340" width="274" height="12" rx="6" fill="#1e293b" stroke="#334155"/>
+    <rect x="28" y="340" width="197" height="12" rx="6" fill="url(#greenGrad)"/>
+
+    <!-- Mode chip -->
+    <rect x="28" y="380" width="160" height="38" rx="19" fill="#f5b70a"/>
+    <text x="48" y="404" fill="#22252c" font-family="system-ui, sans-serif" font-weight="800" font-size="15">🦺 MODO OBRA</text>
+
+    <!-- 3D badge -->
+    <rect x="226" y="380" width="76" height="38" rx="19" fill="#1e293b" stroke="#38bdf8"/>
+    <text x="264" y="404" text-anchor="middle" fill="#38bdf8" font-family="system-ui, sans-serif" font-weight="800" font-size="14">3D</text>
   </g>
 </svg>

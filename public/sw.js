@@ -1,5 +1,5 @@
 /*
- * Service worker de Obra Exacta.
+ * Service worker de Metra Perú.
  *
  * Estrategia:
  * - Navegación: red primero; si falla, sirve el index cacheado (offline).
@@ -8,7 +8,7 @@
  *
  * Al cambiar el shell de la app, subir CACHE_VERSION para limpiar lo anterior.
  */
-const CACHE_VERSION = 'obra-exacta-v1';
+const CACHE_VERSION = 'metra-peru-v1';
 const APP_SHELL = [
   '/',
   '/index.html',

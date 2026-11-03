@@ -45,7 +45,7 @@ export const ZapataReferencia: React.FC = () => {
         <div className="ref-card__body">
           Este metrado es <strong>referencial</strong>. Para obra ejecutiva se requiere
           cálculo estructural, plano aprobado y, de ser el caso, estudio de mecánica
-          de suelos (RNE E.050). Obra Exacta no reemplaza un diseño estructural.
+          de suelos (RNE E.050). Metra Perú no reemplaza un diseño estructural.
         </div>
       </div>
     </div>

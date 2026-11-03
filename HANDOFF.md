@@ -1,7 +1,21 @@
-# Obra Exacta — estado para continuar
+# Metra Perú — estado para continuar
 
 Fecha de corte: 23/10/2026
-Última actualización: 02/11/2026 — P1 de metrado + respaldo JSON + organización por piso + visores 3D diferidos
+Última actualización: 03/11/2026 — rebrand a Metra Perú + lista de compra + modo obra
+
+## Rebrand 03/11/2026 — Metra Perú
+
+- Marca pública: **Metra Perú** (`https://metraperu.com/`), posicionada como “de tu plano a
+  la ferretería”. El nombre anterior queda solo en notas históricas y en la compatibilidad
+  de respaldos.
+- Nuevo diferenciador de producto: **lista de compra con checkmarks y avance** en `Mi obra`,
+  incluida en WhatsApp y en el respaldo JSON.
+- Nuevo **Modo obra**: alto contraste, letras y controles más grandes, y menos contenido
+  SEO en pantalla. Se activa desde el header y se recuerda en `localStorage`.
+- `localStorage` migra automáticamente de `obra-exacta-v1` a `metra-peru-v1`.
+- Los respaldos nuevos usan `"app": "metra-peru"` y archivo `metra-peru-AAAA-MM-DD.json`;
+  los respaldos antiguos con `"app": "obra-exacta"` se siguen importando.
+- Iconos, favicon, OG image, manifest, service worker, PDF y metadatos actualizados.
 
 ## Cambios 26/10/2026 — P0 de revisión técnica
 
@@ -299,7 +313,7 @@ npm run build   # OK
 - Three.js queda en un chunk diferido de `571.27 kB` (142.40 kB gzip); la
   advertencia de chunk >500 kB ahora aplica solo a ese chunk bajo demanda.
 - No se volvieron a correr las pruebas Playwright de sesiones anteriores.
-- Persistencia: `localStorage`, clave `obra-exacta-v1`.
+- Persistencia: `localStorage`, clave `metra-peru-v1` (migra desde `obra-exacta-v1`).
 - Checkpoint anterior: `6f34b6f`. Los cambios de esta sesión (P1 de metrado,
   respaldo JSON, organización por piso y visores diferidos) quedaron en los
   commits de checkpoint del 02/11/2026.

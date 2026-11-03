@@ -1,8 +1,12 @@
-# ⚒️ Obra Exacta
+# 📐 Metra Perú
 
 Calculadora de materiales de construcción para obras en Perú. Ingresas las medidas de tu
 obra y obtienes cuánto material comprar: cemento, arena, piedra, ladrillos, fierro, etc.
 Sin registro y sin pagos.
+
+La app convierte el metrado en una **lista de compra**: marca cada material cuando ya lo
+compraste, mira el avance y compártela por WhatsApp. Incluye un **Modo obra** de alto
+contraste y letras grandes para revisar la lista en campo.
 
 > Las cantidades son referenciales y se basan en prácticas habituales peruanas (RNE).
 > Confirma las cantidades con el maestro de obra y las medidas estructurales con un ingeniero colegiado.
@@ -22,6 +26,13 @@ Sin registro y sin pagos.
 
 Cada etapa incluye un visor técnico (3D y cortes 2D con cotas) para revisar la
 geometría antes de comprar material.
+
+## Diferenciador: lista de compra
+
+`Mi obra` consolida todos los materiales y permite marcarlos como comprados. El avance
+se guarda en el dispositivo y también viaja en el respaldo JSON. La lista se puede
+compartir por WhatsApp con checkmarks (`✅` comprado / `⬜` pendiente), y el **Modo obra**
+sube el contraste y el tamaño de los controles para usar la app en el terreno.
 
 ## Stack
 

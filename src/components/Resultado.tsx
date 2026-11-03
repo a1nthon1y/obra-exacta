@@ -278,7 +278,7 @@ export const Resultado: React.FC<Props> = ({ resultado, idCalc, esEjemplo }) => 
 
       {/* Aviso legal */}
       <p className="aviso-legal">
-        Obra Exacta calcula cantidades referenciales y muestra reglas mínimas habituales de obra.<br />
+        Metra Perú calcula cantidades referenciales y muestra reglas mínimas habituales de obra.<br />
         No es un diseño estructural. Las cantidades, con el maestro de obra; la estructura, con un ingeniero colegiado.
       </p>
 

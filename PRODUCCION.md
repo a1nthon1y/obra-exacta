@@ -1,6 +1,8 @@
-# Publicación de Obra Exacta
+# Publicación de Metra Perú
 
 Fecha: 03/11/2026
+
+Marca y dominio objetivo: **Metra Perú** (`https://metraperu.com/`).
 
 ## Veredicto
 
@@ -22,12 +24,16 @@ presupuesto; para 3 a 5 pisos solo debe usarse con planos.
 - Contenido visible para el usuario y para buscadores: qué se calcula, cómo funciona y FAQ.
 - JSON-LD: `WebSite`, `Organization`, `WebApplication` y `FAQPage`.
 - Cabeceras de seguridad y caché para assets en `vercel.json`.
+- **Lista de compra con checkmarks y avance** en Mi obra, compartida por WhatsApp y
+  respaldada en JSON. Es el diferenciador visible frente a calculadoras que solo dan precio.
+- **Modo obra** de alto contraste y letras grandes para usar la app en campo.
+- Sello visible `🇵🇪 Hecho para Perú · RNE + Capeco · Sin registro · Offline`.
 
 ## Antes de publicar
 
-1. **Dominio:** el canonical y las URLs sociales apuntan a
-   `https://obra-exacta.vercel.app/`. Si el dominio final es otro, actualizar:
-   `index.html`, `public/robots.txt` y `public/sitemap.xml`.
+1. **Dominio:** registrar `metraperu.com` y apuntar Vercel a ese dominio. El canonical y
+   las URLs sociales ya apuntan a `https://metraperu.com/`. Si cambia, actualizar:
+   `index.html`, `public/robots.txt`, `public/sitemap.xml` y `public/sw.js`.
 2. **Vercel:** importar el repositorio, framework Vite, build `npm run build`, salida `dist`.
 3. **Search Console:** verificar la propiedad, enviar `/sitemap.xml` y revisar la cobertura.
 4. **Vista previa social:** pasar la URL por el depurador de Facebook/WhatsApp y X para

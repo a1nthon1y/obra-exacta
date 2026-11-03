@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Obra Exacta — Calculadora de Materiales de Construcción Perú",
-  "short_name": "Obra Exacta",
-  "description": "Calculadora de materiales de construcción según normas RNE y tablas Capeco en Perú. Metrado de cemento, arena, piedra, ladrillos y fierro.",
+  "name": "Metra Perú — Calculadora de materiales y lista de compra",
+  "short_name": "Metra Perú",
+  "description": "Metrado de materiales para tu obra en Perú con criterios RNE/Capeco, lista de compra, visor 3D, WhatsApp y modo obra. Sin registro.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

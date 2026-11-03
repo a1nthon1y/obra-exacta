@@ -37,6 +37,8 @@ export interface ObraDatos {
   proyectos: ProyectoEdificio[];
   proyectoActivoId: string | null;
   pisoActivo: number;
+  /** Materiales ya comprados, por id de catálogo. */
+  comprados: Record<string, boolean>;
 }
 
 interface ObraState {
@@ -45,6 +47,7 @@ interface ObraState {
   proyectos: ProyectoEdificio[];
   proyectoActivoId: string | null;
   pisoActivo: number;
+  comprados: Record<string, boolean>;
   agregarEtapa: (e: EtapaGuardada) => void;
   quitarEtapa: (idx: number) => void;
   crearProyecto: (nombre: string, pisos: number) => string;
@@ -58,6 +61,24 @@ interface ObraState {
   cargarRespaldo: (datos: ObraDatos) => void;
   moverEtapa: (idx: number, destino: DestinoPartida) => void;
   copiarEtapaAPisos: (idx: number, proyectoId: string, pisos?: number[]) => void;
+  toggleComprado: (id: string) => void;
+}
+
+const STORAGE_KEY = 'metra-peru-v1';
+const LEGACY_STORAGE_KEY = 'obra-exacta-v1';
+
+// Migración silenciosa para no perder la obra de quien probó la versión anterior.
+if (typeof window !== 'undefined') {
+  try {
+    const actual = window.localStorage.getItem(STORAGE_KEY);
+    const anterior = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!actual && anterior) {
+      window.localStorage.setItem(STORAGE_KEY, anterior);
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    }
+  } catch {
+    // Navegación privada o almacenamiento bloqueado: la app sigue funcionando en memoria.
+  }
 }
 
 export const useObraStore = create<ObraState>()(
@@ -68,6 +89,7 @@ export const useObraStore = create<ObraState>()(
       proyectos: [],
       proyectoActivoId: null,
       pisoActivo: 1,
+      comprados: {},
       agregarEtapa: (e) => set((s) => {
     // Permitir guardar la misma calculadora varias veces con medidas distintas (pisos diferentes)
     // Solo evitamos el caso extremo de doble clic que genere exactamente la misma entrada
@@ -134,13 +156,14 @@ export const useObraStore = create<ObraState>()(
         return { precios: nuevo };
       }),
       limpiarPrecios: () => set({ precios: {} }),
-      limpiarObra: () => set({ etapas: [] }),
+      limpiarObra: () => set({ etapas: [], comprados: {} }),
       cargarRespaldo: (datos) => set({
         etapas: datos.etapas,
         precios: datos.precios,
         proyectos: datos.proyectos,
         proyectoActivoId: datos.proyectoActivoId,
         pisoActivo: datos.pisoActivo,
+        comprados: datos.comprados ?? {},
       }),
       moverEtapa: (idx, destino) => set((s) => {
         const etapas = moverEtapaDatos(s.etapas, idx, destino, s.proyectos);
@@ -152,8 +175,14 @@ export const useObraStore = create<ObraState>()(
         const etapas = copiarEtapaDatos(s.etapas, idx, proyecto, pisos);
         return etapas === s.etapas ? s : { etapas };
       }),
+      toggleComprado: (id) => set((s) => {
+        const comprados = { ...s.comprados };
+        if (comprados[id]) delete comprados[id];
+        else comprados[id] = true;
+        return { comprados };
+      }),
     }),
-    { name: 'obra-exacta-v1' }
+    { name: STORAGE_KEY }
   )
 );
 

@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # Directives for search engines
-Sitemap: https://obra-exacta.vercel.app/sitemap.xml
+Sitemap: https://metraperu.com/sitemap.xml

@@ -17,7 +17,7 @@ type Calc = EtapaId | null;
 
 const PREGUNTAS_FRECUENTES = [
   {
-    pregunta: '¿Cómo calcula Obra Exacta los materiales?',
+    pregunta: '¿Cómo calcula Metra Perú los materiales?',
     respuesta:
       'Convierte las medidas de cada elemento en volumen o área y aplica dosificaciones de Capeco y criterios del RNE. Para concreto usa bolsas de 42.5 kg, arena gruesa, piedra chancada y agua; para muros, ladrillo King Kong 18 huecos o pandereta; para acero, varillas de 9 m y estribos.',
   },
@@ -34,7 +34,12 @@ const PREGUNTAS_FRECUENTES = [
   {
     pregunta: '¿Es gratis y funciona sin internet?',
     respuesta:
-      'Sí. Obra Exacta es gratuita, no pide registro ni correo. Después de la primera visita, la app queda guardada en tu navegador y puedes seguir calculando sin conexión. Tus partidas se guardan solo en este dispositivo.',
+      'Sí. Metra Perú es gratuita, no pide registro ni correo. Después de la primera visita, la app queda guardada en tu navegador y puedes seguir calculando sin conexión. Tus partidas se guardan solo en este dispositivo.',
+  },
+  {
+    pregunta: '¿Puedo marcar lo que ya compré?',
+    respuesta:
+      'Sí. En Mi obra cada material tiene un check. Marca lo que ya compraste, mira el avance de tu lista y compártela por WhatsApp con tu maestro o con la ferretería. La lista también viaja en el respaldo JSON.',
   },
   {
     pregunta: '¿Puedo usarla para un edificio de 3 a 5 pisos?',
@@ -47,6 +52,13 @@ export default function App() {
   const [tab, setTab]   = useState<Tab>('inicio');
   const [calc, setCalc] = useState<Calc>(null);
   const [enEdificio, setEnEdificio] = useState(false);
+  const [modoObra, setModoObra] = useState(() => {
+    try {
+      return localStorage.getItem('metra-modo-obra') === '1';
+    } catch {
+      return false;
+    }
+  });
   const etapas = useObraStore(s => s.etapas);
   const proyectos = useObraStore(s => s.proyectos);
   const proyectoActivoId = useObraStore(s => s.proyectoActivoId);
@@ -58,16 +70,25 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [tab, calc, enEdificio]);
 
+  // Modo obra: alto contraste y letras grandes para usar en campo.
+  useEffect(() => {
+    try {
+      localStorage.setItem('metra-modo-obra', modoObra ? '1' : '0');
+    } catch {
+      // Sin almacenamiento: el modo funciona igual durante la sesión.
+    }
+  }, [modoObra]);
+
   // Título de la pestaña según la pantalla: útil para compartir y para el historial.
   useEffect(() => {
     if (calc) {
-      document.title = `${getEtapa(calc).nombre} | Obra Exacta`;
+      document.title = `${getEtapa(calc).nombre} | Metra Perú`;
     } else if (enEdificio) {
-      document.title = 'Edificio de 3 a 5 pisos | Obra Exacta';
+      document.title = 'Edificio de 3 a 5 pisos | Metra Perú';
     } else if (tab === 'obra') {
-      document.title = 'Mi obra y presupuesto | Obra Exacta';
+      document.title = 'Mi obra y lista de compra | Metra Perú';
     } else {
-      document.title = 'Calculadora de materiales de construcción | Obra Exacta';
+      document.title = 'Calculadora de materiales de construcción | Metra Perú';
     }
   }, [calc, enEdificio, tab]);
 
@@ -106,16 +127,29 @@ export default function App() {
   };
 
   return (
-    <div id="app" className="app-shell">
+    <div id="app" className={`app-shell ${modoObra ? 'modo-obra' : ''}`}>
       {/* Header */}
       <header className="header">
         <div className="header-inner">
           <button
             className="header-logo"
             onClick={volverInicio}
+            aria-label="Metra Perú, ir al inicio"
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
           >
-            <span>⚒️</span> Obra Exacta
+            <span className="brand-mark" aria-hidden="true">📐</span>
+            <span className="brand-name">Metra</span>
+            <span className="brand-pais">PERÚ</span>
+          </button>
+          <button
+            className={`header-modo ${modoObra ? 'active' : ''}`}
+            type="button"
+            aria-pressed={modoObra}
+            title={modoObra ? 'Desactivar modo obra' : 'Activar modo obra: alto contraste y letras grandes'}
+            onClick={() => setModoObra(v => !v)}
+          >
+            <span aria-hidden="true">🦺</span>
+            <span className="modo-label">Obra</span>
           </button>
           <button
             className="header-obra-badge"
@@ -128,6 +162,11 @@ export default function App() {
 
       {/* Contenido */}
       <main style={{ flex: 1, overflowY: 'auto' }}>
+        {modoObra && (
+          <div className="modo-obra-strip" role="status">
+            🦺 Modo obra activo · letras grandes y alto contraste
+          </div>
+        )}
         {calc ? (
           renderCalc()
         ) : enEdificio ? (
@@ -142,11 +181,18 @@ export default function App() {
             <div className="inicio-portada">
               <div className="portada-tape" aria-hidden="true" />
               <div className="portada-cuerpo">
-                <h1>Tu obra, calculada</h1>
+                <h1>De tu plano a la ferretería</h1>
                 <p>
-                  Calculadora de materiales de construcción en Perú. Entra las medidas de tu obra
-                  y te decimos cuánto material comprar. Sin cuentas, sin pagos — todo en tu teléfono.
+                  Metra Perú convierte las medidas de tu obra en una lista de compra clara.
+                  Cemento, arena, ladrillos y fierro con criterios RNE/Capeco, visores 3D
+                  y todo en tu teléfono. Sin cuentas, sin pagos.
                 </p>
+                <div className="portada-sellos" aria-label="Lo que hace diferente a Metra Perú">
+                  <span className="sello">🇵🇪 Hecho para Perú</span>
+                  <span className="sello">RNE + Capeco</span>
+                  <span className="sello">Sin registro</span>
+                  <span className="sello">Offline</span>
+                </div>
               </div>
             </div>
 
@@ -195,6 +241,7 @@ export default function App() {
 
             {/* Contenido visible: ayuda al usuario y da contexto real a buscadores */}
             <section
+              className="seo-guia"
               aria-labelledby="guia-materiales"
               style={{
                 marginTop: 24,
@@ -211,7 +258,7 @@ export default function App() {
                 Calculadora de materiales de construcción en Perú
               </h2>
               <p style={{ fontSize: '0.84rem', lineHeight: 1.6, color: 'var(--c-muted)', marginBottom: 14 }}>
-                Obra Exacta convierte las medidas de tu plano en una lista de compra: bolsas de
+                Metra Perú convierte las medidas de tu plano en una lista de compra: bolsas de
                 cemento de 42.5 kg, metros cúbicos de arena gruesa y piedra chancada, ladrillos
                 King Kong, varillas de fierro y materiales de acabados. Los cálculos usan
                 dosificaciones habituales de Capeco y criterios del Reglamento Nacional de
@@ -227,7 +274,8 @@ export default function App() {
                 <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Columnas y vigas:</strong> concreto, acero longitudinal, estribos y recubrimiento.</li>
                 <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Losa aligerada y escalera:</strong> viguetas, ladrillo de techo, concreto y acero.</li>
                 <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Acabados:</strong> tarrajeo, contrapiso, cerámico y pintura.</li>
-                <li><strong style={{ color: 'var(--c-text)' }}>Mi obra:</strong> presupuesto en soles, exportación a PDF y respaldo JSON.</li>
+                <li><strong style={{ color: 'var(--c-text)' }}>Mi obra:</strong> presupuesto en soles, checklist de compra con avance, WhatsApp, PDF y respaldo JSON.</li>
+                <li><strong style={{ color: 'var(--c-text)' }}>Modo obra:</strong> alto contraste y letras grandes para revisar la lista en campo, con una mano y bajo el sol.</li>
               </ul>
 
               <h3 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 7 }}>
@@ -236,7 +284,8 @@ export default function App() {
               <ol style={{ margin: '0 0 14px', paddingLeft: 18, fontSize: '0.82rem', lineHeight: 1.55, color: 'var(--c-muted)' }}>
                 <li style={{ marginBottom: 4 }}>Elige la etapa de tu obra.</li>
                 <li style={{ marginBottom: 4 }}>Ingresa las medidas del plano o usa una medida usual orientativa.</li>
-                <li>Revisa la lista de materiales y guárdala en Mi obra.</li>
+                <li style={{ marginBottom: 4 }}>Revisa la lista de materiales y guárdala en Mi obra.</li>
+                <li>Marca lo que ya compraste y comparte la lista por WhatsApp.</li>
               </ol>
 
               <h3 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 4 }}>
@@ -277,7 +326,7 @@ export default function App() {
                 lineHeight: 1.55,
               }}
             >
-              Obra Exacta · Hecho para la autoconstrucción en Perú<br />
+              Metra Perú · De tu plano a la ferretería<br />
               Tus datos se guardan solo en este navegador. Sin cuentas ni publicidad.
             </footer>
           </div>

@@ -1,8 +1,11 @@
 import type { EtapaGuardada, ObraDatos, ProyectoEdificio } from './obraStore';
 import type { PreciosUsuario } from './totalizar';
 
-export const RESPALDO_APP = 'obra-exacta' as const;
+export const RESPALDO_APP = 'metra-peru' as const;
 export const RESPALDO_SCHEMA = 1;
+
+// Se aceptan respaldos de la versión anterior para no romper una obra ya guardada.
+const APPS_ACEPTADAS = new Set<string>([RESPALDO_APP, 'obra-exacta']);
 
 export interface RespaldoObra extends ObraDatos {
   app: typeof RESPALDO_APP;
@@ -78,6 +81,11 @@ function esProyecto(v: unknown): v is ProyectoEdificio {
     && esNumero(v.creado);
 }
 
+function esListaComprados(v: unknown): v is Record<string, boolean> {
+  if (!esObjeto(v)) return false;
+  return Object.values(v).every(valor => typeof valor === 'boolean');
+}
+
 export function crearRespaldo(datos: ObraDatos): RespaldoObra {
   return {
     app: RESPALDO_APP,
@@ -88,6 +96,7 @@ export function crearRespaldo(datos: ObraDatos): RespaldoObra {
     proyectos: datos.proyectos,
     proyectoActivoId: datos.proyectoActivoId,
     pisoActivo: datos.pisoActivo,
+    comprados: datos.comprados,
   };
 }
 
@@ -99,7 +108,7 @@ export function nombreArchivoRespaldo(fecha = new Date()): string {
   const y = fecha.getFullYear();
   const m = String(fecha.getMonth() + 1).padStart(2, '0');
   const d = String(fecha.getDate()).padStart(2, '0');
-  return `obra-exacta-${y}-${m}-${d}.json`;
+  return `metra-peru-${y}-${m}-${d}.json`;
 }
 
 /**
@@ -118,8 +127,8 @@ export function parsearRespaldo(texto: string): ResultadoImportacion {
   }
 
   if (!esObjeto(raw)) return { ok: false, error: 'El respaldo no tiene el formato esperado.' };
-  if (raw.app !== RESPALDO_APP) {
-    return { ok: false, error: 'No parece un respaldo de Obra Exacta (falta la marca de la app).' };
+  if (!esTexto(raw.app) || !APPS_ACEPTADAS.has(raw.app)) {
+    return { ok: false, error: 'No parece un respaldo de Metra Perú (falta la marca de la app).' };
   }
   if (raw.schema !== RESPALDO_SCHEMA) {
     return { ok: false, error: `Versión de respaldo no compatible (se esperaba la ${RESPALDO_SCHEMA}).` };
@@ -133,6 +142,14 @@ export function parsearRespaldo(texto: string): ResultadoImportacion {
   }
   if (!Array.isArray(raw.proyectos) || !raw.proyectos.every(esProyecto)) {
     return { ok: false, error: 'El respaldo tiene proyectos incompletos o dañados.' };
+  }
+  // Los respaldos anteriores al checklist no traen `comprados`.
+  let comprados: Record<string, boolean> = {};
+  if (raw.comprados !== undefined) {
+    if (!esListaComprados(raw.comprados)) {
+      return { ok: false, error: 'El respaldo tiene una lista de compras dañada.' };
+    }
+    comprados = raw.comprados;
   }
 
   const precios: PreciosUsuario = {};
@@ -162,6 +179,7 @@ export function parsearRespaldo(texto: string): ResultadoImportacion {
       proyectos,
       proyectoActivoId,
       pisoActivo,
+      comprados,
     },
   };
 }

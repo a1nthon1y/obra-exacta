@@ -4,43 +4,31 @@
       <stop offset="0%" stop-color="#0f172a"/>
       <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f59e0b"/>
-      <stop offset="100%" stop-color="#d97706"/>
-    </linearGradient>
-    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="tape" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#38bdf8"/>
       <stop offset="100%" stop-color="#0284c7"/>
     </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f5b70a"/>
+    </linearGradient>
   </defs>
-  <!-- Background badge -->
+
+  <!-- Fondo tipo plano de obra -->
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect x="12" y="12" width="488" height="488" rx="100" stroke="#334155" stroke-width="8" stroke-dasharray="16 12" fill="none"/>
-  
-  <!-- Architectural grid accents -->
+  <rect x="12" y="12" width="488" height="488" rx="100" stroke="#334155" stroke-width="8" stroke-dasharray="16 12"/>
   <path d="M96 160h320M96 256h320M96 352h320M160 96v320M256 96v320M352 96v320" stroke="#1e293b" stroke-width="3"/>
 
-  <!-- Construction brick layers / structure -->
-  <g transform="translate(116, 126)">
-    <!-- Top Brick -->
-    <rect x="50" y="30" width="180" height="60" rx="10" fill="url(#accent)"/>
-    <circle cx="85" cy="60" r="12" fill="#b45309" opacity="0.6"/>
-    <circle cx="140" cy="60" r="12" fill="#b45309" opacity="0.6"/>
-    <circle cx="195" cy="60" r="12" fill="#b45309" opacity="0.6"/>
+  <!-- M de Metra: dos trazos de medida que se encuentran -->
+  <path d="M124 368V168L256 300L388 168V368" stroke="url(#accent)" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
 
-    <!-- Bottom Left Brick -->
-    <rect x="0" y="105" width="130" height="60" rx="10" fill="url(#cyanGrad)"/>
-    <circle cx="40" cy="135" r="12" fill="#0369a1" opacity="0.6"/>
-    <circle cx="90" cy="135" r="12" fill="#0369a1" opacity="0.6"/>
-
-    <!-- Bottom Right Brick -->
-    <rect x="150" y="105" width="130" height="60" rx="10" fill="url(#cyanGrad)"/>
-    <circle cx="190" cy="135" r="12" fill="#0369a1" opacity="0.6"/>
-    <circle cx="240" cy="135" r="12" fill="#0369a1" opacity="0.6"/>
-
-    <!-- Precision Drafting Compass / Caliper -->
-    <path d="M140 180 L80 250 M140 180 L200 250" stroke="#f8fafc" stroke-width="14" stroke-linecap="round"/>
-    <circle cx="140" cy="180" r="16" fill="#f59e0b" stroke="#f8fafc" stroke-width="6"/>
-    <path d="M98 228 Q140 242 182 228" stroke="#38bdf8" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <!-- Cinta métrica: base y marcas -->
+  <rect x="96" y="430" width="320" height="30" rx="15" fill="url(#tape)"/>
+  <g stroke="#0f172a" stroke-width="6" stroke-linecap="round">
+    <path d="M128 430v14M176 430v20M224 430v14M272 430v20M320 430v14M368 430v20M416 430v14"/>
   </g>
+
+  <!-- Sello Perú -->
+  <rect x="354" y="64" width="98" height="48" rx="24" fill="url(#accent)"/>
+  <text x="403" y="97" text-anchor="middle" fill="#22252c" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="900" letter-spacing="1">PE</text>
 </svg>

@@ -42,6 +42,7 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
   const proyectos = useObraStore(s => s.proyectos);
   const proyectoActivoId = useObraStore(s => s.proyectoActivoId);
   const pisoActivo = useObraStore(s => s.pisoActivo);
+  const comprados = useObraStore(s => s.comprados);
   const quitarEtapa = useObraStore(s => s.quitarEtapa);
   const setPrecio = useObraStore(s => s.setPrecio);
   const quitarPrecio = useObraStore(s => s.quitarPrecio);
@@ -49,6 +50,7 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
   const cargarRespaldo = useObraStore(s => s.cargarRespaldo);
   const moverEtapa = useObraStore(s => s.moverEtapa);
   const copiarEtapaAPisos = useObraStore(s => s.copiarEtapaAPisos);
+  const toggleComprado = useObraStore(s => s.toggleComprado);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [respaldoMsg, setRespaldoMsg] = useState<{ tipo: 'ok' | 'bad'; texto: string } | null>(null);
@@ -78,6 +80,8 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
 
   const { lineas, totalSoles } = totalizarObra(etapasFiltradas, precios);
   const grupos = [...new Set(lineas.map(l => l.grupo))];
+  const compradosCount = lineas.filter(l => comprados[l.id]).length;
+  const porcentajeComprado = lineas.length > 0 ? Math.round((compradosCount / lineas.length) * 100) : 0;
   const hayProyectos = proyectos.length > 0 || etapas.some(e => !!e.proyectoId);
 
   const scopeLabel = filtro === 'todo'
@@ -174,14 +178,16 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
       return filtro === 'todo' && proyectoNombre ? `${base} (${proyectoNombre})` : base;
     }))].join(' · ');
 
-    let texto = `*OBRA EXACTA — ${scopeLabel.toUpperCase()}*\n`;
+    let texto = `*METRA PERÚ — ${scopeLabel.toUpperCase()}*\n`;
     texto += `📅 Calculado el ${fechaHoy()}\n`;
+    texto += `🛒 Lista de compra: ${compradosCount}/${lineas.length} materiales marcados\n`;
     texto += `Partidas: ${etapasUsadas}\n\n`;
 
     for (const grupo of grupos) {
       texto += `*${grupo.toUpperCase()}*\n`;
       lineas.filter(l => l.grupo === grupo).forEach(l => {
-        texto += `• ${l.nombre}: ${l.cantidad} ${l.unidad} — S/ ${l.subtotal.toFixed(0)}\n`;
+        const estado = comprados[l.id] ? '✅' : '⬜';
+        texto += `${estado} ${l.nombre}: ${l.cantidad} ${l.unidad} — S/ ${l.subtotal.toFixed(0)}\n`;
         if (l.desglose) texto += `  ↳ ${l.desglose}\n`;
       });
       texto += '\n';
@@ -220,7 +226,7 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
   }
 
   function exportarRespaldo() {
-    const json = serializarRespaldo({ etapas, precios, proyectos, proyectoActivoId, pisoActivo });
+    const json = serializarRespaldo({ etapas, precios, proyectos, proyectoActivoId, pisoActivo, comprados });
     const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -232,7 +238,7 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     setRespaldoMsg({
       tipo: 'ok',
-      texto: `Respaldo descargado con ${etapas.length} partida(s) y ${proyectos.length} proyecto(s).`,
+      texto: `Respaldo descargado con ${etapas.length} partida(s), ${proyectos.length} proyecto(s) y ${Object.keys(comprados).length} compra(s) marcada(s).`,
     });
   }
 
@@ -257,9 +263,12 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
       cargarRespaldo(parsed.data);
       setFiltro('todo');
       setPisoFiltro('todos');
+      const compradosTexto = Object.keys(parsed.data.comprados).length > 0
+        ? `, ${Object.keys(parsed.data.comprados).length} compra(s) marcada(s)`
+        : '';
       setRespaldoMsg({
         tipo: 'ok',
-        texto: `Respaldo importado: ${parsed.data.etapas.length} partida(s), ${parsed.data.proyectos.length} proyecto(s) y ${Object.keys(parsed.data.precios).length} precio(s) propios.`,
+        texto: `Respaldo importado: ${parsed.data.etapas.length} partida(s), ${parsed.data.proyectos.length} proyecto(s)${compradosTexto} y ${Object.keys(parsed.data.precios).length} precio(s) propios.`,
       });
     } catch {
       setRespaldoMsg({ tipo: 'bad', texto: 'No se pudo leer el archivo. Intenta descargarlo de nuevo.' });
@@ -374,6 +383,29 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
         <div style={{ fontSize: '2.5rem' }}>🏗️</div>
       </div>
 
+      {/* Checklist de compra: el diferenciador de Metra */}
+      <div className="compra-progreso" aria-live="polite">
+        <div className="compra-progreso-head">
+          <span>🛒 Lista de compra</span>
+          <strong>{compradosCount}/{lineas.length}</strong>
+        </div>
+        <div
+          className="compra-progreso-barra"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={porcentajeComprado}
+          aria-label="Avance de compra de materiales"
+        >
+          <div style={{ width: `${porcentajeComprado}%` }} />
+        </div>
+        <div className="compra-progreso-nota">
+          {compradosCount === lineas.length
+            ? 'Lista completa. Ya puedes ir a comprar con tranquilidad.'
+            : `${porcentajeComprado}% comprado · marca cada material cuando lo tengas en la mano.`}
+        </div>
+      </div>
+
       {/* Etapas incluidas */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
         {etapasFiltradas.map((e) => {
@@ -467,8 +499,17 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
             <div className="grupo-titulo">{grupo}</div>
             {lineas.filter(l => l.grupo === grupo).map((l) => {
               const precioActual = precios[l.id] ?? CATALOGO[l.id]?.precio ?? 0;
+              const estaComprado = Boolean(comprados[l.id]);
               return (
-                <div key={l.id} className="obra-mat-fila">
+                <div key={l.id} className={`obra-mat-fila ${estaComprado ? 'comprado' : ''}`}>
+                  <label className="obra-compra-check" title={estaComprado ? 'Marcar como pendiente' : 'Marcar como comprado'}>
+                    <input
+                      type="checkbox"
+                      checked={estaComprado}
+                      onChange={() => toggleComprado(l.id)}
+                      aria-label={`${estaComprado ? 'Marcar como pendiente' : 'Marcar como comprado'}: ${l.nombre}`}
+                    />
+                  </label>
                   <div style={{ flex: 1, paddingRight: '8px' }}>
                     <div className="obra-mat-nombre">{l.nombre}</div>
                     <div className="obra-badge-compra">
@@ -544,8 +585,8 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
       <div className="form-card" style={{ marginTop: 16 }}>
         <div className="form-section-title">Respaldo de la obra</div>
         <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: 'var(--c-muted)', lineHeight: 1.5 }}>
-          Descarga un archivo JSON con todas las partidas, precios y proyectos. Sirve para
-          guardar una copia o restaurar la obra en otro teléfono.
+          Descarga un archivo JSON con todas las partidas, precios, proyectos y la lista de
+          compra. Sirve para guardar una copia o restaurar la obra en otro teléfono.
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           <button className="btn-secondary" type="button" onClick={exportarRespaldo}>
