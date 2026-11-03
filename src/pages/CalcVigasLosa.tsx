@@ -99,37 +99,37 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="form-card">
         <div className="form-section-title">Medidas de la obra</div>
         <div className="campo">
-          <label>¿Cuántas vigas? <span className="unidad">(und)</span></label>
-          <input type="number" inputMode="decimal" placeholder="Ej: 4" value={cant} onChange={e => { setCant(e.target.value); reset(); }} />
+          <label htmlFor="vig-cant">¿Cuántas vigas? <span className="unidad">(und)</span></label>
+          <input id="vig-cant" type="number" inputMode="decimal" placeholder="Ej: 4" value={cant} onChange={e => { setCant(e.target.value); reset(); }} />
         </div>
         <div className="campo">
-          <label>¿Cuántos metros mide la viga de largo? <span className="unidad">(m)</span></label>
-          <input type="number" inputMode="decimal" placeholder="Ej: 4" value={luz}
+          <label htmlFor="vig-luz">¿Cuántos metros mide la viga de largo? <span className="unidad">(m)</span></label>
+          <input id="vig-luz" type="number" inputMode="decimal" placeholder="Ej: 4" value={luz}
             onFocus={() => setCampoActivo('luz')} onBlur={() => setCampoActivo(null)}
             onChange={e => { setLuz(e.target.value); reset(); }} />
         </div>
         <div className="form-grid-2">
           <div className="campo">
-            <label>¿Cuánto mide la base? <span className="unidad">(cm)</span></label>
-            <input type="number" inputMode="decimal" placeholder="Ej: 25" value={b}
+            <label htmlFor="vig-b">¿Cuánto mide la base? <span className="unidad">(cm)</span></label>
+            <input id="vig-b" type="number" inputMode="decimal" placeholder="Ej: 25" value={b}
               onFocus={() => setCampoActivo('b')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setB(e.target.value); reset(); }} />
           </div>
           <div className="campo">
-            <label>¿Cuánto mide de alto (peralte)? <span className="unidad">(cm)</span></label>
-            <input type="number" inputMode="decimal" placeholder="Ej: 40" value={h}
+            <label htmlFor="vig-h">¿Cuánto mide de alto (peralte)? <span className="unidad">(cm)</span></label>
+            <input id="vig-h" type="number" inputMode="decimal" placeholder="Ej: 40" value={h}
               onFocus={() => setCampoActivo('h')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setH(e.target.value); reset(); }} />
           </div>
         </div>
 
         <div className="campo">
-          <label>Fierro de arriba — varillas y diámetro</label>
-          <div className="form-grid-2">
-            <input type="number" inputMode="decimal" placeholder="Cantidad" value={nSup}
+          <label id="vig-sup-label">Fierro de arriba — varillas y diámetro</label>
+          <div className="form-grid-2" role="group" aria-labelledby="vig-sup-label">
+            <input id="vig-sup-n" aria-label="Cantidad de varillas de arriba" type="number" inputMode="decimal" placeholder="Cantidad" value={nSup}
               onFocus={() => setCampoActivo('nSup')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setNSup(e.target.value); reset(); }} />
-            <select value={dSup}
+            <select id="vig-sup-d" aria-label="Diámetro de varillas de arriba" value={dSup}
               onFocus={() => setCampoActivo('dSup')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setDSup(e.target.value); reset(); }}>
               {DIAMETROS.map(d => <option key={d} value={d}>{d}"</option>)}
@@ -138,12 +138,12 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         <div className="campo">
-          <label>Fierro de abajo — varillas y diámetro</label>
-          <div className="form-grid-2">
-            <input type="number" inputMode="decimal" placeholder="Cantidad" value={nInf}
+          <label id="vig-inf-label">Fierro de abajo — varillas y diámetro</label>
+          <div className="form-grid-2" role="group" aria-labelledby="vig-inf-label">
+            <input id="vig-inf-n" aria-label="Cantidad de varillas de abajo" type="number" inputMode="decimal" placeholder="Cantidad" value={nInf}
               onFocus={() => setCampoActivo('nInf')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setNInf(e.target.value); reset(); }} />
-            <select value={dInf}
+            <select id="vig-inf-d" aria-label="Diámetro de varillas de abajo" value={dInf}
               onFocus={() => setCampoActivo('dInf')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setDInf(e.target.value); reset(); }}>
               {DIAMETROS.map(d => <option key={d} value={d}>{d}"</option>)}
@@ -152,8 +152,8 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         <div className="campo">
-          <label>¿La viga está entre muros o es libre?</label>
-          <div className="btn-row">
+          <label id="vig-sis-label">¿La viga está entre muros o es libre?</label>
+          <div className="btn-row" role="group" aria-labelledby="vig-sis-label">
             {([['confinada','Entre muros (confinada)'],['porticos','Libre (pórtico)']] as const).map(([v, label]) => (
               <button key={v} className={`aparejo-btn ${sis === v ? 'active' : ''}`} style={{ flex: 1 }} onClick={() => { setSis(v); reset(); }}>
                 <span className="ap-label" style={{ fontSize: '0.76rem' }}>{label}</span>
@@ -168,23 +168,23 @@ export const CalcVigas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {avanzado && (
           <div className="form-grid-2">
             <div className="campo">
-              <label>Estribo <span className="unidad">(diámetro)</span></label>
-              <select value={dEst} onChange={e => { setDEst(e.target.value); reset(); }}>
+              <label htmlFor="vig-dest">Estribo <span className="unidad">(diámetro)</span></label>
+              <select id="vig-dest" value={dEst} onChange={e => { setDEst(e.target.value); reset(); }}>
                 {DIAMETROS.map(d => <option key={d} value={d}>{d}"</option>)}
               </select>
             </div>
             <div className="campo">
-              <label>Recubrimiento <span className="unidad">(cm)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Usual: 4" value={rec} onChange={e => { setRec(e.target.value); reset(); }} />
+              <label htmlFor="vig-rec">Recubrimiento <span className="unidad">(cm)</span></label>
+              <input id="vig-rec" type="number" inputMode="decimal" placeholder="Usual: 4" value={rec} onChange={e => { setRec(e.target.value); reset(); }} />
             </div>
             <div className="campo" style={{ gridColumn: 'span 2' }}>
-              <label>Losa apoyada sobre la viga <span className="unidad">(cm)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Usual: 0" value={espesorLosa} onChange={e => { setEspesorLosa(e.target.value); reset(); }} />
+              <label htmlFor="vig-espesor-losa">Losa apoyada sobre la viga <span className="unidad">(cm)</span></label>
+              <input id="vig-espesor-losa" type="number" inputMode="decimal" placeholder="Usual: 0" value={espesorLosa} onChange={e => { setEspesorLosa(e.target.value); reset(); }} />
               <div style={{ fontSize: '0.68rem', color: 'var(--c-muted)', marginTop: 4 }}>Si la viga lleva losa encima, se descuenta del hormigón y del encofrado lateral.</div>
             </div>
             <div className="campo" style={{ gridColumn: 'span 2' }}>
-              <label>Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
-              <select value={fc} onChange={e => { setFc(Number(e.target.value) as 140|175|210|245|280); reset(); }}>
+              <label htmlFor="vig-fc">Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
+              <select id="vig-fc" value={fc} onChange={e => { setFc(Number(e.target.value) as 140|175|210|245|280); reset(); }}>
                 {FC_OPCIONES.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
               </select>
               <div style={{ fontSize: '0.68rem', color: 'var(--c-muted)', marginTop: 4 }}>{FC_AYUDA}</div>
@@ -267,14 +267,14 @@ export const CalcLosa: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="form-section-title">Medidas de la obra</div>
         <div className="form-grid-2">
           <div className="campo">
-            <label>¿Cuántos metros mide de largo? <span className="unidad">(m)</span></label>
-            <input type="number" inputMode="decimal" placeholder="Ej: 4" value={largo}
+            <label htmlFor="losa-largo">¿Cuántos metros mide de largo? <span className="unidad">(m)</span></label>
+            <input id="losa-largo" type="number" inputMode="decimal" placeholder="Ej: 4" value={largo}
               onFocus={() => setCampoActivo('largo')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setLargo(e.target.value); reset(); }} />
           </div>
           <div className="campo">
-            <label>¿Cuántos metros mide de ancho? <span className="unidad">(m)</span></label>
-            <input type="number" inputMode="decimal" placeholder="Ej: 3.5" value={ancho}
+            <label htmlFor="losa-ancho">¿Cuántos metros mide de ancho? <span className="unidad">(m)</span></label>
+            <input id="losa-ancho" type="number" inputMode="decimal" placeholder="Ej: 3.5" value={ancho}
               onFocus={() => setCampoActivo('ancho')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setAncho(e.target.value); reset(); }} />
           </div>
@@ -284,8 +284,8 @@ export const CalcLosa: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         <div className="campo">
-          <label>Espesor de la losa</label>
-          <div className="aparejo-grid">
+          <label id="losa-espesor-label">Espesor de la losa</label>
+          <div className="aparejo-grid" role="group" aria-labelledby="losa-espesor-label">
             {(['auto',17,20,22,25,30] as const).map(v => (
               <button key={v} className={`aparejo-btn ${espesor === v ? 'active' : ''}`} onClick={() => { setEspesor(v); reset(); }}>
                 <span className="ap-label">{v === 'auto' ? 'Automático' : `${v} cm`}</span>
@@ -300,28 +300,28 @@ export const CalcLosa: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {avanzado && (
           <div className="form-grid-2" style={{ marginTop: 8 }}>
             <div className="campo">
-              <label>Varillas de vigueta <span className="unidad">(und)</span></label>
-              <input type="number" inputMode="decimal" placeholder="2" value={nInf} onChange={e => { setNInf(e.target.value); reset(); }} />
+              <label htmlFor="losa-ninf">Varillas de vigueta <span className="unidad">(und)</span></label>
+              <input id="losa-ninf" type="number" inputMode="decimal" placeholder="2" value={nInf} onChange={e => { setNInf(e.target.value); reset(); }} />
             </div>
             <div className="campo">
-              <label>Diámetro</label>
-              <select value={dInf} onChange={e => { setDInf(e.target.value); reset(); }}>
+              <label htmlFor="losa-dinf">Diámetro</label>
+              <select id="losa-dinf" value={dInf} onChange={e => { setDInf(e.target.value); reset(); }}>
                 {(['3/8','1/2','5/8'] as const).map(d => <option key={d} value={d}>{d}"</option>)}
               </select>
             </div>
             <div className="campo">
-              <label>Bastones <span className="unidad">(und)</span></label>
-              <input type="number" inputMode="decimal" placeholder="1" value={nBast} onChange={e => { setNBast(e.target.value); reset(); }} />
+              <label htmlFor="losa-nbast">Bastones <span className="unidad">(und)</span></label>
+              <input id="losa-nbast" type="number" inputMode="decimal" placeholder="1" value={nBast} onChange={e => { setNBast(e.target.value); reset(); }} />
             </div>
             <div className="campo">
-              <label>Diámetro</label>
-              <select value={dBast} onChange={e => { setDBast(e.target.value); reset(); }}>
+              <label htmlFor="losa-dbast">Diámetro</label>
+              <select id="losa-dbast" value={dBast} onChange={e => { setDBast(e.target.value); reset(); }}>
                 {(['3/8','1/2'] as const).map(d => <option key={d} value={d}>{d}"</option>)}
               </select>
             </div>
             <div className="campo" style={{ gridColumn: 'span 2' }}>
-              <label>Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
-              <select value={fc} onChange={e => { setFc(Number(e.target.value) as 140|175|210|245|280); reset(); }}>
+              <label htmlFor="losa-fc">Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
+              <select id="losa-fc" value={fc} onChange={e => { setFc(Number(e.target.value) as 140|175|210|245|280); reset(); }}>
                 {FC_OPCIONES.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
               </select>
               <div style={{ fontSize: '0.68rem', color: 'var(--c-muted)', marginTop: 4 }}>{FC_AYUDA}</div>

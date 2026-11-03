@@ -80,22 +80,22 @@ export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="form-section-title">Medidas de la obra</div>
         <div className="form-grid-2">
           <div className="campo">
-            <label>Altura entre pisos <span className="unidad">(m)</span></label>
-            <input type="number" inputMode="decimal" placeholder="Ej: 2.80" value={altura}
+            <label htmlFor="esc-altura">Altura entre pisos <span className="unidad">(m)</span></label>
+            <input id="esc-altura" type="number" inputMode="decimal" placeholder="Ej: 2.80" value={altura}
               onFocus={() => setCampoActivo('altura')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setAltura(e.target.value); reset(); }} />
           </div>
           <div className="campo">
-            <label>Ancho de la escalera <span className="unidad">(m)</span></label>
-            <input type="number" inputMode="decimal" placeholder="Ej: 0.90" value={ancho}
+            <label htmlFor="esc-ancho">Ancho de la escalera <span className="unidad">(m)</span></label>
+            <input id="esc-ancho" type="number" inputMode="decimal" placeholder="Ej: 0.90" value={ancho}
               onFocus={() => setCampoActivo('ancho')} onBlur={() => setCampoActivo(null)}
               onChange={e => { setAncho(e.target.value); reset(); }} />
           </div>
         </div>
 
         <div className="campo">
-          <label>Huella del escalón <span className="unidad">(donde pones el pie)</span></label>
-          <div className="aparejo-grid">
+          <label id="esc-huella-label">Huella del escalón <span className="unidad">(donde pones el pie)</span></label>
+          <div className="aparejo-grid" role="group" aria-labelledby="esc-huella-label">
             {HUELLAS.map(v => (
               <button key={v} className={`aparejo-btn ${huella === v ? 'active' : ''}`}
                 onClick={() => { setHuella(v); setCampoActivo('huella'); reset(); }}>
@@ -111,15 +111,15 @@ export const CalcEscalera: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {avanzado && (
           <div className="form-grid-2" style={{ marginTop: 8 }}>
             <div className="campo">
-              <label>Espesor de la losa (lanza) <span className="unidad">(cm)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Usual: 15" value={lanza}
+              <label htmlFor="esc-lanza">Espesor de la losa (lanza) <span className="unidad">(cm)</span></label>
+              <input id="esc-lanza" type="number" inputMode="decimal" placeholder="Usual: 15" value={lanza}
                 onFocus={() => setCampoActivo('lanza')} onBlur={() => setCampoActivo(null)}
                 onChange={e => { setLanza(e.target.value); reset(); }} />
               <div className="form-hint">En vivienda va de 12 a 15 cm. Más espesor significa más concreto.</div>
             </div>
             <div className="campo">
-              <label>Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
-              <select value={fc} onChange={e => { setFc(Number(e.target.value) as 140|175|210|245|280); reset(); }}>
+              <label htmlFor="esc-fc">Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
+              <select id="esc-fc" value={fc} onChange={e => { setFc(Number(e.target.value) as 140|175|210|245|280); reset(); }}>
                 {FC_OPCIONES.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
               </select>
               <div style={{ fontSize: '0.68rem', color: 'var(--c-muted)', marginTop: 4 }}>{FC_AYUDA}</div>

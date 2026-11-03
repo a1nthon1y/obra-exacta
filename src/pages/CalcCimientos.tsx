@@ -84,8 +84,9 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="form-card">
         <div className="form-section-title">Medidas de la obra</div>
         <div className="campo">
-          <label>¿Cuántos metros mide el cimiento de largo? <span className="unidad">(m)</span></label>
+          <label htmlFor="cim-largo">¿Cuántos metros mide el cimiento de largo? <span className="unidad">(m)</span></label>
           <input
+            id="cim-largo"
             type="number"
             inputMode="decimal"
             placeholder="Ej: 30"
@@ -96,8 +97,9 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           />
         </div>
         <div className="campo">
-          <label>¿Qué tan ancho va el cimiento? <span className="unidad">(m)</span></label>
+          <label htmlFor="cim-ancho">¿Qué tan ancho va el cimiento? <span className="unidad">(m)</span></label>
           <input
+            id="cim-ancho"
             type="number"
             inputMode="decimal"
             placeholder="Ej: 0.6"
@@ -108,8 +110,9 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           />
         </div>
         <div className="campo">
-          <label>¿Qué tan profundo se va a cavar? <span className="unidad">(m)</span></label>
+          <label htmlFor="cim-prof">¿Qué tan profundo se va a cavar? <span className="unidad">(m)</span></label>
           <input
+            id="cim-prof"
             type="number"
             inputMode="decimal"
             placeholder="Ej: 1.0"
@@ -120,8 +123,9 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           />
         </div>
         <div className="campo">
-          <label>¿Qué tan alto va el sobrecimiento? <span className="unidad">(m, visible sobre el terreno)</span></label>
+          <label htmlFor="cim-alto">¿Qué tan alto va el sobrecimiento? <span className="unidad">(m, visible sobre el terreno)</span></label>
           <input
+            id="cim-alto"
             type="number"
             inputMode="decimal"
             placeholder="Ej: 0.4"
@@ -138,8 +142,9 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {avanzado && (
           <>
             <div className="campo">
-              <label>Espesor del sobrecimiento <span className="unidad">(m)</span></label>
+              <label htmlFor="cim-esp">Espesor del sobrecimiento <span className="unidad">(m)</span></label>
               <input
+                id="cim-esp"
                 type="number"
                 inputMode="decimal"
                 placeholder="Usual: 0.15"
@@ -150,8 +155,9 @@ export const CalcCimientos: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               />
             </div>
             <div className="campo">
-              <label>Altura del cimiento ciclópeo <span className="unidad">(m)</span></label>
+              <label htmlFor="cim-alto-cimiento">Altura del cimiento ciclópeo <span className="unidad">(m)</span></label>
               <input
+                id="cim-alto-cimiento"
                 type="number"
                 inputMode="decimal"
                 placeholder="Usual: 0.50 (se ajusta a la zanja)"

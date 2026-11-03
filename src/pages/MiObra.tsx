@@ -489,6 +489,7 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
                         type="number"
                         inputMode="decimal"
                         value={precioActual}
+                        aria-label={`Precio por ${labelPrecioUnidad(CATALOGO[l.id]?.unidad ?? l.unidad)} de ${l.nombre}`}
                         onChange={e => setPrecio(l.id, Number(e.target.value))}
                       />
                       {precios[l.id] !== undefined && precios[l.id] !== CATALOGO[l.id]?.precio && (

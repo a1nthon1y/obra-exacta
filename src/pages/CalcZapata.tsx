@@ -251,8 +251,8 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="campo">
-            <label>¿Dónde va la zapata?</label>
-            <div className="btn-row">
+            <label id="zap-sug-sis-label">¿Dónde va la zapata?</label>
+            <div className="btn-row" role="group" aria-labelledby="zap-sug-sis-label">
               {([['confinada', 'Entre muros'], ['porticos', 'Columna libre']] as const).map(([v, label]) => (
                 <button
                   key={v}
@@ -271,8 +271,8 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="campo">
-            <label>¿Dónde está la columna?</label>
-            <div className="btn-row">
+            <label id="zap-sug-pos-label">¿Dónde está la columna?</label>
+            <div className="btn-row" role="group" aria-labelledby="zap-sug-pos-label">
               {([['esquina', 'Esquina'], ['borde', 'Borde'], ['centro', 'Centro']] as const).map(([v, label]) => (
                 <button
                   key={v}
@@ -291,8 +291,8 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="campo">
-            <label>¿Para cuántos pisos?</label>
-            <div className="btn-row">
+            <label id="zap-sug-pisos-label">¿Para cuántos pisos?</label>
+            <div className="btn-row" role="group" aria-labelledby="zap-sug-pisos-label">
               {([1, 2, 3] as const).map(n => (
                 <button
                   key={n}
@@ -310,8 +310,9 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="campo">
-            <label>¿De columna a columna cuánto hay? <span className="unidad">(m)</span></label>
+            <label htmlFor="zap-luz">¿De columna a columna cuánto hay? <span className="unidad">(m)</span></label>
             <input
+              id="zap-luz"
               type="number"
               inputMode="decimal"
               placeholder="Ej: 4"
@@ -324,8 +325,8 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="campo">
-            <label>¿Qué tipo de suelo hay?</label>
-            <div className="form-grid-2">
+            <label id="zap-sug-suelo-label">¿Qué tipo de suelo hay?</label>
+            <div className="form-grid-2" role="group" aria-labelledby="zap-sug-suelo-label">
               {SUELOS.map(s => (
                 <button
                   key={s.valor}
@@ -342,8 +343,9 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           {suelo === 'manual' && (
             <div className="campo">
-              <label>Presión admisible del suelo <span className="unidad">(kg/cm²)</span></label>
+              <label htmlFor="zap-pa-sug">Presión admisible del suelo <span className="unidad">(kg/cm²)</span></label>
               <input
+                id="zap-pa-sug"
                 type="number"
                 inputMode="decimal"
                 placeholder="Ej: 1.0"
@@ -450,30 +452,30 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div className="form-section-title">Medidas de la zapata</div>
 
             <div className="campo">
-              <label>¿Cuántas zapatas vas a vaciar? <span className="unidad">(und)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Ej: 4" value={cant}
+              <label htmlFor="zap-cant">¿Cuántas zapatas vas a vaciar? <span className="unidad">(und)</span></label>
+              <input id="zap-cant" type="number" inputMode="decimal" placeholder="Ej: 4" value={cant}
                 onFocus={() => setCampoActivo('cant')} onBlur={() => setCampoActivo(null)}
                 onChange={e => { setCant(e.target.value); reset(); }} />
             </div>
 
             <div className="form-grid-2">
               <div className="campo">
-                <label>Ancho de la columna <span className="unidad">(cm)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Ej: 30" value={bCol}
+                <label htmlFor="zap-bcol">Ancho de la columna <span className="unidad">(cm)</span></label>
+                <input id="zap-bcol" type="number" inputMode="decimal" placeholder="Ej: 30" value={bCol}
                   onFocus={() => setCampoActivo('bCol')} onBlur={() => setCampoActivo(null)}
                   onChange={e => { setBCol(e.target.value); reset(); }} />
               </div>
               <div className="campo">
-                <label>Largo de la columna <span className="unidad">(cm)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Ej: 30" value={hCol}
+                <label htmlFor="zap-hcol">Largo de la columna <span className="unidad">(cm)</span></label>
+                <input id="zap-hcol" type="number" inputMode="decimal" placeholder="Ej: 30" value={hCol}
                   onFocus={() => setCampoActivo('hCol')} onBlur={() => setCampoActivo(null)}
                   onChange={e => { setHCol(e.target.value); reset(); }} />
               </div>
             </div>
 
             <div className="campo">
-              <label>Carga sobre la zapata <span className="unidad">(toneladas)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Ej: 15" value={carga}
+              <label htmlFor="zap-carga">Carga sobre la zapata <span className="unidad">(toneladas)</span></label>
+              <input id="zap-carga" type="number" inputMode="decimal" placeholder="Ej: 15" value={carga}
                 onFocus={() => setCampoActivo('carga')} onBlur={() => setCampoActivo(null)}
                 onChange={e => { setCarga(e.target.value); reset(); }} />
               <div className="form-hint">
@@ -484,8 +486,8 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
 
             <div className="campo">
-              <label>¿Qué tipo de suelo hay?</label>
-              <div className="form-grid-2">
+              <label id="zap-suelo-label">¿Qué tipo de suelo hay?</label>
+              <div className="form-grid-2" role="group" aria-labelledby="zap-suelo-label">
                 {SUELOS.map(s => (
                   <button
                     key={s.valor}
@@ -502,16 +504,16 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             {suelo === 'manual' && (
               <div className="campo">
-                <label>Presión admisible del suelo (pa) <span className="unidad">(kg/cm²)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Ej: 1.0" value={pa}
+                <label htmlFor="zap-pa">Presión admisible del suelo (pa) <span className="unidad">(kg/cm²)</span></label>
+                <input id="zap-pa" type="number" inputMode="decimal" placeholder="Ej: 1.0" value={pa}
                   onFocus={() => setCampoActivo('suelo')} onBlur={() => setCampoActivo(null)}
                   onChange={e => { setPa(e.target.value); reset(); }} />
               </div>
             )}
 
             <div className="campo">
-              <label>¿Qué espesor tendrá la zapata? <span className="unidad">(cm)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Usual: 40" value={espesor}
+              <label htmlFor="zap-espesor">¿Qué espesor tendrá la zapata? <span className="unidad">(cm)</span></label>
+              <input id="zap-espesor" type="number" inputMode="decimal" placeholder="Usual: 40" value={espesor}
                 onFocus={() => setCampoActivo('espesor')} onBlur={() => setCampoActivo(null)}
                 onChange={e => { setEspesor(e.target.value); reset(); }} />
             </div>
@@ -522,16 +524,16 @@ export const CalcZapata: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             {avanzado && (
               <div className="form-grid-2">
                 <div className="campo">
-                  <label>Varilla de la malla <span className="unidad">(diámetro)</span></label>
-                  <select value={dVar} onChange={e => { setDVar(e.target.value); reset(); }}>
+                  <label htmlFor="zap-dvar">Varilla de la malla <span className="unidad">(diámetro)</span></label>
+                  <select id="zap-dvar" value={dVar} onChange={e => { setDVar(e.target.value); reset(); }}>
                     <option value="1/2">Ø 1/2"</option>
                     <option value="5/8">Ø 5/8"</option>
                     <option value="3/4">Ø 3/4"</option>
                   </select>
                 </div>
                 <div className="campo">
-                  <label>Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
-                  <select value={fc} onChange={e => { setFc(Number(e.target.value) as 140 | 175 | 210 | 245 | 280); reset(); }}>
+                  <label htmlFor="zap-fc">Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
+                  <select id="zap-fc" value={fc} onChange={e => { setFc(Number(e.target.value) as 140 | 175 | 210 | 245 | 280); reset(); }}>
                     {FC_OPCIONES.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
                   </select>
                   <div style={{ fontSize: '0.68rem', color: 'var(--c-muted)', marginTop: 4 }}>{FC_AYUDA}</div>

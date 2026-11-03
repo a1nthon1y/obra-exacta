@@ -189,8 +189,8 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="campo">
-            <label>¿Dónde va la columna?</label>
-            <div className="btn-row">
+            <label id="col-sug-sis-label">¿Dónde va la columna?</label>
+            <div className="btn-row" role="group" aria-labelledby="col-sug-sis-label">
               {([['confinada', 'Entre muros'], ['porticos', 'Libre (pórtico)']] as const).map(([v, label]) => (
                 <button
                   key={v}
@@ -207,8 +207,8 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="campo">
-            <label>¿Para cuántos pisos?</label>
-            <div className="btn-row">
+            <label id="col-sug-pisos-label">¿Para cuántos pisos?</label>
+            <div className="btn-row" role="group" aria-labelledby="col-sug-pisos-label">
               {([1, 2, 3] as const).map(n => (
                 <button
                   key={n}
@@ -226,8 +226,9 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="campo">
-            <label>¿Cuánto hay de columna a columna? <span className="unidad">(m)</span></label>
+            <label htmlFor="col-luz">¿Cuánto hay de columna a columna? <span className="unidad">(m)</span></label>
             <input
+              id="col-luz"
               type="number"
               inputMode="decimal"
               placeholder="Ej: 4"
@@ -324,19 +325,19 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div className="form-card" ref={formRef}>
             <div className="form-section-title">Medidas de la columna</div>
             <div className="campo">
-              <label>¿Cuántas columnas? <span className="unidad">(und)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Ej: 6" value={cant} onChange={e => { setCant(e.target.value); reset(); }} />
+              <label htmlFor="col-cant">¿Cuántas columnas? <span className="unidad">(und)</span></label>
+              <input id="col-cant" type="number" inputMode="decimal" placeholder="Ej: 6" value={cant} onChange={e => { setCant(e.target.value); reset(); }} />
             </div>
             <div className="form-grid-2">
               <div className="campo">
-                <label>Ancho de la sección <span className="unidad">(cm)</span></label>
-                <input type="number" inputMode="decimal" placeholder={sis === 'confinada' ? 'Ej: 13' : 'Ej: 25'} value={b}
+                <label htmlFor="col-b">Ancho de la sección <span className="unidad">(cm)</span></label>
+                <input id="col-b" type="number" inputMode="decimal" placeholder={sis === 'confinada' ? 'Ej: 13' : 'Ej: 25'} value={b}
                   onFocus={() => setCampoActivo('b')} onBlur={() => setCampoActivo(null)}
                   onChange={e => { setB(e.target.value); reset(); }} />
               </div>
               <div className="campo">
-                <label>Largo de la sección <span className="unidad">(cm)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Ej: 25" value={h}
+                <label htmlFor="col-h">Largo de la sección <span className="unidad">(cm)</span></label>
+                <input id="col-h" type="number" inputMode="decimal" placeholder="Ej: 25" value={h}
                   onFocus={() => setCampoActivo('h')} onBlur={() => setCampoActivo(null)}
                   onChange={e => { setH(e.target.value); reset(); }} />
               </div>
@@ -347,19 +348,19 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 : 'Se escribe ancho × largo. En pórticos: 25 × 25 cm como mínimo.'}
             </div>
             <div className="campo">
-              <label>¿Qué tan alta es la columna? <span className="unidad">(m)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Ej: 2.5" value={alto}
+              <label htmlFor="col-alto">¿Qué tan alta es la columna? <span className="unidad">(m)</span></label>
+              <input id="col-alto" type="number" inputMode="decimal" placeholder="Ej: 2.5" value={alto}
                 onFocus={() => setCampoActivo('alto')} onBlur={() => setCampoActivo(null)}
                 onChange={e => { setAlto(e.target.value); reset(); }} />
             </div>
 
             <div className="campo">
-              <label>Fierro — ¿cuántas varillas y de qué grosor?</label>
-              <div className="form-grid-2">
-                <input type="number" inputMode="decimal" placeholder="Cantidad de varillas" value={nVar}
+              <label id="col-fierro-label">Fierro — ¿cuántas varillas y de qué grosor?</label>
+              <div className="form-grid-2" role="group" aria-labelledby="col-fierro-label">
+                <input id="col-nvar" aria-label="Cantidad de varillas" type="number" inputMode="decimal" placeholder="Cantidad de varillas" value={nVar}
                   onFocus={() => setCampoActivo('nVar')} onBlur={() => setCampoActivo(null)}
                   onChange={e => { setNVar(e.target.value); reset(); }} />
-                <select value={dVar}
+                <select id="col-dvar" aria-label="Diámetro de las varillas" value={dVar}
                   onFocus={() => setCampoActivo('dVar')} onBlur={() => setCampoActivo(null)}
                   onChange={e => { setDVar(e.target.value); reset(); }}>
                   {DIAMETROS.map(d => <option key={d} value={d}>{d}"</option>)}
@@ -368,8 +369,8 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
 
             <div className="campo">
-              <label>¿La columna está entre muros o es libre?</label>
-              <div className="btn-row">
+              <label id="col-sis-label">¿La columna está entre muros o es libre?</label>
+              <div className="btn-row" role="group" aria-labelledby="col-sis-label">
                 {([['confinada','Entre muros (confinada)'],['porticos','Libre (pórtico)']] as const).map(([v, label]) => (
                   <button key={v} className={`aparejo-btn ${sis === v ? 'active' : ''}`} style={{ flex: 1 }} onClick={() => { setSis(v); setRec(v === 'confinada' ? '2' : '4'); reset(); }}>
                     <span className="ap-label" style={{ fontSize: '0.76rem' }}>{label}</span>
@@ -384,20 +385,20 @@ export const CalcColumnas: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             {avanzado && (
               <div className="form-grid-2">
                 <div className="campo">
-                  <label>Estribo <span className="unidad">(diámetro)</span></label>
-                  <select value={dEst}
+                  <label htmlFor="col-dest">Estribo <span className="unidad">(diámetro)</span></label>
+                  <select id="col-dest" value={dEst}
                     onFocus={() => setCampoActivo('dEst')} onBlur={() => setCampoActivo(null)}
                     onChange={e => { setDEst(e.target.value); reset(); }}>
                     {DIAMETROS.map(d => <option key={d} value={d}>{d}"</option>)}
                   </select>
                 </div>
                 <div className="campo">
-                  <label>Recubrimiento <span className="unidad">(cm)</span></label>
-                  <input type="number" inputMode="decimal" placeholder="Usual: 4" value={rec} onChange={e => { setRec(e.target.value); reset(); }} />
+                  <label htmlFor="col-rec">Recubrimiento <span className="unidad">(cm)</span></label>
+                  <input id="col-rec" type="number" inputMode="decimal" placeholder="Usual: 4" value={rec} onChange={e => { setRec(e.target.value); reset(); }} />
                 </div>
                 <div className="campo" style={{ gridColumn: 'span 2' }}>
-                  <label>Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
-                  <select value={fc} onChange={e => { setFc(Number(e.target.value) as 140|175|210|245|280); reset(); }}>
+                  <label htmlFor="col-fc">Resistencia del concreto <span className="unidad">(kg/cm²)</span></label>
+                  <select id="col-fc" value={fc} onChange={e => { setFc(Number(e.target.value) as 140|175|210|245|280); reset(); }}>
                     {FC_OPCIONES.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
                   </select>
                   <div style={{ fontSize: '0.68rem', color: 'var(--c-muted)', marginTop: 4 }}>{FC_AYUDA}</div>

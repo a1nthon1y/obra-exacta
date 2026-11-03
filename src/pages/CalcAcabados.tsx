@@ -77,21 +77,21 @@ export const CalcAcabados: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="form-card">
         <div className="form-section-title">Medidas de la obra</div>
         <div className="campo">
-          <label>¿Cuántos m² va a tarrajear? <span className="unidad">(m²)</span></label>
-          <input type="number" inputMode="decimal" placeholder="Ej: 60" value={aTarr} onChange={e => { setATarr(e.target.value); reset(); }} />
+          <label htmlFor="aca-tarr">¿Cuántos m² va a tarrajear? <span className="unidad">(m²)</span></label>
+          <input id="aca-tarr" type="number" inputMode="decimal" placeholder="Ej: 60" value={aTarr} onChange={e => { setATarr(e.target.value); reset(); }} />
         </div>
         <div className="campo">
-          <label>¿Cuántos m² va a pintar? <span className="unidad">(m²)</span></label>
-          <input type="number" inputMode="decimal" placeholder="Ej: 60" value={aPint} onChange={e => { setAPint(e.target.value); reset(); }} />
+          <label htmlFor="aca-pint">¿Cuántos m² va a pintar? <span className="unidad">(m²)</span></label>
+          <input id="aca-pint" type="number" inputMode="decimal" placeholder="Ej: 60" value={aPint} onChange={e => { setAPint(e.target.value); reset(); }} />
         </div>
         <div className="campo">
-          <label>¿Cuántos m² de piso (cerámico)? <span className="unidad">(m²)</span></label>
-          <input type="number" inputMode="decimal" placeholder="Ej: 20" value={aPiso} onChange={e => { setAPiso(e.target.value); reset(); }} />
+          <label htmlFor="aca-piso">¿Cuántos m² de piso (cerámico)? <span className="unidad">(m²)</span></label>
+          <input id="aca-piso" type="number" inputMode="decimal" placeholder="Ej: 20" value={aPiso} onChange={e => { setAPiso(e.target.value); reset(); }} />
         </div>
 
         <div className="campo">
-          <label>¿Va a poner contrapiso?</label>
-          <div className="btn-row">
+          <label id="aca-contra-label">¿Va a poner contrapiso?</label>
+          <div className="btn-row" role="group" aria-labelledby="aca-contra-label">
             {([['si','Sí'],['no','No']] as const).map(([v, label]) => (
               <button key={v} className={`aparejo-btn ${contra === v ? 'active' : ''}`} style={{ flex: 1 }} onClick={() => { setContra(v); reset(); }}>
                 <span className="ap-label">{label}</span>
@@ -106,25 +106,25 @@ export const CalcAcabados: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {avanzado && (
           <div className="form-grid-2" style={{ marginTop: 8 }}>
             <div className="campo">
-              <label>Espesor del tarrajeo <span className="unidad">(cm)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Usual: 1.5" value={eTarr} onChange={e => { setETarr(e.target.value); reset(); }} />
+              <label htmlFor="aca-e-tarr">Espesor del tarrajeo <span className="unidad">(cm)</span></label>
+              <input id="aca-e-tarr" type="number" inputMode="decimal" placeholder="Usual: 1.5" value={eTarr} onChange={e => { setETarr(e.target.value); reset(); }} />
             </div>
             <div className="campo">
-              <label>Manos de pintura</label>
-              <input type="number" inputMode="decimal" placeholder="Usual: 2" value={manos} onChange={e => { setManos(e.target.value); reset(); }} />
+              <label htmlFor="aca-manos">Manos de pintura</label>
+              <input id="aca-manos" type="number" inputMode="decimal" placeholder="Usual: 2" value={manos} onChange={e => { setManos(e.target.value); reset(); }} />
             </div>
             <div className="campo">
-              <label>Rendimiento de pintura <span className="unidad">(m²/gal)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Usual: 30" value={rendP} onChange={e => { setRendP(e.target.value); reset(); }} />
+              <label htmlFor="aca-rend-p">Rendimiento de pintura <span className="unidad">(m²/gal)</span></label>
+              <input id="aca-rend-p" type="number" inputMode="decimal" placeholder="Usual: 30" value={rendP} onChange={e => { setRendP(e.target.value); reset(); }} />
             </div>
             <div className="campo">
-              <label>Desperdicio de cerámico <span className="unidad">(%)</span></label>
-              <input type="number" inputMode="decimal" placeholder="Usual: 5" value={perd} onChange={e => { setPerd(e.target.value); reset(); }} />
+              <label htmlFor="aca-perd">Desperdicio de cerámico <span className="unidad">(%)</span></label>
+              <input id="aca-perd" type="number" inputMode="decimal" placeholder="Usual: 5" value={perd} onChange={e => { setPerd(e.target.value); reset(); }} />
             </div>
             {contra === 'si' && (
               <div className="campo" style={{ gridColumn: 'span 2' }}>
-                <label>Espesor del contrapiso <span className="unidad">(cm)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Usual: 4" value={eContra} onChange={e => { setEContra(e.target.value); reset(); }} />
+                <label htmlFor="aca-e-contra">Espesor del contrapiso <span className="unidad">(cm)</span></label>
+                <input id="aca-e-contra" type="number" inputMode="decimal" placeholder="Usual: 4" value={eContra} onChange={e => { setEContra(e.target.value); reset(); }} />
               </div>
             )}
           </div>

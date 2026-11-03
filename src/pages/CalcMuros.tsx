@@ -118,8 +118,9 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         {/* 1. Largo */}
         <div className="campo">
-          <label>¿Cuántos metros mide el muro de largo? <span className="unidad">(m)</span></label>
+          <label htmlFor="muro-largo">¿Cuántos metros mide el muro de largo? <span className="unidad">(m)</span></label>
           <input
+            id="muro-largo"
             type="number"
             inputMode="decimal"
             placeholder="Ej: 10"
@@ -132,8 +133,9 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         {/* 2. Alto */}
         <div className="campo">
-          <label>¿Cuánto mide de alto el muro? <span className="unidad">(m)</span></label>
+          <label htmlFor="muro-alto">¿Cuánto mide de alto el muro? <span className="unidad">(m)</span></label>
           <input
+            id="muro-alto"
             type="number"
             inputMode="decimal"
             placeholder="Ej: 2.5"
@@ -146,8 +148,8 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         {/* 3. Aparejo */}
         <div className="campo">
-          <label>¿Cómo va colocado el ladrillo? (Aparejo / Espesor)</label>
-          <div className="aparejo-grid">
+          <label id="muro-aparejo-label">¿Cómo va colocado el ladrillo? (Aparejo / Espesor)</label>
+          <div className="aparejo-grid" role="group" aria-labelledby="muro-aparejo-label">
             {([
               ['soga','🧱',`Soga (${Number(ab) || 13} cm)`],
               ['cabeza','🪨',`Cabeza (${Number(lb) || 24} cm)`],
@@ -170,8 +172,8 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         {/* 4. Tipo de ladrillo */}
         <div className="campo">
-          <label>¿Qué tipo de ladrillo se usará?</label>
-          <div className="btn-row">
+          <label id="muro-ladrillo-label">¿Qué tipo de ladrillo se usará?</label>
+          <div className="btn-row" role="group" aria-labelledby="muro-ladrillo-label">
             {([['kk18','🧱 King Kong 18 huecos (Estructural)'],['pand','📦 Pandereta (Tabiquería)']] as const).map(([v, label]) => (
               <button
                 key={v}
@@ -188,8 +190,8 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         {/* 5. Uso estructural */}
         <div className="campo">
-          <label>¿El muro sostiene el techo o peso del piso superior?</label>
-          <div className="btn-row">
+          <label id="muro-uso-label">¿El muro sostiene el techo o peso del piso superior?</label>
+          <div className="btn-row" role="group" aria-labelledby="muro-uso-label">
             {([['portante','🏛️ Sí, sostiene techo (Portante)'],['tabique','🚪 No, solo división (Tabique)']] as const).map(([v, label]) => (
               <button
                 key={v}
@@ -261,7 +263,7 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div style={{ marginBottom: 14, padding: '12px', background: 'var(--c-surface2)', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--c-border)' }}>
             {/* Puertas */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--c-muted)', margin: 0 }}>
+              <label id="muro-puertas-label" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--c-muted)', margin: 0 }}>
                 🚪 Puertas en este muro
               </label>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -284,10 +286,11 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               </div>
             </div>
 
-            <div className="form-grid-3" style={{ marginBottom: 14 }}>
+            <div className="form-grid-3" style={{ marginBottom: 14 }} role="group" aria-labelledby="muro-puertas-label">
               <div className="campo" style={{ margin: 0 }}>
-                <label>Cantidad <span className="unidad">(und)</span></label>
+                <label htmlFor="muro-puertas-cant">Cantidad <span className="unidad">(und)</span></label>
                 <input
+                  id="muro-puertas-cant"
                   type="number"
                   inputMode="decimal"
                   placeholder="0"
@@ -298,8 +301,9 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 />
               </div>
               <div className="campo" style={{ margin: 0 }}>
-                <label>Alto <span className="unidad">(m)</span></label>
+                <label htmlFor="muro-puertas-alto">Alto <span className="unidad">(m)</span></label>
                 <input
+                  id="muro-puertas-alto"
                   type="number"
                   inputMode="decimal"
                   placeholder="2.10"
@@ -310,8 +314,9 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 />
               </div>
               <div className="campo" style={{ margin: 0 }}>
-                <label>Ancho <span className="unidad">(m)</span></label>
+                <label htmlFor="muro-puertas-ancho">Ancho <span className="unidad">(m)</span></label>
                 <input
+                  id="muro-puertas-ancho"
                   type="number"
                   inputMode="decimal"
                   placeholder="0.90"
@@ -325,7 +330,7 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             {/* Ventanas */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--c-muted)', margin: 0 }}>
+              <label id="muro-ventanas-label" style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--c-muted)', margin: 0 }}>
                 🪟 Ventanas en este muro
               </label>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -348,10 +353,11 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               </div>
             </div>
 
-            <div className="form-grid-3">
+            <div className="form-grid-3" role="group" aria-labelledby="muro-ventanas-label">
               <div className="campo" style={{ margin: 0 }}>
-                <label>Cantidad <span className="unidad">(und)</span></label>
+                <label htmlFor="muro-ventanas-cant">Cantidad <span className="unidad">(und)</span></label>
                 <input
+                  id="muro-ventanas-cant"
                   type="number"
                   inputMode="decimal"
                   placeholder="0"
@@ -362,8 +368,9 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 />
               </div>
               <div className="campo" style={{ margin: 0 }}>
-                <label>Alto <span className="unidad">(m)</span></label>
+                <label htmlFor="muro-ventanas-alto">Alto <span className="unidad">(m)</span></label>
                 <input
+                  id="muro-ventanas-alto"
                   type="number"
                   inputMode="decimal"
                   placeholder="1.20"
@@ -374,8 +381,9 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 />
               </div>
               <div className="campo" style={{ margin: 0 }}>
-                <label>Ancho <span className="unidad">(m)</span></label>
+                <label htmlFor="muro-ventanas-ancho">Ancho <span className="unidad">(m)</span></label>
                 <input
+                  id="muro-ventanas-ancho"
                   type="number"
                   inputMode="decimal"
                   placeholder="1.20"
@@ -398,42 +406,42 @@ export const CalcMuros: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div style={{ marginTop: 8, padding: '12px', background: 'var(--c-surface2)', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--c-border)' }}>
             <div className="form-grid-2" style={{ marginBottom: 12 }}>
               <div className="campo" style={{ margin: 0 }}>
-                <label>Proporción mortero <span className="unidad">(1:N)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Usual: 5" value={mezcla} onChange={e => { setMezcla(e.target.value); reset(); }} />
+                <label htmlFor="muro-mezcla">Proporción mortero <span className="unidad">(1:N)</span></label>
+                <input id="muro-mezcla" type="number" inputMode="decimal" placeholder="Usual: 5" value={mezcla} onChange={e => { setMezcla(e.target.value); reset(); }} />
               </div>
               <div className="campo" style={{ margin: 0 }}>
-                <label>Espesor de junta <span className="unidad">(cm)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Usual: 1.5" value={junta} onChange={e => { setJunta(e.target.value); reset(); }} />
+                <label htmlFor="muro-junta">Espesor de junta <span className="unidad">(cm)</span></label>
+                <input id="muro-junta" type="number" inputMode="decimal" placeholder="Usual: 1.5" value={junta} onChange={e => { setJunta(e.target.value); reset(); }} />
               </div>
             </div>
 
             <div className="form-grid-2" style={{ marginBottom: 14 }}>
               <div className="campo" style={{ margin: 0 }}>
-                <label>Desperdicio de ladrillo <span className="unidad">(%)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Usual: 5" value={desL} onChange={e => { setDesL(e.target.value); reset(); }} />
+                <label htmlFor="muro-des-l">Desperdicio de ladrillo <span className="unidad">(%)</span></label>
+                <input id="muro-des-l" type="number" inputMode="decimal" placeholder="Usual: 5" value={desL} onChange={e => { setDesL(e.target.value); reset(); }} />
               </div>
               <div className="campo" style={{ margin: 0 }}>
-                <label>Desperdicio de mortero <span className="unidad">(%)</span></label>
-                <input type="number" inputMode="decimal" placeholder="Usual: 10" value={desM} onChange={e => { setDesM(e.target.value); reset(); }} />
+                <label htmlFor="muro-des-m">Desperdicio de mortero <span className="unidad">(%)</span></label>
+                <input id="muro-des-m" type="number" inputMode="decimal" placeholder="Usual: 10" value={desM} onChange={e => { setDesM(e.target.value); reset(); }} />
               </div>
             </div>
 
             <div style={{ borderTop: '1px solid var(--c-border)', paddingTop: 10 }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--c-muted)', marginBottom: 8 }}>
+              <div id="muro-ladrillo-medidas" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--c-muted)', marginBottom: 8 }}>
                 Medidas del ladrillo comercial
               </div>
-              <div className="form-grid-3">
+              <div className="form-grid-3" role="group" aria-labelledby="muro-ladrillo-medidas">
                 <div className="campo" style={{ margin: 0 }}>
-                  <label>Largo <span className="unidad">(cm)</span></label>
-                  <input type="number" inputMode="decimal" placeholder="24" value={lb} onChange={e => { setLb(e.target.value); reset(); }} />
+                  <label htmlFor="muro-lb">Largo <span className="unidad">(cm)</span></label>
+                  <input id="muro-lb" type="number" inputMode="decimal" placeholder="24" value={lb} onChange={e => { setLb(e.target.value); reset(); }} />
                 </div>
                 <div className="campo" style={{ margin: 0 }}>
-                  <label>Ancho <span className="unidad">(cm)</span></label>
-                  <input type="number" inputMode="decimal" placeholder="13" value={ab} onChange={e => { setAb(e.target.value); reset(); }} />
+                  <label htmlFor="muro-ab">Ancho <span className="unidad">(cm)</span></label>
+                  <input id="muro-ab" type="number" inputMode="decimal" placeholder="13" value={ab} onChange={e => { setAb(e.target.value); reset(); }} />
                 </div>
                 <div className="campo" style={{ margin: 0 }}>
-                  <label>Alto <span className="unidad">(cm)</span></label>
-                  <input type="number" inputMode="decimal" placeholder="9" value={hb} onChange={e => { setHb(e.target.value); reset(); }} />
+                  <label htmlFor="muro-hb">Alto <span className="unidad">(cm)</span></label>
+                  <input id="muro-hb" type="number" inputMode="decimal" placeholder="9" value={hb} onChange={e => { setHb(e.target.value); reset(); }} />
                 </div>
               </div>
             </div>

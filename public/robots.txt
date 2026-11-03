@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Directives for search engines
+Sitemap: https://obra-exacta.vercel.app/sitemap.xml

@@ -1,0 +1,20 @@
+{
+  "name": "Obra Exacta — Calculadora de Materiales de Construcción Perú",
+  "short_name": "Obra Exacta",
+  "description": "Calculadora de materiales de construcción según normas RNE y tablas Capeco en Perú. Metrado exacto de cemento, arena, piedra, ladrillos y fierro.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0d14",
+  "theme_color": "#0a0d14",
+  "lang": "es-PE",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

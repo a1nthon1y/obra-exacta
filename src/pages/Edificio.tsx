@@ -144,8 +144,8 @@ export const Edificio: React.FC<Props> = ({ onBack, onIrCalculadoras, onVerObra 
             </div>
 
             <div className="campo">
-              <label>¿Cuántos pisos tendrá?</label>
-              <div className="btn-row">
+              <label id="proyecto-pisos-label">¿Cuántos pisos tendrá?</label>
+              <div className="btn-row" role="group" aria-labelledby="proyecto-pisos-label">
                 {([3, 4, 5] as const).map(n => (
                   <button
                     key={n}
@@ -218,8 +218,8 @@ export const Edificio: React.FC<Props> = ({ onBack, onIrCalculadoras, onVerObra 
             </div>
 
             <div className="campo" style={{ marginTop: 14 }}>
-              <label>Piso que estás metrando</label>
-              <div className="btn-row">
+              <label id="proyecto-piso-activo-label">Piso que estás metrando</label>
+              <div className="btn-row" role="group" aria-labelledby="proyecto-piso-activo-label">
                 {Array.from({ length: proyectoActivo.pisos }, (_, i) => i + 1).map(n => (
                   <button
                     key={n}

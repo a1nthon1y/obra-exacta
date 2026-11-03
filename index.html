@@ -2,13 +2,152 @@
 <html lang="es-PE">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚒️</text></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f1f2ee" />
-    <meta name="description" content="Calcula materiales para tu obra en Perú: cimientos, muros, columnas, vigas, losa y acabados. Gratis, sin registro." />
-    <title>Obra Exacta — Calculadora de materiales para construcción en Perú</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- SEO Primario: Título y Metadatos de Alto Impacto -->
+    <title>Calculadora de Materiales de Construcción Perú | Obra Exacta (RNE y Capeco)</title>
+    <meta name="description" content="Calcula gratis materiales de construcción en Perú: cemento, arena, piedra, ladrillos King Kong, fierro y acabados según normas RNE (E.050, E.060, E.070) y Capeco. Con visor 3D." />
+    <meta name="keywords" content="calculadora de materiales construccion peru, calcular cemento concreto rne capeco, calculo de ladrillos king kong por m2, fierro construccion varillas columnas vigas losa aligerada, metrados de obra civil peru, presupuesto autoconstruccion lima" />
+    <meta name="author" content="Obra Exacta" />
+    <meta name="application-name" content="Obra Exacta" />
+    <link rel="canonical" href="https://obra-exacta.vercel.app/" />
+
+    <!-- Indexación y Rastreadores -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large" />
+
+    <!-- Geo-Targeting para Perú (SEO Local) -->
+    <meta name="geo.region" content="PE" />
+    <meta name="geo.placename" content="Perú" />
+    <meta name="geo.position" content="-12.046374;-77.042793" />
+    <meta name="ICBM" content="-12.046374, -77.042793" />
+
+    <!-- PWA, Tema e Iconos -->
+    <meta name="theme-color" content="#0a0d14" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Obra Exacta" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Open Graph / Redes Sociales (WhatsApp, Facebook, LinkedIn) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Obra Exacta" />
+    <meta property="og:locale" content="es_PE" />
+    <meta property="og:title" content="Calculadora de Materiales de Construcción Perú | Obra Exacta" />
+    <meta property="og:description" content="Calcula con precisión cemento, agregados, ladrillos y fierro para zapatas, cimientos, muros, columnas, vigas y losas según normas RNE y Capeco. 100% gratis con visualizador 3D." />
+    <meta property="og:url" content="https://obra-exacta.vercel.app/" />
+    <meta property="og:image" content="https://obra-exacta.vercel.app/og-image.svg" />
+    <meta property="og:image:secure_url" content="https://obra-exacta.vercel.app/og-image.svg" />
+    <meta property="og:image:type" content="image/svg+xml" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Obra Exacta - Calculadora de Materiales para Construcción en el Perú con Visores 3D" />
+
+    <!-- Twitter Cards (X) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Calculadora de Materiales de Construcción Perú | Obra Exacta" />
+    <meta name="twitter:description" content="Herramienta profesional para ingenieros, maestros de obra y autoconstructores en Perú. Dosificaciones Capeco y normas RNE E.050/E.060/E.070." />
+    <meta name="twitter:image" content="https://obra-exacta.vercel.app/og-image.svg" />
+    <meta name="twitter:image:alt" content="Calculadora de Obra y Metrados Perú" />
+
+    <!-- Datos Estructurados JSON-LD (Schema.org) para Google Rich Results -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://obra-exacta.vercel.app/#webapp",
+          "name": "Obra Exacta",
+          "url": "https://obra-exacta.vercel.app/",
+          "description": "Calculadora técnica de materiales de construcción para el Perú. Cuantifica cemento, arena gruesa, piedra chancada, agua, ladrillos King Kong y varillas de acero corrugado conforme al Reglamento Nacional de Edificaciones (RNE) y tablas Capeco.",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "All",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "inLanguage": "es-PE",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "PEN"
+          },
+          "featureList": [
+            "Dosificación de concreto por m³ para f'c 140, 175, 210, 245 y 280 kg/cm²",
+            "Metrado de ladrillo King Kong 18 huecos y pandereta en soga, cabeza y canto",
+            "Cuantificación de acero longitudinal y estribos de confinamiento para columnas y vigas",
+            "Cálculo de zapatas aisladas según capacidad portante del suelo",
+            "Cálculo de cimiento corrido ciclópeo 1:10 + 30% piedra grande y sobrecimiento",
+            "Metrado de losa aligerada y ladrillos de techo 30x30",
+            "Cálculo de tarrajeo, contrapiso y rendimiento de pintura",
+            "Visores 3D interactivos con cotas reales para cada elemento estructural",
+            "Presupuesto consolidado en Soles (PEN) con exportación a PDF y respaldo JSON"
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://obra-exacta.vercel.app/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "¿Cómo calcular la cantidad de materiales para una construcción en Perú?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Se calculan los volúmenes de concreto (m³) o áreas (m²) de cada elemento (zapatas, cimientos, muros, columnas, vigas, losas) y se aplican las proporciones técnicas peruanas de Capeco y el RNE para obtener bolsas de cemento de 42.5 kg, m³ de arena, piedra y varillas de fierro de 9 metros."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cuántas bolsas de cemento se necesitan por m³ de concreto f'c 210 kg/cm²?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Según la tabla Capeco para concreto f'c = 210 kg/cm² con agregado de 1/2\", se requieren 9.73 bolsas de cemento (42.5 kg), 0.52 m³ de arena gruesa, 0.53 m³ de piedra chancada y 0.186 m³ de agua por metro cúbico vaciado."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Cuántos ladrillos King Kong entran por m² de muro?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Para ladrillo King Kong 18 huecos (medida estándar 24×13×9 cm) con junta de 1.5 cm en aparejo de soga entran 37 unidades por m² (más 5% de desperdicio: ~39 und/m²). En cabeza entran 62 und/m² y en canto 25 und/m²."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿La calculadora de Obra Exacta es gratuita?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sí, Obra Exacta es 100% gratuita, no requiere registro ni correo electrónico y funciona sin conexión a internet una vez cargada en el celular o computadora."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
+    <!-- Fallback semántico accesible e indexable por rastreadores que no ejecutan JavaScript -->
+    <noscript>
+      <header style="padding: 24px; font-family: sans-serif; background: #0f172a; color: #f8fafc;">
+        <h1>Obra Exacta — Calculadora de Materiales de Construcción en Perú</h1>
+        <p>Herramienta técnica de metrados y dosificación según el Reglamento Nacional de Edificaciones (RNE E.050, E.060, E.070) y tablas Capeco.</p>
+      </header>
+      <main style="padding: 20px; font-family: sans-serif; line-height: 1.6; max-width: 800px;">
+        <h2>Módulos de Cálculo Disponibles:</h2>
+        <ul>
+          <li><strong>Zapatas aisladas:</strong> Dimensionamiento según carga axial y tipo de suelo (blando, intermedio, duro), concreto f'c 210/245/280, parrilla de fierro y solado 1:10.</li>
+          <li><strong>Cimientos corridos y sobrecimientos:</strong> Concreto ciclópeo 1:10 + 30% piedra grande y 1:8 + 25% piedra mediana.</li>
+          <li><strong>Muros de albañilería:</strong> Ladrillo King Kong 18 huecos y pandereta en soga, cabeza o canto, con volumen de mortero y desperdicio.</li>
+          <li><strong>Columnas de confinamiento y pórticos:</strong> Concreto f'c 175/210, varillas longitudinales de 1/2", 5/8", 3/4" y distribución de estribos según norma sísmica E.060.</li>
+          <li><strong>Vigas y Losas Aligeradas:</strong> Peralte económico L/25, ladrillos de techo 30x30 (8.33 und/m²), viguetas cada 40 cm y acero superior/inferior.</li>
+          <li><strong>Acabados y revoques:</strong> Tarrajeo en muros y cielorrasos con mortero 1:5, contrapiso y rendimiento de pintura látex.</li>
+        </ul>
+        <p><em>Para utilizar las calculadoras interactivas y los visores 3D, por favor activa JavaScript en tu navegador.</em></p>
+      </main>
+    </noscript>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
