@@ -15,6 +15,34 @@ import type { EtapaId } from './config/etapas';
 type Tab = 'inicio' | 'obra';
 type Calc = EtapaId | null;
 
+const PREGUNTAS_FRECUENTES = [
+  {
+    pregunta: '¿Cómo calcula Obra Exacta los materiales?',
+    respuesta:
+      'Convierte las medidas de cada elemento en volumen o área y aplica dosificaciones de Capeco y criterios del RNE. Para concreto usa bolsas de 42.5 kg, arena gruesa, piedra chancada y agua; para muros, ladrillo King Kong 18 huecos o pandereta; para acero, varillas de 9 m y estribos.',
+  },
+  {
+    pregunta: "¿Cuántas bolsas de cemento se necesitan por m³ de concreto f'c 210?",
+    respuesta:
+      'Según la tabla Capeco para f\'c 210 kg/cm² con agregado de 1/2", se requieren 9.73 bolsas de 42.5 kg, 0.52 m³ de arena gruesa, 0.53 m³ de piedra chancada y 0.186 m³ de agua por metro cúbico de concreto.',
+  },
+  {
+    pregunta: '¿Cuántos ladrillos King Kong entran por m² de muro?',
+    respuesta:
+      'Para King Kong 18 huecos de 24×13×9 cm, junta de 1.5 cm y aparejo de soga, entran 37 unidades por m². Con 5% de desperdicio se compran aproximadamente 39. En cabeza son 62 und/m² y en canto 25 und/m².',
+  },
+  {
+    pregunta: '¿Es gratis y funciona sin internet?',
+    respuesta:
+      'Sí. Obra Exacta es gratuita, no pide registro ni correo. Después de la primera visita, la app queda guardada en tu navegador y puedes seguir calculando sin conexión. Tus partidas se guardan solo en este dispositivo.',
+  },
+  {
+    pregunta: '¿Puedo usarla para un edificio de 3 a 5 pisos?',
+    respuesta:
+      'Sí, con planos. La sección Edificio te permite organizar las partidas por piso, pero no sugiere medidas estructurales para 3 a 5 pisos: esas las define un ingeniero colegiado.',
+  },
+] as const;
+
 export default function App() {
   const [tab, setTab]   = useState<Tab>('inicio');
   const [calc, setCalc] = useState<Calc>(null);
@@ -29,6 +57,19 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [tab, calc, enEdificio]);
+
+  // Título de la pestaña según la pantalla: útil para compartir y para el historial.
+  useEffect(() => {
+    if (calc) {
+      document.title = `${getEtapa(calc).nombre} | Obra Exacta`;
+    } else if (enEdificio) {
+      document.title = 'Edificio de 3 a 5 pisos | Obra Exacta';
+    } else if (tab === 'obra') {
+      document.title = 'Mi obra y presupuesto | Obra Exacta';
+    } else {
+      document.title = 'Calculadora de materiales de construcción | Obra Exacta';
+    }
+  }, [calc, enEdificio, tab]);
 
   function abrirCalc(id: Calc) {
     setEnEdificio(false);
@@ -103,8 +144,8 @@ export default function App() {
               <div className="portada-cuerpo">
                 <h1>Tu obra, calculada</h1>
                 <p>
-                  Entra las medidas de tu obra y te decimos cuánto material comprar.
-                  Sin cuentas, sin pagos — todo en tu teléfono.
+                  Calculadora de materiales de construcción en Perú. Entra las medidas de tu obra
+                  y te decimos cuánto material comprar. Sin cuentas, sin pagos — todo en tu teléfono.
                 </p>
               </div>
             </div>
@@ -152,11 +193,93 @@ export default function App() {
               </button>
             </div>
 
-            {/* Aviso referencial */}
-            <p className="aviso-legal" style={{ marginTop: 20 }}>
-              Obra Exacta muestra cantidades referenciales basadas en prácticas habituales peruanas (RNE).<br />
-              Confirmar las cantidades con el maestro de obra y las medidas estructurales con un ingeniero colegiado.
-            </p>
+            {/* Contenido visible: ayuda al usuario y da contexto real a buscadores */}
+            <section
+              aria-labelledby="guia-materiales"
+              style={{
+                marginTop: 24,
+                background: 'var(--c-surface)',
+                border: '1px solid var(--c-border)',
+                borderRadius: 'var(--radius)',
+                padding: '16px',
+              }}
+            >
+              <h2
+                id="guia-materiales"
+                style={{ fontSize: '1.02rem', fontWeight: 800, lineHeight: 1.25, marginBottom: 8 }}
+              >
+                Calculadora de materiales de construcción en Perú
+              </h2>
+              <p style={{ fontSize: '0.84rem', lineHeight: 1.6, color: 'var(--c-muted)', marginBottom: 14 }}>
+                Obra Exacta convierte las medidas de tu plano en una lista de compra: bolsas de
+                cemento de 42.5 kg, metros cúbicos de arena gruesa y piedra chancada, ladrillos
+                King Kong, varillas de fierro y materiales de acabados. Los cálculos usan
+                dosificaciones habituales de Capeco y criterios del Reglamento Nacional de
+                Edificaciones (RNE).
+              </p>
+
+              <h3 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 7 }}>
+                ¿Qué puedes calcular?
+              </h3>
+              <ul style={{ margin: '0 0 14px', paddingLeft: 18, fontSize: '0.82rem', lineHeight: 1.55, color: 'var(--c-muted)' }}>
+                <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Cimientos y zapatas:</strong> excavación, concreto ciclópeo, sobrecimiento y acero.</li>
+                <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Muros:</strong> ladrillo King Kong 18 huecos o pandereta en soga, cabeza o canto, mortero y esbeltez.</li>
+                <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Columnas y vigas:</strong> concreto, acero longitudinal, estribos y recubrimiento.</li>
+                <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Losa aligerada y escalera:</strong> viguetas, ladrillo de techo, concreto y acero.</li>
+                <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Acabados:</strong> tarrajeo, contrapiso, cerámico y pintura.</li>
+                <li><strong style={{ color: 'var(--c-text)' }}>Mi obra:</strong> presupuesto en soles, exportación a PDF y respaldo JSON.</li>
+              </ul>
+
+              <h3 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 7 }}>
+                Cómo funciona
+              </h3>
+              <ol style={{ margin: '0 0 14px', paddingLeft: 18, fontSize: '0.82rem', lineHeight: 1.55, color: 'var(--c-muted)' }}>
+                <li style={{ marginBottom: 4 }}>Elige la etapa de tu obra.</li>
+                <li style={{ marginBottom: 4 }}>Ingresa las medidas del plano o usa una medida usual orientativa.</li>
+                <li>Revisa la lista de materiales y guárdala en Mi obra.</li>
+              </ol>
+
+              <h3 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 4 }}>
+                Preguntas frecuentes
+              </h3>
+              {PREGUNTAS_FRECUENTES.map(({ pregunta, respuesta }, index) => (
+                <details
+                  key={pregunta}
+                  open={index === 0}
+                  style={{ borderTop: '1px solid var(--c-border)', padding: '8px 0' }}
+                >
+                  <summary
+                    style={{ cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700, color: 'var(--c-text)' }}
+                  >
+                    {pregunta}
+                  </summary>
+                  <p style={{ marginTop: 6, fontSize: '0.8rem', lineHeight: 1.55, color: 'var(--c-muted)' }}>
+                    {respuesta}
+                  </p>
+                </details>
+              ))}
+
+              <p className="aviso-legal" style={{ marginTop: 12, paddingBottom: 0, textAlign: 'left' }}>
+                <strong>Antes de comprar:</strong> las cantidades son referenciales y dependen del
+                tipo de suelo, los planos y las prácticas de tu zona. Confirma el metrado con tu
+                maestro de obra y las medidas estructurales con un ingeniero colegiado.
+              </p>
+            </section>
+
+            <footer
+              style={{
+                marginTop: 18,
+                paddingTop: 14,
+                borderTop: '1px solid var(--c-border)',
+                textAlign: 'center',
+                fontSize: '0.7rem',
+                color: 'var(--c-muted)',
+                lineHeight: 1.55,
+              }}
+            >
+              Obra Exacta · Hecho para la autoconstrucción en Perú<br />
+              Tus datos se guardan solo en este navegador. Sin cuentas ni publicidad.
+            </footer>
           </div>
         ) : (
           <MiObra onIrCalculadoras={() => { setEnEdificio(false); setTab('inicio'); setCalc(null); }} />

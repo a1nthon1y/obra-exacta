@@ -373,3 +373,14 @@ npm run dev
 ```
 
 Continuar por la validación con ingeniero o por el respaldo JSON.
+
+
+## Publicaci?n y SEO (03/11/2026)
+
+- Se prepar? la salida a producci?n: OG PNG 1200?630, iconos PWA 192/512 y apple-touch, manifest completo.
+- Service worker (`public/sw.js`) + registro en `src/main.tsx`: la app queda disponible offline despu?s de la primera visita. Probado con Playwright en iPhone 13, incluyendo recarga sin conexi?n.
+- Contenido indexable visible en Inicio: gu?a de materiales, c?mo funciona y 5 preguntas frecuentes; JSON-LD actualizado (WebSite, Organization, WebApplication, FAQPage).
+- Metadatos: t?tulo/description cortos, canonical, hreflang, preconnect de fuentes y hoja de Google Fonts movida fuera del CSS.
+- Verificaci?n: 78/78 tests, oxlint 0, build OK. JS inicial 415.10 kB (117.01 kB gzip); Three.js diferido 571.27 kB.
+- Pendiente: validaci?n con ingeniero, Search Console, probar la vista previa social real y definir el dominio definitivo.
+- Checklist de publicaci?n: `PRODUCCION.md`.

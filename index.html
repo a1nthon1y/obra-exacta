@@ -3,61 +3,94 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    
-    <!-- SEO Primario: Título y Metadatos de Alto Impacto -->
-    <title>Calculadora de Materiales de Construcción Perú | Obra Exacta (RNE y Capeco)</title>
-    <meta name="description" content="Calcula gratis materiales de construcción en Perú: cemento, arena, piedra, ladrillos King Kong, fierro y acabados según normas RNE (E.050, E.060, E.070) y Capeco. Con visor 3D." />
-    <meta name="keywords" content="calculadora de materiales construccion peru, calcular cemento concreto rne capeco, calculo de ladrillos king kong por m2, fierro construccion varillas columnas vigas losa aligerada, metrados de obra civil peru, presupuesto autoconstruccion lima" />
+
+    <!-- SEO primario -->
+    <title>Calculadora de materiales de construcción | Obra Exacta</title>
+    <meta name="description" content="Calcula cemento, arena, piedra, ladrillos y fierro para tu obra en Perú. Metrado gratis con dosificaciones Capeco, RNE y visor 3D. Sin registro." />
     <meta name="author" content="Obra Exacta" />
     <meta name="application-name" content="Obra Exacta" />
     <link rel="canonical" href="https://obra-exacta.vercel.app/" />
+    <link rel="alternate" hreflang="es-PE" href="https://obra-exacta.vercel.app/" />
+    <link rel="alternate" hreflang="x-default" href="https://obra-exacta.vercel.app/" />
 
-    <!-- Indexación y Rastreadores -->
+    <!-- Indexación y rastreadores -->
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large" />
     <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large" />
 
-    <!-- Geo-Targeting para Perú (SEO Local) -->
+    <!-- Geo-targeting para Perú (SEO local) -->
     <meta name="geo.region" content="PE" />
     <meta name="geo.placename" content="Perú" />
     <meta name="geo.position" content="-12.046374;-77.042793" />
     <meta name="ICBM" content="-12.046374, -77.042793" />
 
-    <!-- PWA, Tema e Iconos -->
+    <!-- PWA, tema e iconos -->
     <meta name="theme-color" content="#0a0d14" />
+    <meta name="color-scheme" content="light" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Obra Exacta" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Open Graph / Redes Sociales (WhatsApp, Facebook, LinkedIn) -->
+    <!-- Fuentes: conexión temprana para no bloquear el primer render -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;700&display=swap"
+    />
+
+    <!-- Open Graph / WhatsApp, Facebook, LinkedIn -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Obra Exacta" />
     <meta property="og:locale" content="es_PE" />
-    <meta property="og:title" content="Calculadora de Materiales de Construcción Perú | Obra Exacta" />
-    <meta property="og:description" content="Calcula con precisión cemento, agregados, ladrillos y fierro para zapatas, cimientos, muros, columnas, vigas y losas según normas RNE y Capeco. 100% gratis con visualizador 3D." />
+    <meta property="og:title" content="Calculadora de materiales de construcción | Obra Exacta" />
+    <meta property="og:description" content="Metrado gratis de cemento, arena, piedra, ladrillos y fierro para tu obra en Perú. Dosificaciones Capeco, RNE y visor 3D." />
     <meta property="og:url" content="https://obra-exacta.vercel.app/" />
-    <meta property="og:image" content="https://obra-exacta.vercel.app/og-image.svg" />
-    <meta property="og:image:secure_url" content="https://obra-exacta.vercel.app/og-image.svg" />
-    <meta property="og:image:type" content="image/svg+xml" />
+    <meta property="og:image" content="https://obra-exacta.vercel.app/og-image.png" />
+    <meta property="og:image:secure_url" content="https://obra-exacta.vercel.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Obra Exacta - Calculadora de Materiales para Construcción en el Perú con Visores 3D" />
+    <meta property="og:image:alt" content="Obra Exacta: calculadora de materiales de construcción en Perú con visor 3D" />
 
     <!-- Twitter Cards (X) -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Calculadora de Materiales de Construcción Perú | Obra Exacta" />
-    <meta name="twitter:description" content="Herramienta profesional para ingenieros, maestros de obra y autoconstructores en Perú. Dosificaciones Capeco y normas RNE E.050/E.060/E.070." />
-    <meta name="twitter:image" content="https://obra-exacta.vercel.app/og-image.svg" />
-    <meta name="twitter:image:alt" content="Calculadora de Obra y Metrados Perú" />
+    <meta name="twitter:title" content="Calculadora de materiales de construcción | Obra Exacta" />
+    <meta name="twitter:description" content="Metrado gratis de cemento, arena, piedra, ladrillos y fierro para tu obra en Perú. Dosificaciones Capeco, RNE y visor 3D." />
+    <meta name="twitter:image" content="https://obra-exacta.vercel.app/og-image.png" />
+    <meta name="twitter:image:alt" content="Calculadora de materiales de construcción en Perú" />
 
-    <!-- Datos Estructurados JSON-LD (Schema.org) para Google Rich Results -->
+    <!-- Datos estructurados JSON-LD -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://obra-exacta.vercel.app/#website",
+          "url": "https://obra-exacta.vercel.app/",
+          "name": "Obra Exacta",
+          "description": "Calculadora de materiales de construcción para viviendas en Perú.",
+          "inLanguage": "es-PE",
+          "publisher": { "@id": "https://obra-exacta.vercel.app/#organization" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://obra-exacta.vercel.app/#organization",
+          "name": "Obra Exacta",
+          "url": "https://obra-exacta.vercel.app/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://obra-exacta.vercel.app/icons/icon-512.png",
+            "width": 512,
+            "height": 512
+          }
+        },
         {
           "@type": "WebApplication",
           "@id": "https://obra-exacta.vercel.app/#webapp",
@@ -65,9 +98,12 @@
           "url": "https://obra-exacta.vercel.app/",
           "description": "Calculadora técnica de materiales de construcción para el Perú. Cuantifica cemento, arena gruesa, piedra chancada, agua, ladrillos King Kong y varillas de acero corrugado conforme al Reglamento Nacional de Edificaciones (RNE) y tablas Capeco.",
           "applicationCategory": "BusinessApplication",
-          "operatingSystem": "All",
+          "operatingSystem": "Any",
           "browserRequirements": "Requires JavaScript. Requires HTML5.",
           "inLanguage": "es-PE",
+          "isAccessibleForFree": true,
+          "image": "https://obra-exacta.vercel.app/og-image.png",
+          "screenshot": "https://obra-exacta.vercel.app/og-image.png",
           "offers": {
             "@type": "Offer",
             "price": "0",
@@ -83,7 +119,8 @@
             "Cálculo de tarrajeo, contrapiso y rendimiento de pintura",
             "Visores 3D interactivos con cotas reales para cada elemento estructural",
             "Presupuesto consolidado en Soles (PEN) con exportación a PDF y respaldo JSON"
-          ]
+          ],
+          "publisher": { "@id": "https://obra-exacta.vercel.app/#organization" }
         },
         {
           "@type": "FAQPage",
@@ -91,18 +128,18 @@
           "mainEntity": [
             {
               "@type": "Question",
-              "name": "¿Cómo calcular la cantidad de materiales para una construcción en Perú?",
+              "name": "¿Cómo calcula Obra Exacta los materiales?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Se calculan los volúmenes de concreto (m³) o áreas (m²) de cada elemento (zapatas, cimientos, muros, columnas, vigas, losas) y se aplican las proporciones técnicas peruanas de Capeco y el RNE para obtener bolsas de cemento de 42.5 kg, m³ de arena, piedra y varillas de fierro de 9 metros."
+                "text": "Convierte las medidas de cada elemento en volumen o área y aplica dosificaciones de Capeco y criterios del RNE. Para concreto usa bolsas de 42.5 kg, arena gruesa, piedra chancada y agua; para muros, ladrillo King Kong 18 huecos o pandereta; para acero, varillas de 9 m y estribos."
               }
             },
             {
               "@type": "Question",
-              "name": "¿Cuántas bolsas de cemento se necesitan por m³ de concreto f'c 210 kg/cm²?",
+              "name": "¿Cuántas bolsas de cemento se necesitan por m³ de concreto f'c 210?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Según la tabla Capeco para concreto f'c = 210 kg/cm² con agregado de 1/2\", se requieren 9.73 bolsas de cemento (42.5 kg), 0.52 m³ de arena gruesa, 0.53 m³ de piedra chancada y 0.186 m³ de agua por metro cúbico vaciado."
+                "text": "Según la tabla Capeco para f'c 210 kg/cm² con agregado de 1/2\", se requieren 9.73 bolsas de 42.5 kg, 0.52 m³ de arena gruesa, 0.53 m³ de piedra chancada y 0.186 m³ de agua por metro cúbico de concreto."
               }
             },
             {
@@ -110,15 +147,23 @@
               "name": "¿Cuántos ladrillos King Kong entran por m² de muro?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Para ladrillo King Kong 18 huecos (medida estándar 24×13×9 cm) con junta de 1.5 cm en aparejo de soga entran 37 unidades por m² (más 5% de desperdicio: ~39 und/m²). En cabeza entran 62 und/m² y en canto 25 und/m²."
+                "text": "Para King Kong 18 huecos de 24×13×9 cm, junta de 1.5 cm y aparejo de soga, entran 37 unidades por m². Con 5% de desperdicio se compran aproximadamente 39. En cabeza son 62 und/m² y en canto 25 und/m²."
               }
             },
             {
               "@type": "Question",
-              "name": "¿La calculadora de Obra Exacta es gratuita?",
+              "name": "¿Es gratis y funciona sin internet?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Sí, Obra Exacta es 100% gratuita, no requiere registro ni correo electrónico y funciona sin conexión a internet una vez cargada en el celular o computadora."
+                "text": "Sí. Obra Exacta es gratuita, no pide registro ni correo. Después de la primera visita, la app queda guardada en tu navegador y puedes seguir calculando sin conexión. Tus partidas se guardan solo en este dispositivo."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿Puedo usarla para un edificio de 3 a 5 pisos?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sí, con planos. La sección Edificio te permite organizar las partidas por piso, pero no sugiere medidas estructurales para 3 a 5 pisos: esas las define un ingeniero colegiado."
               }
             }
           ]
@@ -135,7 +180,7 @@
         <p>Herramienta técnica de metrados y dosificación según el Reglamento Nacional de Edificaciones (RNE E.050, E.060, E.070) y tablas Capeco.</p>
       </header>
       <main style="padding: 20px; font-family: sans-serif; line-height: 1.6; max-width: 800px;">
-        <h2>Módulos de Cálculo Disponibles:</h2>
+        <h2>Módulos de cálculo disponibles</h2>
         <ul>
           <li><strong>Zapatas aisladas:</strong> Dimensionamiento según carga axial y tipo de suelo (blando, intermedio, duro), concreto f'c 210/245/280, parrilla de fierro y solado 1:10.</li>
           <li><strong>Cimientos corridos y sobrecimientos:</strong> Concreto ciclópeo 1:10 + 30% piedra grande y 1:8 + 25% piedra mediana.</li>
@@ -144,7 +189,10 @@
           <li><strong>Vigas y Losas Aligeradas:</strong> Peralte económico L/25, ladrillos de techo 30x30 (8.33 und/m²), viguetas cada 40 cm y acero superior/inferior.</li>
           <li><strong>Acabados y revoques:</strong> Tarrajeo en muros y cielorrasos con mortero 1:5, contrapiso y rendimiento de pintura látex.</li>
         </ul>
-        <p><em>Para utilizar las calculadoras interactivas y los visores 3D, por favor activa JavaScript en tu navegador.</em></p>
+        <h2>Preguntas frecuentes</h2>
+        <p><strong>¿Cuántas bolsas de cemento se necesitan por m³ de concreto f'c 210?</strong> Según la tabla Capeco, 9.73 bolsas de 42.5 kg, 0.52 m³ de arena gruesa, 0.53 m³ de piedra chancada y 0.186 m³ de agua.</p>
+        <p><strong>¿Cuántos ladrillos King Kong entran por m²?</strong> Para King Kong 18 huecos de 24×13×9 cm, junta de 1.5 cm y aparejo de soga, 37 unidades por m²; con 5% de desperdicio, aproximadamente 39.</p>
+        <p><em>Para utilizar las calculadoras interactivas y los visores 3D, activa JavaScript en tu navegador.</em></p>
       </main>
     </noscript>
 
