@@ -16,7 +16,7 @@ presupuesto; para 3 a 5 pisos solo debe usarse con planos.
 
 ## Lo que ya está listo
 
-- Build de producción con Vite (`npm run build`) y 78 pruebas aprobadas.
+- Build de producción con Vite (`npm run build`) y 80 pruebas aprobadas.
 - SEO on-page: título y descripción cortos, canonical, `hreflang`, Open Graph y Twitter Card.
 - Imagen social real `og-image.png` de 1200 × 630 (WhatsApp y Facebook no leen bien SVG).
 - Iconos PWA de 192, 512 y 180 px; manifest con icono maskable.

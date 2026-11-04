@@ -304,12 +304,12 @@ La app está estable y compila. El flujo principal ya cubre:
 Ejecutado y aprobado:
 
 ```bash
-npm test        # 78/78
+npm test        # 80/80
 npx oxlint src  # 0
 npm run build   # OK
 ```
 
-- Build correcto: JS inicial `405.05 kB` (114.50 kB gzip), CSS `21.65 kB`.
+- Build correcto: JS inicial `418.98 kB` (118.14 kB gzip), CSS `25.34 kB`.
 - Three.js queda en un chunk diferido de `571.27 kB` (142.40 kB gzip); la
   advertencia de chunk >500 kB ahora aplica solo a ese chunk bajo demanda.
 - No se volvieron a correr las pruebas Playwright de sesiones anteriores.
