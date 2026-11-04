@@ -14,8 +14,8 @@ export interface RespaldoObra extends ObraDatos {
 }
 
 export type ResultadoImportacion =
-  | { ok: true; data: ObraDatos; exportado: string }
-  | { ok: false; error: string };
+  | { ok: true; data: ObraDatos; exportado: string; error?: undefined }
+  | { ok: false; error: string; data?: undefined };
 
 function esObjeto(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);

@@ -251,7 +251,7 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
     try {
       const parsed = parsearRespaldo(await file.text());
       if (!parsed.ok) {
-        setRespaldoMsg({ tipo: 'bad', texto: parsed.error });
+        setRespaldoMsg({ tipo: 'bad', texto: parsed.error ?? 'Error al leer el archivo de respaldo.' });
         return;
       }
 
