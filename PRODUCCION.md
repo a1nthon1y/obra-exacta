@@ -1,6 +1,6 @@
 # Publicación de Metra Perú
 
-Fecha: 03/11/2026
+Fecha: 03/11/2026 · Actualizado: 12/11/2026 (landings SEO + vista de escritorio)
 
 Marca y dominio objetivo: **Metra Perú** (`https://metraperu.com/`).
 
@@ -64,12 +64,54 @@ Luego subir el repositorio a Vercel o ejecutar `vercel --prod` con la CLI.
 - Medir instalaciones de PWA y errores de consola durante una semana.
 - Incorporar analítica solo si se acepta la implicancia de privacidad.
 
+## Landings SEO por calculadora (12/11/2026)
+
+Ya NO es una SPA de una sola URL. Hay **9 landings estáticas** en `public/` (Vite las copia
+a `dist` y Vercel las sirve directo; el filesystem tiene prioridad sobre la rewrite):
+
+| URL | Palabra clave objetivo | Deep-link a la app |
+|-----|------------------------|--------------------|
+| `/calculadora-de-cemento/` | cuántas bolsas de cemento por m³ | `/#vigas` |
+| `/calculadora-de-cimientos/` | cimiento ciclópeo | `/#cimientos` |
+| `/calculadora-de-zapatas/` | zapata aislada pa del suelo | `/#zapata` |
+| `/calculadora-de-ladrillos/` | cuántos ladrillos por m² | `/#muros` |
+| `/calculadora-de-columnas/` | sección y estribos de columna | `/#columnas` |
+| `/calculadora-de-vigas/` | viga solera material | `/#vigas` |
+| `/calculadora-de-losa-aligerada/` | espesor y ladrillos de techo | `/#losa` |
+| `/calculadora-de-escalera/` | huella y contrahuella | `/#escalera` |
+| `/calculadora-de-acabados/` | tarrajeo por m², pintura | `/#acabados` |
+
+- Cada landing: HTML estático **sin JavaScript**, CSS compartido `/landings.css`,
+  contenido propio con tablas Capeco, FAQ visible + JSON-LD (`WebPage`, `BreadcrumbList`,
+  `FAQPage` por página), OG/Twitter y canonical con barra final.
+- Datos extraídos del motor real (`tablas.json`): 9.73 bolsas/m³ f'c 210, 37 und/m² KK18
+  soga, espesor losa L/25, malla Ø1/4 @25, 4.5 kg/m² pegamento, 30 m²/gal látex, etc.
+- **Deep-links por hash en la app:** `metraperu.com/#muros` abre esa calculadora
+  (escucha `hashchange` en `App.tsx`; `#mi-obra` abre Mi obra). Las landings enlazan así.
+- **Enlazado interno:** el footer de Inicio enlaza las 9 landings; cada landing enlaza a
+  las otras 8 y a la app. Sitemap actualizado con las 10 URLs.
+- Vista previa validada con Playwright (inicio, calculadora 2 columnas, landing, CTA →
+  deep-link, móvil).
+
+## Vista de escritorio (12/11/2026)
+
+- Nuevo `src/desktop.css` (importado después de `index.css`, que queda intacto):
+  media query `@media (min-width: 1024px)`.
+- Contenedor 1140 px, header 64 px, etapas en grilla de 4, portada con tipografía grande.
+- **Calculadoras a 2 columnas:** formulario + avisos + resultado a la izquierda; visor
+  técnico a la derecha con `position: sticky`. Se activa con la clase `main-calc` en
+  `<main>` y `grid-auto-flow: dense`; los visores van por `.viewer-card`/`.viewer-2d`.
+- `ProyectoActivoBar` ahora tiene clase `proyecto-bar` (para abarcar las 2 columnas).
+- Barra inferior → **pastilla flotante centrada** de 480 px con `padding-bottom: 96px`
+  en `.page` para que no tape el botón principal.
+- El móvil (<1024 px) queda byte a byte igual: es la base para empaquetar la PWA como
+  TWA en Play Store.
+
 ## Limitaciones conocidas
 
-- Es una SPA: hoy hay una sola URL indexable. El siguiente salto de SEO es prerenderizar o
-  crear páginas estáticas por calculadora (`/calculadora-de-cemento`, `/calculadora-de-muros`,
-  etc.) con contenido propio y enlaces internos.
 - No hay backend, autenticación ni sincronización entre dispositivos.
 - El respaldo JSON es la forma de mover una obra de un dispositivo a otro.
 - Las fuentes se cargan desde Google Fonts; si se quiere eliminar esa dependencia, self-host.
 - La app no reemplaza planos, licencia de construcción ni revisión estructural.
+- Las landings son estáticas: si cambia una dosificación del motor, hay que editar a mano
+  la tabla de la landing correspondiente.

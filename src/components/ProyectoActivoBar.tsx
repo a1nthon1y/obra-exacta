@@ -21,6 +21,7 @@ export const ProyectoActivoBar: React.FC = () => {
     <div
       role="group"
       aria-label="Proyecto activo"
+      className="proyecto-bar"
       style={{
         display: 'flex',
         alignItems: 'center',

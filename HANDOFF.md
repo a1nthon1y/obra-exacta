@@ -1,7 +1,38 @@
 # Metra Perú — estado para continuar
 
 Fecha de corte: 23/10/2026
-Última actualización: 03/11/2026 — rebrand a Metra Perú + lista de compra + modo obra
+Última actualización: 12/11/2026 — vista de escritorio + 9 landings SEO por calculadora
+
+## Cambios 12/11/2026 — Escritorio + SEO
+
+**Vista de escritorio (≥1024 px, móvil intacto):**
+- `src/desktop.css` nuevo con media queries; `index.css` NO se tocó (Latin-1/CR).
+- Shell de 1140 px, grilla de etapas a 4 columnas, calculadoras a 2 columnas
+  (formulario+avisos+resultado | visor sticky), nav inferior como pastilla flotante.
+- `<main>` recibe clase `main-calc` cuando hay calculadora abierta;
+  `ProyectoActivoBar` ganó clase `proyecto-bar`.
+- Verificado con Playwright a 1440 px: 4 columnas en etapas, 2 columnas en calculadoras
+  (`form x=182 / viewer x=734`), móvil a 375 px sin cambios (`grid: none`).
+- Pensado para Play Store: la vista móvil es la que se empaqueta como TWA.
+
+**SEO — landings estáticas:**
+- 9 landings en `public/calculadora-de-*/index.html` + `public/landings.css`
+  (cemento, cimientos, zapatas, ladrillos, columnas, vigas, losa-aligerada, escalera,
+  acabados). Sin JS, con tablas Capeco reales del motor, FAQ + JSON-LD propio,
+  OG/Twitter y canonical con barra final.
+- Deep-links: `App.tsx` lee `location.hash` al montar y en `hashchange`
+  (`#muros` abre la calculadora de muros; `#mi-obra` abre Mi obra).
+- Footer de Inicio enlaza las 9 landings; sitemap.xml con las 10 URLs;
+  Vercel sirve las landings directo (filesystem > rewrite). No se cambió `sw.js`:
+  las navegaciones ya son network-first.
+- Detalle en `PRODUCCION.md` → "Landings SEO por calculadora".
+
+Verificado: `npm test` (80/80), `npx tsc --noEmit` (OK), `npx oxlint src` (0),
+`npm run build` (OK, JS inicial 420.17 kB; el chunk >500 kB sigue siendo Three.js
+diferido). Las landings y `landings.css` quedan en `dist/`.
+
+Mantener en mente: si cambia una dosificación en `tablas.json`, actualizar la tabla de
+la landing correspondiente (son HTML estáticos).
 
 ## Rebrand 03/11/2026 — Metra Perú
 

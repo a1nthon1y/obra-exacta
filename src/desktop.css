@@ -1,0 +1,153 @@
+/* ══════════════════════════════════════════════════════════════
+   METRA PERÚ — vista de escritorio (≥ 1024 px)
+   ══════════════════════════════════════════════════════════════
+   El móvil y la tablet quedan exactamente como están: estas reglas
+   solo aplican desde 1024 px. La app se empaqueta como PWA/TWA,
+   así que la vista de teléfono es intocable.
+
+   En PC la app deja de parecer una vista de celular:
+   - Contenedor ancho (1140 px) y más aire de respiro.
+   - Portada y etapas como una web real (grilla de 4 columnas).
+   - Calculadoras a 2 columnas: formulario + resultado a la
+     izquierda, visor técnico a la derecha (fijo mientras haces
+     scroll del formulario).
+   - Barra inferior → pastilla flotante centrada.
+   ══════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1024px) {
+  :root {
+    --max-w: 1140px;
+  }
+
+  /* ── Header: banda completa con contenido alineado al ancho ── */
+  .header {
+    padding: 0 32px;
+  }
+  .header-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    height: 64px;
+  }
+
+  /* ── Página: más aire ─────────────────────────────────────── */
+  .page {
+    padding: 24px 32px 40px;
+  }
+
+  /* ── Inicio: portada de web, no de teléfono ───────────────── */
+  .inicio-portada h1 {
+    font-size: 2.1rem;
+    line-height: 1.1;
+  }
+  .inicio-portada p {
+    font-size: 1rem;
+    max-width: 62ch;
+  }
+  .portada-cuerpo {
+    padding: 26px 30px 28px;
+  }
+  .inicio-sec-title {
+    font-size: 1rem;
+    margin-top: 6px;
+  }
+
+  /* Etapas: 8 tarjetas en 2 filas de 4 */
+  .etapas-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .etapa-card {
+    padding: 16px;
+  }
+  .etapa-card:hover {
+    border-color: var(--c-accent);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* El texto SEO/guía no se estira a 1140 px: legibilidad primero */
+  .seo-guia {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 880px;
+    padding: 22px 28px;
+  }
+
+  /* ── Calculadoras: 2 columnas ────────────────────────────────
+     Izquierda: formulario, avisos y resultado.
+     Derecha: visor técnico (sticky mientras haces scroll).      */
+  .main-calc .page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 28px;
+    row-gap: 0;
+    align-items: start;
+    grid-auto-flow: dense;
+  }
+
+  /* Elementos de cabecera de la calculadora: ancho completo */
+  .main-calc .calc-header,
+  .main-calc .proyecto-bar,
+  .main-calc .btn-ejemplo,
+  .main-calc .modo-switch {
+    grid-column: 1 / -1;
+  }
+  .main-calc .btn-ejemplo {
+    justify-self: start;
+  }
+
+  /* Columna izquierda */
+  .main-calc .sugerir-card,
+  .main-calc .form-card,
+  .main-calc .aviso,
+  .main-calc .resultado {
+    grid-column: 1;
+  }
+
+  /* Columna derecha: el visor es la ventana técnica.
+     Ocupa 2 filas (empareja con formulario y avisos) y se queda
+     fijo arriba mientras el usuario recorre el formulario. */
+  .main-calc .viewer-card,
+  .main-calc .viewer-2d {
+    grid-column: 2;
+    grid-row: span 2;
+    position: sticky;
+    top: 76px;
+  }
+  /* El visor no debe despegarse del borde derecho */
+  .main-calc .viewer-card {
+    align-self: start;
+  }
+
+  /* ── Mi obra y Edificio: el banner total no se estira de más ── */
+  .obra-total-banner {
+    max-width: 640px;
+  }
+
+  /* ── Barra inferior: pastilla flotante centrada ────────────── */
+  .bottom-nav {
+    position: sticky;
+    bottom: 14px;
+    width: min(480px, 100%);
+    max-width: none;
+    margin: 0 auto 16px;
+    align-self: center;
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    background: rgba(255, 255, 255, 0.97);
+  }
+  .nav-tab {
+    flex: 1;
+    padding: 10px 0;
+    white-space: nowrap;
+  }
+  .nav-tab.active {
+    box-shadow: inset 0 3px 0 var(--c-accent);
+  }
+
+  /* Dejar aire para que la pastilla flotante no tape el botón principal */
+  .page {
+    padding-bottom: 96px;
+  }
+}

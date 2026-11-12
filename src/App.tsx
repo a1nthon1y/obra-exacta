@@ -70,6 +70,28 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [tab, calc, enEdificio]);
 
+  // Deep-link desde landings y enlaces compartidos: metraperu.com/#muros
+  // abre esa calculadora. #mi-obra abre Mi obra.
+  useEffect(() => {
+    const abrirDesdeHash = () => {
+      const h = window.location.hash.replace('#', '').toLowerCase();
+      if (h === 'mi-obra' || h === 'obra') {
+        setEnEdificio(false);
+        setCalc(null);
+        setTab('obra');
+        return;
+      }
+      if (ETAPAS.some(e => e.id === h)) {
+        setEnEdificio(false);
+        setTab('inicio');
+        setCalc(h as Calc);
+      }
+    };
+    abrirDesdeHash();
+    window.addEventListener('hashchange', abrirDesdeHash);
+    return () => window.removeEventListener('hashchange', abrirDesdeHash);
+  }, []);
+
   // Modo obra: alto contraste y letras grandes para usar en campo.
   useEffect(() => {
     try {
@@ -161,7 +183,7 @@ export default function App() {
       </header>
 
       {/* Contenido */}
-      <main style={{ flex: 1, overflowY: 'auto' }}>
+      <main className={calc ? 'main-calc' : undefined} style={{ flex: 1, overflowY: 'auto' }}>
         {modoObra && (
           <div className="modo-obra-strip" role="status">
             🦺 Modo obra activo · letras grandes y alto contraste
@@ -328,6 +350,26 @@ export default function App() {
             >
               Metra Perú · De tu plano a la ferretería<br />
               Tus datos se guardan solo en este navegador. Sin cuentas ni publicidad.
+              <nav
+                aria-label="Guías y calculadoras"
+                style={{
+                  marginTop: 10,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '4px 14px',
+                  justifyContent: 'center',
+                }}
+              >
+                <a href="/calculadora-de-cemento/">Cemento por m³</a>
+                <a href="/calculadora-de-cimientos/">Cimientos</a>
+                <a href="/calculadora-de-zapatas/">Zapatas</a>
+                <a href="/calculadora-de-ladrillos/">Ladrillos por m²</a>
+                <a href="/calculadora-de-columnas/">Columnas</a>
+                <a href="/calculadora-de-vigas/">Vigas</a>
+                <a href="/calculadora-de-losa-aligerada/">Losa aligerada</a>
+                <a href="/calculadora-de-escalera/">Escalera</a>
+                <a href="/calculadora-de-acabados/">Acabados</a>
+              </nav>
             </footer>
           </div>
         ) : (
