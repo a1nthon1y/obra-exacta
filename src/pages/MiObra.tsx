@@ -586,7 +586,8 @@ export const MiObra: React.FC<{ onIrCalculadoras: () => void }> = ({ onIrCalcula
         <div className="form-section-title">Respaldo de la obra</div>
         <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: 'var(--c-muted)', lineHeight: 1.5 }}>
           Descarga un archivo JSON con todas las partidas, precios, proyectos y la lista de
-          compra. Sirve para guardar una copia o restaurar la obra en otro teléfono.
+          compra. Sirve para guardar una copia o restaurar la obra en otro celular o
+          computadora.
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           <button className="btn-secondary" type="button" onClick={exportarRespaldo}>

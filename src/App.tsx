@@ -207,7 +207,7 @@ export default function App() {
                 <p>
                   Metra Perú convierte las medidas de tu obra en una lista de compra clara.
                   Cemento, arena, ladrillos y fierro con criterios RNE/Capeco, visores 3D
-                  y todo en tu teléfono. Sin cuentas, sin pagos.
+                  y todo en tu celular o computadora. Sin cuentas, sin pagos.
                 </p>
                 <div className="portada-sellos" aria-label="Lo que hace diferente a Metra Perú">
                   <span className="sello">🇵🇪 Hecho para Perú</span>
