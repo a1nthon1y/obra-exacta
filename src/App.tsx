@@ -295,8 +295,14 @@ export default function App() {
                 <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Muros:</strong> ladrillo King Kong 18 huecos o pandereta en soga, cabeza o canto, mortero y esbeltez.</li>
                 <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Columnas y vigas:</strong> concreto, acero longitudinal, estribos y recubrimiento.</li>
                 <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Losa aligerada y escalera:</strong> viguetas, ladrillo de techo, concreto y acero.</li>
-                <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Acabados:</strong> tarrajeo, contrapiso, cerámico y pintura.</li>
-                <li><strong style={{ color: 'var(--c-text)' }}>Mi obra:</strong> presupuesto en soles, checklist de compra con avance, WhatsApp, PDF y respaldo JSON.</li>
+                <li><strong style={{ color: 'var(--c-text)' }}>Acabados:</strong> tarrajeo, contrapiso, cerámico y pintura.</li>
+              </ul>
+
+              <h3 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 7 }}>
+                ¿Y dónde queda todo lo que calculas?
+              </h3>
+              <ul style={{ margin: '0 0 14px', paddingLeft: 18, fontSize: '0.82rem', lineHeight: 1.55, color: 'var(--c-muted)' }}>
+                <li style={{ marginBottom: 4 }}><strong style={{ color: 'var(--c-text)' }}>Mi obra</strong> es el espacio de tu proyecto: ahí se guardan todas las partidas de tu construcción y se convierten en un solo presupuesto en soles, con lista de compra para marcar lo que ya compraste, envío por WhatsApp, PDF y respaldo JSON.</li>
                 <li><strong style={{ color: 'var(--c-text)' }}>Modo obra:</strong> alto contraste y letras grandes para revisar la lista en campo, con una mano y bajo el sol.</li>
               </ul>
 
