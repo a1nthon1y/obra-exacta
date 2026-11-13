@@ -355,7 +355,8 @@ export default function App() {
               }}
             >
               Metra Perú · De tu plano a la ferretería<br />
-              Tus datos se guardan solo en este navegador. Sin cuentas ni publicidad.
+              Tus datos de obra se guardan solo en este navegador. Sin cuentas ni publicidad.
+              Visitas medidas de forma anónima y sin cookies.
               <nav
                 aria-label="Guías y calculadoras"
                 style={{
