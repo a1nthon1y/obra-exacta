@@ -61,8 +61,13 @@ Luego subir el repositorio a Vercel o ejecutar `vercel --prod` con la CLI.
 - Revisar Core Web Vitals en PageSpeed Insights (móvil).
 - Validar los datos estructurados con Rich Results Test.
 - Confirmar que `/og-image.png`, `/manifest.json`, `/sw.js` y `/icons/*.png` devuelven 200.
-- Medir instalaciones de PWA y errores de consola durante una semana.
-- Incorporar analítica solo si se acepta la implicancia de privacidad.
+- **Métricas de visitas:** Vercel Web Analytics está incorporado (12/11/2026): la SPA usa
+  `@vercel/analytics` y las 9 landings cargan `/_vercel/insights/script.js`. Se activa y
+  se consulta en vercel.com → proyecto → pestaña **Analytics**. Es anónimo y sin cookies;
+  la nota de privacidad del footer lo declara.
+- **Métricas SEO:** Google Search Console (rendimiento: impresiones, clics y consultas
+  por página; cubre la app y las landings si se envía el sitemap).
+- Validar los datos estructurados con Rich Results Test.
 
 ## Landings SEO por calculadora (12/11/2026)
 
